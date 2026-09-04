@@ -26,6 +26,7 @@ const hue = plateHueForIndex(project.order - 1);
 		href={project.liveUrl}
 		target="_blank"
 		rel="noopener noreferrer"
+		data-world-slug={project.slug}
 		data-analytics="world_link_click"
 		data-analytics-slug={project.slug}
 		aria-label={`${project.name} — ${project.oneLiner}`}

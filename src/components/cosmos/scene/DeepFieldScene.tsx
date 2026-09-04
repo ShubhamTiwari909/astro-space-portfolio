@@ -10,7 +10,12 @@ import {
 import CameraRig from './CameraRig';
 import GalaxySprites from './GalaxySprites';
 import NebulaVolume from './NebulaVolume';
+import PlanetSystem from './PlanetSystem';
+import ProbeTrail from './ProbeTrail';
+import RelayBeams from './RelayBeams';
 import StarField from './StarField';
+import type { PlanetDatum } from './planetLayout';
+import Station from './Station';
 import { degrade, useSceneTier, type SceneTier } from './useSceneTier';
 
 /**
@@ -150,7 +155,14 @@ function FrameGovernor({
 	return null;
 }
 
-export default function DeepFieldScene() {
+interface Props {
+	/** Minimal project shape, passed from Astro (§4b). */
+	planets: readonly PlanetDatum[];
+	/** Burn-event count — the trail's marker count IS the achievement count. */
+	burnEvents: number;
+}
+
+export default function DeepFieldScene({ planets, burnEvents }: Props) {
 	const detected = useSceneTier();
 	const [tier, setTier] = useState(detected);
 	const [ready, setReady] = useState(false);
@@ -173,6 +185,20 @@ export default function DeepFieldScene() {
 		document.addEventListener('webglcontextlost', onLost, true);
 		return () => document.removeEventListener('webglcontextlost', onLost, true);
 	}, [enabled]);
+
+	/*
+	 * Publish readiness on <html> as well as the container: the art layer
+	 * needs to know, and it is a sibling rather than a descendant. Cleared on
+	 * failure or context loss so the art returns to full strength.
+	 */
+	useEffect(() => {
+		const root = document.documentElement;
+		if (ready && !failed) root.dataset.sceneReady = 'true';
+		else delete root.dataset.sceneReady;
+		return () => {
+			delete root.dataset.sceneReady;
+		};
+	}, [ready, failed]);
 
 	if (!enabled || failed) return null;
 
@@ -211,10 +237,22 @@ export default function DeepFieldScene() {
 						onFirstFrame={() => setReady(true)}
 						onDegrade={() => setTier((t) => degrade(t))}
 					/>
-					<CameraRig staticCamera={tier.staticCamera} />
+					<CameraRig staticCamera={tier.staticCamera} planets={planets} />
 					<StarField count={tier.stars} pixelRatio={tier.dpr} />
 					<NebulaVolume layers={tier.nebulaLayers} />
 					<GalaxySprites />
+
+					{/* Set pieces (§4b). Subdivision and the atmosphere shell
+					    come from the tier — mobile drops both (§24.2). */}
+					<PlanetSystem
+						planets={planets}
+						segments={tier.planetSegments}
+						atmosphere={tier.name === 'high'}
+					/>
+					<ProbeTrail markers={burnEvents} />
+					<Station />
+					{/* Beams are removed on mobile (§24.2). */}
+					{tier.name !== 'low' && <RelayBeams />}
 				</Canvas>
 			</SceneBoundary>
 		</div>

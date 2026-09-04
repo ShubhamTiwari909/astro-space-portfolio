@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react';
 import { Vector3 } from 'three';
 import { BANDS } from '../../../lib/bands';
 import { scrollState } from '../../../lib/scrollProgress';
+import { worldFocus } from '../../../lib/worldFocus';
+import { planetSlot, type PlanetDatum } from './planetLayout';
 import {
 	CAMERA_FOV,
 	CAMERA_LAG_MS,
@@ -34,9 +36,11 @@ const currentLook = new Vector3();
 interface Props {
 	/** Reduced motion: cut between keyframes instead of interpolating. */
 	staticCamera: boolean;
+	/** Needed to resolve a focused card's slug to a position in space. */
+	planets: readonly PlanetDatum[];
 }
 
-export default function CameraRig({ staticCamera }: Props) {
+export default function CameraRig({ staticCamera, planets }: Props) {
 	const camera = useThree((s) => s.camera);
 	const initialised = useRef(false);
 
@@ -66,6 +70,17 @@ export default function CameraRig({ staticCamera }: Props) {
 
 		POSITION_CURVE.getPoint(clamped, targetPos);
 		LOOKAT_CURVE.getPoint(clamped, targetLook);
+
+		/*
+		 * Focusing a project card eases the camera's look-at toward that
+		 * planet — the one place scroll is not the sole camera input (§10.6).
+		 * Position is untouched: only the gaze shifts, so the visitor never
+		 * loses their place on the flight path.
+		 */
+		if (worldFocus.activeSlug) {
+			const i = planets.findIndex((p) => p.slug === worldFocus.activeSlug);
+			if (i >= 0) targetLook.set(...planetSlot(i).position);
+		}
 
 		if (!initialised.current) {
 			// Arrive already in position: the hero must not animate on load

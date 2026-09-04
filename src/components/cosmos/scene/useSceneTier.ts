@@ -27,6 +27,8 @@ export interface SceneTier {
 	dpr: number;
 	/** Nebula billboard layers. */
 	nebulaLayers: number;
+	/** Sphere subdivision for planets (§24.2: 64 / 48 / 32). */
+	planetSegments: number;
 	/** Frame cap. 30 on low tier saves battery and heat. */
 	fps: number;
 	/** Reduced motion: the camera CUTS between keyframes (§16.4). */
@@ -37,9 +39,9 @@ const TIERS: Record<
 	Exclude<TierName, 'none'>,
 	Omit<SceneTier, 'name' | 'staticCamera'>
 > = {
-	low: { stars: 3000, dpr: 1, nebulaLayers: 3, fps: 30 },
-	mid: { stars: 6000, dpr: 1.5, nebulaLayers: 5, fps: 60 },
-	high: { stars: 12000, dpr: 1.75, nebulaLayers: 8, fps: 60 },
+	low: { stars: 3000, dpr: 1, nebulaLayers: 3, planetSegments: 32, fps: 30 },
+	mid: { stars: 6000, dpr: 1.5, nebulaLayers: 5, planetSegments: 48, fps: 60 },
+	high: { stars: 12000, dpr: 1.75, nebulaLayers: 8, planetSegments: 64, fps: 60 },
 };
 
 /*

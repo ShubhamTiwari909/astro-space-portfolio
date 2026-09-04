@@ -95,14 +95,18 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 		<script>
 			import { init } from '../lib/scrollProgress';
 			import { observeOnce } from '../lib/observeOnce';
+			import { initWorldFocus } from '../lib/worldFocus';
 
 			let teardown = init();
+			let teardownFocus = initWorldFocus();
 			observeOnce();
 
 			// Re-arm after a View Transition swaps the document.
 			document.addEventListener('astro:page-load', () => {
 				teardown?.();
+				teardownFocus?.();
 				teardown = init();
+				teardownFocus = initWorldFocus();
 				observeOnce();
 			});
 		</script>

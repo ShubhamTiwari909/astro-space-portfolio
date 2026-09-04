@@ -110,5 +110,18 @@ export function bandForSection(section: string): Band {
 	return BANDS.find((b) => b.section === section) ?? BANDS[0];
 }
 
+/**
+ * A band's colour as a normalised RGB triplet, for use as a shader uniform.
+ *
+ * Set pieces in the scene must take their colour from here rather than
+ * hardcoding one: the whole point of §3.3 is that page and scene cannot
+ * disagree about a band's hue, and a literal in a shader is exactly how that
+ * guarantee would quietly rot.
+ */
+export function bandUniform(section: string): [number, number, number] {
+	const { rgb } = bandForSection(section);
+	return [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255];
+}
+
 /** Distinct plates — `field-deep` serves both the first and last band. */
 export const PLATES: readonly string[] = [...new Set(BANDS.map((b) => b.plate))];

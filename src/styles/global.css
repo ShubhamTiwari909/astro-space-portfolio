@@ -125,6 +125,10 @@
 
 	/* Backdrop stack (§17.1). --z-scene is reserved and left EMPTY in Phase 2;
 	   the WebGL canvas claims it in Phase 4 with no re-stacking needed. */
+	/* Art-layer strength. 1 while the art IS the backdrop; lowered once the
+	   scene takes over so the two do not compete (§17.1). */
+	--art-strength: 1;
+
 	--z-void: 0;
 	--z-art: 1;
 	--z-scene: 2;
@@ -320,6 +324,11 @@
 .js.observer-ready [data-observe].is-revealed {
 	opacity: 1;
 	transform: none;
+}
+
+/* Once the scene is drawing, the art recedes to a ground wash. */
+html[data-scene-ready] {
+	--art-strength: 0.32;
 }
 
 /* The mobile tab bar is fixed, so the last content needs clearance (§7.3). */

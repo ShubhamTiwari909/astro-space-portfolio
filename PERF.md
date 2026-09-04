@@ -105,6 +105,32 @@ harness browser pane does not composite while hidden, which starves
 requestAnimationFrame. That starvation surfaced two real bugs (below), but
 it makes any FPS reading here meaningless.
 
+## Phase 4b — The Set Pieces
+
+| Resource | Measured | Budget |
+|----------|---------|--------|
+| Critical-path JS | 2.4KB | ≤16KB |
+| Scene chunk (lazy) | 233.3KB | ≤250KB |
+| CSS | 9.2KB | ≤34KB |
+| HTML (`/`) | 25.9KB | ≤40KB |
+
+Four set pieces — planet system, probe trail, station, relay beams — cost
+**+2.3KB** over Phase 4's 231.0KB. That is the whole argument for procedural
+geometry and shaders: the planets, their atmospheres, the rings, the trail
+and the station add no asset bytes at all, and the marginal code is trivial
+next to three + R3F's ~229KB floor.
+
+Critical-path JS did not move (2.4KB at Phases 3, 4 and 4b), which is the
+number that actually protects LCP.
+
+Cut from the plan: the ConstellationGlobe (~6KB, redundant with the skills
+SVG) and three AI-generated planet textures plus three fallback stills
+(~120KB each) — replaced by procedural shaders.
+
+Frame rate is still not measured here. The harness browser pane does not
+composite while hidden, so rAF is starved; `scripts/shoot-beats.mjs` drives
+real Chrome for visual review, but real-device frame rates belong to Phase 7.
+
 ---
 
 ## Phase 3 — Portfolio Content

@@ -26,6 +26,7 @@ const hue = plateHueForIndex(project.order - 1);
 	as="article"
 	variant="standard"
 	class="group/featured overflow-hidden"
+	data-world-slug={project.slug}
 	data-observe
 >
 	<div class="grid lg:grid-cols-[7fr_5fr]">
@@ -64,6 +65,7 @@ const hue = plateHueForIndex(project.order - 1);
 					href={project.liveUrl}
 					icon="arrow-up-right"
 					external
+					data-world-slug={project.slug}
 					data-analytics="world_link_click"
 					data-analytics-slug={project.slug}
 				>

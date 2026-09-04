@@ -79,9 +79,17 @@ body[data-band="${l.section}"] .art-plate[data-plate-band="${l.section}"]{
 {/* The opening plate is on the critical path for perceived quality (§9.3). */}
 <link rel="preload" as="image" href={first.full} fetchpriority="high" />
 
+{/*
+  --art-strength recedes once the scene is live (set on <html> by
+  DeepFieldScene). The art layer was designed in Phase 2 as the ENTIRE
+  backdrop; with the scene rendering over it, two full-strength images
+  compete and the planets lose. After handover the art's job is to provide
+  ground and depth, not to be a co-equal image — and at full strength it is
+  still the complete no-WebGL experience (§17.1).
+*/}
 <div
 	aria-hidden="true"
-	class="fixed inset-0 z-[var(--z-art)] bg-void pointer-events-none"
+	class="fixed inset-0 z-[var(--z-art)] bg-void pointer-events-none opacity-[var(--art-strength,1)] transition-opacity duration-[var(--duration-handover)] ease-soft"
 >
 	{
 		layers.map((layer) => (

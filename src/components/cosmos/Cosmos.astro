@@ -11,9 +11,39 @@
  * The scene layer is deliberately left empty rather than absent, so Phase 4
  * needs no re-stacking.
  */
+import { getCollection } from 'astro:content';
 import ArtBackdrop from './ArtBackdrop.astro';
 import Grain from './Grain.astro';
 import DeepFieldScene from './scene/DeepFieldScene';
+import { plateHueForIndex } from '../../data/seed';
+
+/*
+ * The scene's data comes from the same collections the DOM renders, so a
+ * planet cannot exist without a project card — which is what keeps the
+ * §25.0 parallel-DOM table true by construction.
+ *
+ * Hue uses plateHueForIndex, the same function the CSS fallback sphere uses,
+ * so the 3D planet and its DOM counterpart are the same colour by
+ * construction rather than by coincidence.
+ */
+const [projects, experience] = await Promise.all([
+	getCollection('projects'),
+	getCollection('experience'),
+]);
+
+const planets = [...projects]
+	.sort((a, b) => a.data.order - b.data.order)
+	.map((project, i) => ({
+		slug: project.data.slug,
+		hue: plateHueForIndex(i),
+		featured: project.data.featured,
+		order: project.data.order,
+	}));
+
+const burnEvents = experience.reduce(
+	(sum, entry) => sum + entry.data.achievements.length,
+	0,
+);
 ---
 
 <ArtBackdrop />
@@ -24,6 +54,6 @@ import DeepFieldScene from './scene/DeepFieldScene';
   chunk is fetched after the browser goes idle, and the canvas cross-fades
   in over the art once its first frame is drawn (§9.3, §20.2).
 */}
-<DeepFieldScene client:idle />
+<DeepFieldScene client:idle planets={planets} burnEvents={burnEvents} />
 
 <Grain />

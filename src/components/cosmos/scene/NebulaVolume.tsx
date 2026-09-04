@@ -105,9 +105,13 @@ export default function NebulaVolume({ layers }: Props) {
 	const targetColor = useMemo(() => new Color(), []);
 
 	/**
-	 * Layers are placed along the flight path, densest around the nebula-wall
-	 * and cluster beats (z ≈ +80 to 0) where §4.1 says the volume should fill
-	 * the frame.
+	 * Layers occupy the FIRST HALF of the flight only — the nebula-wall and
+	 * cluster beats (§4.1) — and stop short of the planet system.
+	 *
+	 * This is a correction, not a preference: spanning the whole path put
+	 * additive-blended billboards between the camera and the planets, fogging
+	 * the Worlds beat, which is the payoff of the entire flight and gets the
+	 * longest dwell. Dust belongs where the journey passes through it.
 	 */
 	const specs = useMemo<LayerSpec[]>(() => {
 		const rand = mulberry32(0x4e_45_42_55);
@@ -117,7 +121,19 @@ export default function NebulaVolume({ layers }: Props) {
 				position: [
 					(rand() - 0.5) * 90,
 					(rand() - 0.5) * 50,
-					100 - along * 200 + (rand() - 0.5) * 30,
+					/*
+					 * +112 down to +12 only.
+					 *
+					 * Camera z by beat: 120 → 82 → 46 → 16 → -16 → -52 → -80
+					 * → -112. Ending at +12 means the camera passes THROUGH the
+					 * dust during the nebula-wall and cluster beats, and every
+					 * layer is behind it by the Worlds beat (z -16).
+					 *
+					 * The first attempt ran to -14, which put a 200-unit
+					 * billboard two units in front of the camera at Worlds and
+					 * whited out the payoff beat.
+					 */
+					112 - along * 100 + (rand() - 0.5) * 14,
 				],
 				scale: 90 + rand() * 130,
 				opacity: 0.16 + rand() * 0.2,
