@@ -11,21 +11,35 @@ interface Props {
 }
 
 const { profile }: Props = Astro.props;
-
 const buildStamp = new Date().toISOString().slice(0, 10);
+
+const monoLabel = 'font-mono text-label tracking-[0.14em] uppercase';
 ---
 
-<footer class="footer">
-	<div class="footer__inner">
-		<p class="footer__mark">{profile.name}</p>
-		<p class="footer__legal">
+<footer
+	class="relative z-[var(--z-content)] border-t border-hairline px-[var(--gutter)] py-12"
+>
+	<div
+		class="mx-auto grid max-w-content gap-4 md:grid-cols-[1fr_auto] md:items-center"
+	>
+		<p class={`m-0 text-ink-hi ${monoLabel}`}>{profile.name}</p>
+
+		<p class="m-0 text-data text-ink-mid">
 			© {new Date().getFullYear()} {profile.name} · Crafted with precision.
 		</p>
-		<ul class="footer__socials">
+
+		<ul
+			class="m-0 flex list-none flex-wrap gap-5 p-0 md:col-start-2 md:row-start-1 md:justify-end"
+		>
 			{
 				profile.socials.map((social) => (
 					<li>
-						<a href={social.url} target="_blank" rel="noopener noreferrer">
+						<a
+							href={social.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							class={`inline-flex min-h-11 items-center gap-1.5 text-ink-mid no-underline transition-colors duration-[var(--duration-fast)] ease-ui hover:text-accent ${monoLabel}`}
+						>
 							<Icon name={social.network as IconName} size={16} />
 							<span>{social.label}</span>
 							<span class="sr-only">(opens in a new tab)</span>
@@ -34,94 +48,11 @@ const buildStamp = new Date().toISOString().slice(0, 10);
 				))
 			}
 		</ul>
-		<p class="footer__build">Build {buildStamp} · Astro</p>
+
+		<p
+			class={`m-0 text-ink-low md:col-start-2 md:row-start-2 md:text-right ${monoLabel}`}
+		>
+			Build {buildStamp} · Astro
+		</p>
 	</div>
 </footer>
-
-<style>
-	.footer {
-		position: relative;
-		z-index: var(--z-content);
-		border-top: 1px solid var(--color-hairline);
-		padding-block: 3rem;
-		padding-inline: var(--gutter);
-	}
-
-	.footer__inner {
-		max-width: var(--container-content);
-		margin-inline: auto;
-		display: grid;
-		gap: 1rem;
-	}
-
-	.footer__mark,
-	.footer__build {
-		font-family: var(--font-mono);
-		font-size: var(--text-label);
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		margin: 0;
-	}
-
-	.footer__mark {
-		color: var(--color-ink-hi);
-	}
-
-	.footer__build {
-		color: var(--color-ink-low);
-	}
-
-	.footer__legal {
-		font-size: var(--text-data);
-		color: var(--color-ink-mid);
-		margin: 0;
-	}
-
-	.footer__socials {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1.25rem;
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.footer__socials a {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.375rem;
-		min-height: 2.75rem;
-		font-family: var(--font-mono);
-		font-size: var(--text-label);
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--color-ink-mid);
-		text-decoration: none;
-		transition: color var(--duration-fast) var(--ease-ui);
-	}
-
-	@media (hover: hover) and (pointer: fine) {
-		.footer__socials a:hover {
-			color: var(--color-ion);
-		}
-	}
-
-	@media (width >= 48rem) {
-		.footer__inner {
-			grid-template-columns: 1fr auto;
-			align-items: center;
-		}
-
-		.footer__socials {
-			grid-column: 2;
-			grid-row: 1;
-			justify-content: flex-end;
-		}
-
-		.footer__build {
-			grid-column: 2;
-			grid-row: 2;
-			text-align: right;
-		}
-	}
-</style>

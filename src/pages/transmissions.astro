@@ -17,17 +17,7 @@ const articles = await getCollection('articles');
 		title="Writing"
 		lede="Everything published so far. Full posts live on dev.to."
 	>
-		<p class="shell">Full transmission index — Phase 3.</p>
+		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">Full transmission index — Phase 3.</p>
 	</Section>
 </BaseLayout>
 
-<style>
-	.shell {
-		font-family: var(--font-mono);
-		font-size: var(--text-data);
-		color: var(--color-ink-low);
-		padding: 2rem;
-		border: 1px dashed var(--color-hairline);
-		border-radius: var(--radius-card);
-	}
-</style>

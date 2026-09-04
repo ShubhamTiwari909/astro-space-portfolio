@@ -58,12 +58,15 @@ const RULES = [
 	},
 	{
 		id: 'ms',
-		pattern: /(?<![-\w])\d+m?s\b/g,
+		// (?<![-\w.]) so "4s" inside "2.4s" is not a separate match.
+		pattern: /(?<![-\w.])\d+(?:\.\d+)?m?s\b/g,
 		message: 'hardcoded duration — use a --duration-* token',
 		ignore: (match, line) =>
 			line.includes('--duration-') ||
 			line.includes('cubic-bezier') ||
 			line.includes('@media') ||
+			// A named custom property IS the token (same rule as `px`).
+			/--[\w-]+:\s*[^;]*$|--[\w-]+:\s*[\d.]+m?s/.test(line) ||
 			/\b(0s|0ms)\b/.test(match),
 	},
 	{
@@ -110,10 +113,27 @@ for (const root of ROOTS) {
 		const rel = relative(process.cwd(), filePath);
 		const exemptions = EXEMPT[rel] ?? [];
 		const lines = readFileSync(filePath, 'utf8').split('\n');
+		let inBlockComment = false;
 
 		lines.forEach((rawLine, index) => {
 			const trimmed = rawLine.trim();
-			// Skip comment-only lines — the plan is quoted extensively in them.
+
+			// Track multi-line comment blocks: the plan is quoted at length in
+			// them, and continuation lines carry no comment marker of their own.
+			if (inBlockComment) {
+				if (trimmed.includes('*/')) inBlockComment = false;
+				return;
+			}
+			if (
+				(trimmed.startsWith('/*') || trimmed.startsWith('<!--')) &&
+				!trimmed.includes('*/') &&
+				!trimmed.includes('-->')
+			) {
+				inBlockComment = true;
+				return;
+			}
+
+			// Skip comment-only lines.
 			if (
 				trimmed.startsWith('*') ||
 				trimmed.startsWith('//') ||

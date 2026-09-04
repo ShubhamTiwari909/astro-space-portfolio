@@ -1,0 +1,19 @@
+---
+/**
+ * The backdrop stack — §17.1. Mounted once in BaseLayout, fixed behind
+ * everything, persisting across routes via transition:persist.
+ *
+ *   void   --z-void    body background
+ *   art    --z-art     AI/procedural plates + LQIP  (always present)
+ *   scene  --z-scene   RESERVED — the WebGL canvas claims this in Phase 4
+ *   grain  --z-grain   noise tile, unifies art and render
+ *
+ * The scene layer is deliberately left empty rather than absent, so Phase 4
+ * needs no re-stacking.
+ */
+import ArtBackdrop from './ArtBackdrop.astro';
+import Grain from './Grain.astro';
+---
+
+<ArtBackdrop />
+<Grain />

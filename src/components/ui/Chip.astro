@@ -9,19 +9,11 @@ interface Props {
 const { class: className = '' }: Props = Astro.props;
 ---
 
-<span class:list={['chip', className]}><slot /></span>
-
-<style>
-	.chip {
-		display: inline-block;
-		padding: 0.25rem 0.5rem;
-		border: 1px solid var(--color-hairline);
-		border-radius: var(--radius-chip);
-		font-family: var(--font-mono);
-		font-size: 0.6875rem;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--color-ink-mid);
-		white-space: nowrap;
-	}
-</style>
+<span
+	class:list={[
+		'inline-block whitespace-nowrap rounded-chip border border-hairline px-2 py-1 font-mono text-[0.6875rem] tracking-[0.08em] text-ink-mid uppercase',
+		className,
+	]}
+>
+	<slot />
+</span>

@@ -1,0 +1,18 @@
+---
+/**
+ * Grain — §17.1. Sits ABOVE the scene layer deliberately: it unifies
+ * rendered pixels and generated art into one image, so the Phase 4 handover
+ * between them is imperceptible. Also kills gradient banding on cheap panels.
+ */
+import { getImage } from 'astro:assets';
+import grainSrc from '../../assets/art/grain.png';
+
+const grain = await getImage({ src: grainSrc, format: 'webp', quality: 90 });
+---
+
+<div
+	aria-hidden="true"
+	class="fixed inset-0 z-[var(--z-grain)] pointer-events-none opacity-[0.03] mix-blend-overlay bg-repeat bg-[size:128px_128px]"
+	style={`background-image:url("${grain.src}")`}
+>
+</div>

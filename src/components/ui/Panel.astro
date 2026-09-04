@@ -1,9 +1,13 @@
 ---
 /**
- * Instrument panel (§17.2). Glass readout over the sky: translucent surface,
- * hairline border, corner ticks. Falls back to an opaque surface where
- * backdrop-filter is unsupported or transparency is unwanted — the @supports
- * and prefers-reduced-transparency branches live in global.css.
+ * Instrument panel (§17.2). Glass readout over the backdrop: translucent
+ * surface, hairline border, corner ticks.
+ *
+ * Over a live 3D scene the blur does real work — it separates the console
+ * from the vastness behind it, and it is the main thing keeping text legible
+ * against a moving backdrop. Below `md` it becomes opaque, because
+ * backdrop-filter over a WebGL canvas is the most expensive thing on a
+ * mobile GPU (§24.2).
  */
 interface Props {
 	variant?: 'subtle' | 'standard' | 'strong';
@@ -19,39 +23,22 @@ const {
 	class: className = '',
 }: Props = Astro.props;
 
+/** Tick intensity per §17.2, expressed as the utility's own variables. */
 const tickVars = {
 	subtle: '--tick-color: var(--color-hairline); --tick-size: 6px;',
 	standard: '--tick-color: var(--color-hairline-hi); --tick-size: 8px;',
-	strong: '--tick-color: color-mix(in oklab, var(--color-ion) 45%, transparent); --tick-size: 12px;',
+	strong:
+		'--tick-color: color-mix(in oklab, var(--band) 45%, transparent); --tick-size: 12px;',
 }[variant];
 ---
 
 <Tag
-	class:list={['panel', ticks && 'ticks', className]}
+	class:list={[
+		'rounded-panel border border-hairline bg-surface-1/72 shadow-panel backdrop-blur-md md:bg-surface-1/72 max-md:bg-surface-1 max-md:backdrop-blur-none',
+		ticks && 'ticks',
+		className,
+	]}
 	style={ticks ? tickVars : undefined}
 >
 	<slot />
 </Tag>
-
-<style>
-	.panel {
-		background-color: color-mix(in oklab, var(--color-surface-1) 72%, transparent);
-		border: 1px solid var(--color-hairline);
-		border-radius: var(--radius-panel);
-		box-shadow: var(--shadow-panel);
-	}
-
-	@supports (backdrop-filter: blur(1px)) {
-		.panel {
-			backdrop-filter: blur(12px);
-		}
-	}
-
-	/* Blur is expensive on mobile GPUs — opaque below md (§24.2) */
-	@media (width < 48rem) {
-		.panel {
-			backdrop-filter: none;
-			background-color: var(--color-surface-1);
-		}
-	}
-</style>

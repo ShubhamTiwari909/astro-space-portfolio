@@ -10,15 +10,28 @@ import IconSprite from '../components/layout/IconSprite.astro';
 import SkipLink from '../components/layout/SkipLink.astro';
 import TopBar from '../components/layout/TopBar.astro';
 import Footer from '../components/layout/Footer.astro';
+import Cosmos from '../components/cosmos/Cosmos.astro';
+import SectionRail from '../components/layout/SectionRail';
+import MobileNav from '../components/layout/MobileNav';
 
 interface Props {
 	title: string;
 	description: string;
 	/** Set false on /dev pages so they never reach production indexes. */
 	indexable?: boolean;
+	/** /dev pages opt out of the cosmos so tokens can be judged on their own. */
+	backdrop?: boolean;
+	/** The rail only makes sense on the one-page survey. */
+	rail?: boolean;
 }
 
-const { title, description, indexable = true }: Props = Astro.props;
+const {
+	title,
+	description,
+	indexable = true,
+	backdrop = true,
+	rail = false,
+}: Props = Astro.props;
 
 const profile = await getEntry('profile', 'shubham-tiwari');
 if (!profile) throw new Error('profile collection entry "shubham-tiwari" is missing');
@@ -40,6 +53,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 		<meta name="color-scheme" content="dark" />
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
+		{/* Blocking + inline so the entrance state applies before first paint.
+		    Without JS this never runs and [data-observe] stays visible (P1). */}
+		<script is:inline>
+			document.documentElement.classList.add('js');
+		</script>
+
 		{/* Display + body preloaded; mono is not on the critical path (§26.3) */}
 		<Font cssVariable="--ff-display" preload />
 		<Font cssVariable="--ff-body" preload />
@@ -48,16 +67,44 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
 	<body>
 		<IconSprite />
+		{backdrop && <Cosmos transition:persist />}
 		<SkipLink />
 		<TopBar
 			name={profile.data.name}
 			resumePdf={profile.data.resumePdf}
 		/>
 
+		{rail && <SectionRail client:idle />}
+
 		<main id="main">
 			<slot />
 		</main>
 
+		<MobileNav client:idle />
+
 		<Footer profile={profile.data} />
+
+		{/*
+		  Both of these are Astro scripts, not islands, and that distinction is
+		  load-bearing: a `client:load` React island would drag react-dom
+		  (~57KB gz) onto the critical path for code that renders nothing. As
+		  plain modules they cost ~2KB gz combined, which is what keeps the
+		  critical-path budget (§26.2) intact. React still loads — at idle,
+		  for the nav islands that genuinely need it.
+		*/}
+		<script>
+			import { init } from '../lib/scrollProgress';
+			import { observeOnce } from '../lib/observeOnce';
+
+			let teardown = init();
+			observeOnce();
+
+			// Re-arm after a View Transition swaps the document.
+			document.addEventListener('astro:page-load', () => {
+				teardown?.();
+				teardown = init();
+				observeOnce();
+			});
+		</script>
 	</body>
 </html>

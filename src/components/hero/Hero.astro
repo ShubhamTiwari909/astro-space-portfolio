@@ -1,0 +1,227 @@
+---
+/**
+ * First Light — master plan §9.
+ *
+ * Typography-led composition over a live backdrop. The LCP element is the
+ * `h1` text, painted from static HTML before any JavaScript runs; the scene
+ * (Phase 4) cross-fades in behind it later and never competes.
+ *
+ * Ships 0KB of JS. No preloader, no splash, no entry gate — the first-light
+ * reveal is CSS keyframes on load, so nothing is gated behind an animation.
+ *
+ * The one style block below is the case the styling rule allows for:
+ * @keyframes, a staggered animation-delay, and a three-layer portrait grade
+ * cannot be expressed as utilities.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { Picture } from 'astro:assets';
+import Button from '../ui/Button.astro';
+import Icon, { type IconName } from '../ui/Icon.astro';
+import portrait from '../../assets/images/hero_profile.webp';
+
+interface Props {
+	profile: CollectionEntry<'profile'>['data'];
+	skillCount: number;
+	worldCount: number;
+}
+
+const { profile, skillCount, worldCount }: Props = Astro.props;
+
+const stats = [
+	{ value: String(profile.yearsExperience), label: 'Years' },
+	{ value: String(skillCount), label: 'Technologies' },
+	{ value: String(worldCount), label: 'Shipped worlds' },
+];
+
+const monoLabel = 'font-mono text-label tracking-[0.14em] uppercase';
+/** Each revealed element also sets --i, which drives its animation-delay. */
+const reveal =
+	'motion-safe:animate-[first-light_var(--duration-slow)_var(--ease-out-expo)_both]';
+---
+
+<section
+	id="first-light"
+	class="reveal-root relative z-[var(--z-content)] flex min-h-[min(100svh,var(--hero-max-h))] items-center px-[var(--gutter)] pt-[calc(var(--nav-h)+1.5rem)] pb-12 max-md:min-h-[88svh]"
+>
+	<div
+		class="mx-auto grid w-full max-w-content gap-10 lg:grid-cols-[8fr_4fr] lg:items-center lg:gap-16"
+	>
+		<div class="max-lg:order-2">
+			<p class={`mb-6 text-ink-low ${monoLabel} ${reveal}`} style="--i: 0">
+				First Light · {profile.location} · UTC+5:30
+			</p>
+
+			<h1 class={`m-0 grid gap-1 ${reveal}`} style="--i: 1">
+				<span class="block text-display-m text-ink-mid">Hi, I'm</span>
+				<span class="block text-display-xl text-ink-hi">{profile.name}</span>
+			</h1>
+
+			<div
+				class={`mt-5 mb-3.5 h-px w-24 bg-accent shadow-glow-1 ${reveal}`}
+				style="--i: 2"
+			>
+			</div>
+
+			<p
+				class={`mb-5 font-mono text-display-m tracking-[0.08em] text-accent uppercase ${reveal}`}
+				style="--i: 3"
+			>
+				{profile.role}
+			</p>
+
+			<p
+				class={`mb-7 max-w-[34ch] text-body-l text-ink-mid ${reveal}`}
+				style="--i: 4"
+			>
+				{profile.lede}
+			</p>
+
+			<div
+				class={`mb-7 flex flex-wrap gap-3 max-md:*:w-full ${reveal}`}
+				style="--i: 5"
+			>
+				<Button variant="primary" href="#worlds" icon="arrow-right">
+					View the work
+				</Button>
+				<Button
+					variant="secondary"
+					href={profile.resumePdf}
+					icon="arrow-down"
+					download
+					data-analytics="dossier_download"
+					data-analytics-location="hero"
+				>
+					Download résumé
+				</Button>
+			</div>
+
+			{/* Stats before socials: a recruiter's "4 years" outranks social
+			    links for above-the-fold priority (§6.1). */}
+			<dl
+				class={`m-0 mb-5 flex flex-wrap gap-6 border-t border-hairline pt-5 md:gap-10 ${reveal}`}
+				style="--i: 6"
+			>
+				{
+					stats.map((stat) => (
+						<div class="flex flex-col-reverse gap-1">
+							<dt class={`text-ink-low ${monoLabel}`}>{stat.label}</dt>
+							<dd class="m-0 font-mono text-display-m leading-none font-medium text-ink-hi">
+								{stat.value}
+							</dd>
+						</div>
+					))
+				}
+			</dl>
+
+			<ul
+				class={`m-0 flex list-none flex-wrap gap-5 p-0 ${reveal}`}
+				style="--i: 7"
+			>
+				{
+					profile.socials.map((social) => (
+						<li>
+							<a
+								href={social.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								class={`inline-flex min-h-11 items-center gap-1.5 text-ink-mid no-underline transition-colors duration-[var(--duration-fast)] ease-ui hover:text-accent ${monoLabel}`}
+							>
+								<Icon name={social.network as IconName} size={14} />
+								<span>{social.label}</span>
+								<span class="sr-only">(opens in a new tab)</span>
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+
+		{/* Under 480px the words matter more than the face (§9.6). */}
+		<div
+			class={`justify-self-start max-xs:hidden max-lg:order-1 lg:justify-self-end ${reveal}`}
+			style="--i: 2"
+		>
+			<div
+				class="ticks relative rounded-card border border-hairline bg-surface-1/60 p-2"
+				style="--tick-color: color-mix(in oklab, var(--band) 45%, transparent); --tick-size: 12px;"
+			>
+				<div
+					class="relative overflow-hidden rounded-chip *:block max-lg:rounded-pill"
+				>
+					<Picture
+						src={portrait}
+						alt={profile.name}
+						widths={[320, 480, 720]}
+						sizes="(min-width: 64rem) 20rem, 10rem"
+						formats={['avif', 'webp']}
+						loading="eager"
+						class="hero-portrait block h-auto w-40 object-cover max-lg:aspect-square lg:w-[min(30rem,100%)]"
+					/>
+					{/* Grades the studio backdrop into the void so the portrait
+					    reads as part of the composition, not a pasted rectangle. */}
+					<div class="hero-grade pointer-events-none absolute inset-0"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
+		<slot name="hint" />
+	</div>
+</section>
+
+<style>
+	.reveal-root {
+		/* Caps the hero on very tall displays so the composition stays
+		   cinematic rather than stretching into emptiness. */
+		--hero-max-h: 900px;
+		/* Entrance rise distance — §16.2 caps entrance travel at 24px. */
+		--reveal-rise: 12px;
+	}
+
+	/* The stagger: every revealed element sets its own --i above. */
+	.reveal-root [style*='--i'] {
+		animation-delay: calc(var(--duration-instant) + var(--i) * var(--stagger));
+	}
+
+	@keyframes first-light {
+		from {
+			opacity: 0;
+			transform: translateY(var(--reveal-rise));
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	/* Bring a light studio backdrop into the site's value range. */
+	.hero-portrait {
+		filter: brightness(0.78) contrast(1.08) saturate(0.9);
+	}
+
+	/*
+	 * Three-layer grade: a void gradient dissolving the bottom edge into the
+	 * page, a softer one on the top edge, and a band-tinted rim so the
+	 * portrait picks up the section's hue.
+	 */
+	.hero-grade {
+		background:
+			linear-gradient(
+				to top,
+				var(--color-void) 0%,
+				color-mix(in oklab, var(--color-void) 55%, transparent) 22%,
+				transparent 58%
+			),
+			linear-gradient(
+				to bottom,
+				color-mix(in oklab, var(--color-void) 62%, transparent) 0%,
+				transparent 30%
+			),
+			radial-gradient(
+				ellipse 120% 60% at 50% 4%,
+				color-mix(in oklab, var(--band) 20%, transparent),
+				transparent 62%
+			);
+	}
+</style>

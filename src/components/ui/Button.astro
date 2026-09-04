@@ -4,8 +4,8 @@
  * active, disabled, loading. A missing state is a bug.
  *
  * Renders <a> or <button> per `as` — never a div with a handler (§25.1).
- * Hover styles are guarded by (hover: hover) so touch devices never get
- * stuck hover states (§24.3).
+ * Hover styles are guarded by hover:hover so touch devices never get stuck
+ * hover states (§24.3) — Tailwind's `hover:` already compiles to that.
  */
 import Icon, { type IconName } from './Icon.astro';
 
@@ -37,13 +37,24 @@ const {
 	...rest
 }: Props = Astro.props;
 
+const base =
+	'inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-card border font-mono text-label tracking-[0.14em] uppercase no-underline transition-[background-color,border-color,box-shadow,transform,color] duration-[var(--duration-fast)] ease-ui aria-disabled:pointer-events-none aria-disabled:opacity-45 aria-disabled:shadow-none data-loading:pointer-events-none data-loading:text-ink-low';
+
+const variants = {
+	primary:
+		'bg-surface-2 border-accent/40 text-accent shadow-glow-1 px-5 hover:border-accent/70 hover:shadow-glow-2 hover:-translate-y-px active:translate-y-0 active:shadow-glow-1',
+	secondary:
+		'bg-transparent border-accent/35 text-ink-hi px-5 hover:bg-surface-1 hover:border-accent/60',
+	ghost: 'border-transparent bg-transparent text-ink-mid px-2 hover:text-ink-hi',
+};
+
 const externalAttrs = external
 	? { target: '_blank', rel: 'noopener noreferrer' }
 	: {};
 ---
 
 <Tag
-	class:list={['btn', `btn--${variant}`, className]}
+	class:list={[base, variants[variant], className]}
 	href={Tag === 'a' ? href : undefined}
 	type={Tag === 'button' ? (type ?? 'button') : undefined}
 	download={download ? '' : undefined}
@@ -56,88 +67,3 @@ const externalAttrs = external
 	{icon && iconPosition === 'end' && <Icon name={icon} size={16} />}
 	{external && <span class="sr-only">(opens in a new tab)</span>}
 </Tag>
-
-<style>
-	.btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.5rem;
-		min-height: 2.75rem; /* 44px touch target (§24.3) */
-		padding-inline: 1.25rem;
-		border-radius: var(--radius-card);
-		border: 1px solid transparent;
-		font-family: var(--font-mono);
-		font-size: var(--text-label);
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		text-decoration: none;
-		cursor: pointer;
-		transition:
-			background-color var(--duration-fast) var(--ease-ui),
-			border-color var(--duration-fast) var(--ease-ui),
-			box-shadow var(--duration-fast) var(--ease-ui),
-			transform var(--duration-fast) var(--ease-ui),
-			color var(--duration-fast) var(--ease-ui);
-	}
-
-	/* ---- primary ---- */
-	.btn--primary {
-		background-color: var(--color-surface-2);
-		border-color: color-mix(in oklab, var(--color-ion) 40%, transparent);
-		color: var(--color-ion);
-		box-shadow: var(--shadow-glow-1);
-	}
-
-	@media (hover: hover) and (pointer: fine) {
-		.btn--primary:hover {
-			border-color: color-mix(in oklab, var(--color-ion) 70%, transparent);
-			box-shadow: var(--shadow-glow-2);
-			transform: translateY(-1px);
-		}
-	}
-
-	.btn--primary:active {
-		transform: translateY(0);
-		box-shadow: var(--shadow-glow-1);
-	}
-
-	/* ---- secondary ---- */
-	.btn--secondary {
-		background-color: transparent;
-		border-color: var(--color-hairline-hi);
-		color: var(--color-ink-hi);
-	}
-
-	@media (hover: hover) and (pointer: fine) {
-		.btn--secondary:hover {
-			background-color: var(--color-surface-1);
-			border-color: color-mix(in oklab, var(--color-ion) 45%, transparent);
-		}
-	}
-
-	/* ---- ghost ---- */
-	.btn--ghost {
-		background-color: transparent;
-		color: var(--color-ink-mid);
-		padding-inline: 0.5rem;
-	}
-
-	@media (hover: hover) and (pointer: fine) {
-		.btn--ghost:hover {
-			color: var(--color-ink-hi);
-		}
-	}
-
-	/* ---- disabled / loading ---- */
-	.btn[aria-disabled='true'] {
-		opacity: 0.45;
-		pointer-events: none;
-		box-shadow: none;
-	}
-
-	.btn[data-loading] {
-		pointer-events: none;
-		color: var(--color-ink-low);
-	}
-</style>

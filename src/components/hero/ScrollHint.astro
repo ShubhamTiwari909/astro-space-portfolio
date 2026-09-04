@@ -1,0 +1,49 @@
+---
+/**
+ * §9.4. Fades out as soon as the page scrolls and never returns. Hidden
+ * entirely under reduced motion and on short viewports — a pulsing element
+ * is exactly the DOM ambient motion §16.2 bans elsewhere, permitted here
+ * only because it is a one-time affordance that removes itself.
+ */
+---
+
+<div
+	aria-hidden="true"
+	class="hint relative z-[var(--z-content)] flex flex-col items-center gap-1.5 text-ink-low transition-opacity duration-[var(--duration-base)] ease-ui motion-reduce:hidden max-md:hidden max-[40rem]:hidden"
+>
+	<span class="font-mono text-[0.625rem] tracking-[0.14em] uppercase">
+		Scroll
+	</span>
+	<span class="motion-safe:animate-[hint-pulse_var(--hint-cycle)_var(--ease-soft)_infinite]">
+		<svg
+			width="14"
+			height="14"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.5"
+			stroke-linecap="round"
+			stroke-linejoin="round"><use href="#i-arrow-down" /></svg>
+	</span>
+</div>
+
+<style>
+	.hint {
+		--hint-cycle: 2.4s;
+		--hint-travel: 4px;
+		/* Driven by --scroll from ScrollDriver: gone after a flick (§9.4). */
+		opacity: calc(1 - var(--scroll, 0) * 24);
+	}
+
+	@keyframes hint-pulse {
+		0%,
+		100% {
+			transform: translateY(0);
+			opacity: 0.5;
+		}
+		50% {
+			transform: translateY(var(--hint-travel));
+			opacity: 1;
+		}
+	}
+</style>

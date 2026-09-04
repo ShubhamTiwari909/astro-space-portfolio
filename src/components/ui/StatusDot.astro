@@ -12,36 +12,20 @@ const { status, label, class: className = '' }: Props = Astro.props;
 const active = status === 'LIVE' || status === 'OPEN';
 ---
 
-<span class:list={['status', active && 'status--active', className]}>
-	<span class="status__dot" aria-hidden="true"></span>
+<span
+	data-active={active || undefined}
+	class:list={[
+		'inline-flex items-center gap-2 font-mono text-label tracking-[0.14em] uppercase',
+		active ? 'text-accent' : 'text-ink-low',
+		className,
+	]}
+>
+	<span
+		aria-hidden="true"
+		class:list={[
+			'size-1.5 rounded-pill bg-current',
+			active && 'shadow-glow-1',
+		]}
+	></span>
 	<span>{label ?? status}</span>
 </span>
-
-<style>
-	.status {
-		--dot-size: 6px;
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-family: var(--font-mono);
-		font-size: var(--text-label);
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--color-ink-low);
-	}
-
-	.status__dot {
-		width: var(--dot-size);
-		height: var(--dot-size);
-		border-radius: var(--radius-pill);
-		background-color: currentColor;
-	}
-
-	.status--active {
-		color: var(--color-ion);
-	}
-
-	.status--active .status__dot {
-		box-shadow: var(--shadow-glow-1);
-	}
-</style>

@@ -11,6 +11,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
+    "art": "node scripts/generate-art.mjs",
     "lint:tokens": "node scripts/lint-tokens.mjs",
     "verify": "pnpm lint:tokens && pnpm check && pnpm build"
   },
@@ -23,6 +24,7 @@
     "astro": "^7.3.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4.3.3",
     "zod": "^4.5.4"
   },

@@ -17,28 +17,12 @@ const { href, arrow = true, class: className = '' }: Props = Astro.props;
 	href={href}
 	target="_blank"
 	rel="noopener noreferrer"
-	class:list={['extlink', className]}
+	class:list={[
+		'inline-flex items-center gap-1 text-accent underline decoration-accent/40 underline-offset-4 transition-colors duration-[var(--duration-fast)] ease-ui hover:decoration-accent',
+		className,
+	]}
 >
 	<slot />
 	{arrow && <Icon name="arrow-up-right" size={14} />}
 	<span class="sr-only">(opens in a new tab)</span>
 </a>
-
-<style>
-	.extlink {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		color: var(--color-ion);
-		text-decoration-line: underline;
-		text-decoration-color: color-mix(in oklab, var(--color-ion) 40%, transparent);
-		text-underline-offset: 3px;
-		transition: text-decoration-color var(--duration-fast) var(--ease-ui);
-	}
-
-	@media (hover: hover) and (pointer: fine) {
-		.extlink:hover {
-			text-decoration-color: var(--color-ion);
-		}
-	}
-</style>

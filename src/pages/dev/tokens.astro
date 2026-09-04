@@ -16,10 +16,15 @@ import Icon, { type IconName } from '../../components/ui/Icon.astro';
 import MetricBlock from '../../components/ui/MetricBlock.astro';
 import Panel from '../../components/ui/Panel.astro';
 import StatusDot from '../../components/ui/StatusDot.astro';
+import { BANDS } from '../../lib/bands';
 
 const surfaces = ['void', 'surface-0', 'surface-1', 'surface-2'];
 const inks = ['ink-hi', 'ink-mid', 'ink-low'];
-const accents = ['ion', 'plasma', 'ember', 'danger'];
+
+/** Distinct bands — Ion Cyan serves both First Light and Uplink (§3.3). */
+const uniqueBands = BANDS.filter(
+	(b, i) => BANDS.findIndex((o) => o.hex === b.hex) === i,
+);
 
 const typeScale = [
 	['display-xl', 'Hi, I&rsquo;m Shubham'],
@@ -38,6 +43,17 @@ const icons: IconName[] = [
 	'more', 'github', 'linkedin', 'devto', 'instagram',
 ];
 
+const sampleClass: Record<string, string> = {
+	'display-xl': 'font-display text-display-xl',
+	'display-l': 'font-display text-display-l',
+	'display-m': 'font-display text-display-m',
+	'display-s': 'font-display text-display-s',
+	'body-l': 'text-body-l text-ink-mid',
+	body: 'text-body text-ink-mid',
+	data: 'font-mono text-data tracking-[0.04em]',
+	label: 'font-mono text-label tracking-[0.14em] text-ink-low',
+};
+
 const radii = ['chip', 'card', 'panel', 'pill'];
 const glows = ['glow-1', 'glow-2', 'glow-3'];
 ---
@@ -45,65 +61,102 @@ const glows = ['glow-1', 'glow-2', 'glow-3'];
 <BaseLayout
 	title="Design tokens · DEEP FIELD"
 	description="Internal token and primitive reference."
+	backdrop={false}
 	indexable={false}
 >
-	<div class="dev">
-		<h1>Design tokens &amp; primitives</h1>
-		<p class="dev__note">
+	<div class="relative z-[var(--z-content)] mx-auto max-w-content px-[var(--gutter)] pt-[calc(var(--nav-h)+3rem)] pb-24">
+		<h1 class="text-display-l">Design tokens &amp; primitives</h1>
+		<p class="text-data text-ink-low">
 			Internal reference. Master plan §17–§18. Every value below is a token —
 			no literals.
 		</p>
 
-		<h2>Colour — surfaces</h2>
-		<div class="swatches">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Colour — surfaces</h2>
+		<div class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-4">
 			{surfaces.map((name) => (
-				<div class="swatch">
-					<div class="swatch__chip" style={`background-color: var(--color-${name})`}></div>
-					<code>--color-{name}</code>
+				<div class="">
+					<div class="mb-1.5 grid h-16 place-items-center rounded-card border border-hairline" style={`background-color: var(--color-${name})`}></div>
+					<code class="font-mono text-[0.6875rem] text-ink-low">--color-{name}</code>
 				</div>
 			))}
 		</div>
 
-		<h2>Colour — ink</h2>
-		<div class="swatches">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Colour — ink</h2>
+		<div class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-4">
 			{inks.map((name) => (
-				<div class="swatch">
-					<div class="swatch__chip swatch__chip--text" style={`color: var(--color-${name})`}>Aa</div>
-					<code>--color-{name}</code>
+				<div class="">
+					<div class="mb-1.5 grid h-16 place-items-center rounded-card border border-hairline bg-surface-0 font-display text-2xl" style={`color: var(--color-${name})`}>Aa</div>
+					<code class="font-mono text-[0.6875rem] text-ink-low">--color-{name}</code>
 				</div>
 			))}
 		</div>
 
-		<h2>Colour — accents</h2>
-		<div class="swatches">
-			{accents.map((name) => (
-				<div class="swatch">
-					<div class="swatch__chip" style={`background-color: var(--color-${name})`}></div>
-					<code>--color-{name}</code>
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Colour — the eight spectral bands</h2>
+		<p class="text-data text-ink-low">
+			§3.3. One band per section; the hue travels with the visitor and drives
+			both DOM accents and (from Phase 4) the scene's lighting. Every band
+			must clear 4.5:1 on <code class="font-mono text-[0.6875rem] text-ink-low">--color-void</code> — which is why they are
+			all light, high-value hues.
+		</p>
+		<div class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-5">
+			{uniqueBands.map((band) => (
+				<div class="grid gap-1 rounded-card border border-hairline bg-surface-0 p-3.5" style={`--b: ${band.hex}`}>
+					<div class="h-12 rounded-chip bg-[var(--b)] shadow-[0_0_24px_-6px_var(--b)]"></div>
+					<p class="mt-1.5 mb-0 text-data text-ink-hi">{band.name}</p>
+					<code class="font-mono text-[0.6875rem] text-ink-low">{band.hex}</code>
+					<p class="m-0 text-[0.625rem] leading-snug text-ink-low">{band.source}</p>
+					<p class:list={["mt-1 mb-0 font-mono text-[0.625rem] tracking-[0.04em]", band.contrastOnVoid >= 4.5 ? "text-[var(--b)]" : "text-danger"]}>
+						{band.contrastOnVoid.toFixed(1)}:1 on void
+					</p>
+					<p class="mt-1 mb-0 text-data text-[var(--b)]">Link text at this band</p>
 				</div>
 			))}
 		</div>
 
-		<h2>Hairlines</h2>
-		<div class="stack">
-			<div class="rule" style="border-color: var(--color-hairline)"></div>
-			<code>--color-hairline</code>
-			<div class="rule" style="border-color: var(--color-hairline-hi)"></div>
-			<code>--color-hairline-hi</code>
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Band mechanism</h2>
+		<p class="text-data text-ink-low">
+			Every accent resolves through <code class="font-mono text-[0.6875rem] text-ink-low">--band</code>, so one write
+			re-tints the page. Below is the live value on this page.
+		</p>
+		<div class="flex flex-wrap items-center gap-4">
+			<div class="">
+				<div class="mb-1.5 grid h-16 place-items-center rounded-card border border-hairline" style="background-color: var(--band)"></div>
+				<code class="font-mono text-[0.6875rem] text-ink-low">--band (live)</code>
+			</div>
+			<div class="">
+				<div class="mb-1.5 grid h-16 place-items-center rounded-card border border-hairline" style="background-color: var(--color-accent)"></div>
+				<code class="font-mono text-[0.6875rem] text-ink-low">--color-accent</code>
+			</div>
+			<div class="">
+				<div class="mb-1.5 grid h-16 place-items-center rounded-card border border-hairline" style="background-color: var(--color-accent-dim)"></div>
+				<code class="font-mono text-[0.6875rem] text-ink-low">--color-accent-dim</code>
+			</div>
+			<div class="">
+				<div class="mb-1.5 grid h-16 place-items-center rounded-card border border-hairline" style="background-color: var(--color-danger)"></div>
+				<code class="font-mono text-[0.6875rem] text-ink-low">--color-danger</code>
+			</div>
 		</div>
 
-		<h2>Type scale</h2>
-		<div class="stack">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Hairlines</h2>
+		<div class="grid gap-3">
+			<div class="border-t" style="border-color: var(--color-hairline)"></div>
+			<code class="font-mono text-[0.6875rem] text-ink-low">--color-hairline</code>
+			<div class="border-t" style="border-color: var(--color-hairline-hi)"></div>
+			<code class="font-mono text-[0.6875rem] text-ink-low">--color-hairline-hi</code>
+		</div>
+
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Type scale</h2>
+		<div class="grid gap-3">
 			{typeScale.map(([token, sample]) => (
-				<div class="type-row">
-					<code>--text-{token}</code>
-					<p class={`sample sample--${token}`} set:html={sample} />
+				<div class="grid gap-1 border-b border-hairline py-2">
+					<code class="font-mono text-[0.6875rem] text-ink-low">--text-{token}</code>
+					<p class={`m-0 text-ink-hi ${sampleClass[token]}`} set:html={sample} />
 				</div>
 			))}
 		</div>
 
-		<h2>Families</h2>
-		<div class="stack">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Families</h2>
+		<div class="grid gap-3">
 			<p style="font-family: var(--font-display); font-size: var(--text-display-m)">
 				Instrument Serif — display
 			</p>
@@ -115,8 +168,8 @@ const glows = ['glow-1', 'glow-2', 'glow-3'];
 			</p>
 		</div>
 
-		<h2>Buttons — all six states</h2>
-		<div class="row">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Buttons — all six states</h2>
+		<div class="flex flex-wrap items-center gap-4">
 			<Button variant="primary">Primary</Button>
 			<Button variant="secondary">Secondary</Button>
 			<Button variant="ghost">Ghost</Button>
@@ -124,43 +177,43 @@ const glows = ['glow-1', 'glow-2', 'glow-3'];
 			<Button variant="primary" disabled>Disabled</Button>
 			<Button variant="primary" data-loading>Loading</Button>
 		</div>
-		<p class="dev__note">
+		<p class="text-data text-ink-low">
 			Hover and focus-visible states are interactive — tab through the row.
 		</p>
 
-		<h2>Panels</h2>
-		<div class="row row--panels">
-			<Panel variant="subtle"><p class="panel-demo">subtle ticks</p></Panel>
-			<Panel variant="standard"><p class="panel-demo">standard ticks</p></Panel>
-			<Panel variant="strong"><p class="panel-demo">strong ticks</p></Panel>
-			<Panel ticks={false}><p class="panel-demo">no ticks</p></Panel>
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Panels</h2>
+		<div class="flex flex-wrap items-stretch gap-4">
+			<Panel variant="subtle"><p class="m-0 px-10 py-8 font-mono text-label tracking-[0.14em] text-ink-mid uppercase">subtle ticks</p></Panel>
+			<Panel variant="standard"><p class="m-0 px-10 py-8 font-mono text-label tracking-[0.14em] text-ink-mid uppercase">standard ticks</p></Panel>
+			<Panel variant="strong"><p class="m-0 px-10 py-8 font-mono text-label tracking-[0.14em] text-ink-mid uppercase">strong ticks</p></Panel>
+			<Panel ticks={false}><p class="m-0 px-10 py-8 font-mono text-label tracking-[0.14em] text-ink-mid uppercase">no ticks</p></Panel>
 		</div>
 
-		<h2>Chips</h2>
-		<div class="row">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Chips</h2>
+		<div class="flex flex-wrap items-center gap-4">
 			<Chip>Next.js</Chip>
 			<Chip>Tailwind CSS</Chip>
 			<Chip>MongoDB</Chip>
 			<Chip>Playwright</Chip>
 		</div>
 
-		<h2>Status</h2>
-		<div class="row">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Status</h2>
+		<div class="flex flex-wrap items-center gap-4">
 			<StatusDot status="LIVE" />
 			<StatusDot status="ARCHIVED" />
 			<StatusDot status="PRIVATE" />
 			<StatusDot status="OPEN" label="Open to roles" />
 		</div>
 
-		<h2>Metric block</h2>
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Metric block</h2>
 		<MetricBlock
 			value="14×"
 			label="faster page delivery"
 			basis="From 2 pages per 14-day sprint to 2 pages per day"
 		/>
 
-		<h2>Data list</h2>
-		<Panel variant="standard" class="datalist-demo">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Data list</h2>
+		<Panel variant="standard" class="max-w-panel p-6">
 			<DataList
 				items={[
 					{ label: 'Location', value: 'India' },
@@ -170,41 +223,41 @@ const glows = ['glow-1', 'glow-2', 'glow-3'];
 			/>
 		</Panel>
 
-		<h2>Links</h2>
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Links</h2>
 		<p>
 			An <ExternalLink href="https://dev.to/shubhamtiwari909">external link</ExternalLink>
 			carries an arrow and a hidden new-tab warning.
 		</p>
 
-		<h2>Icons ({icons.length})</h2>
-		<div class="icons">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Icons ({icons.length})</h2>
+		<div class="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-4">
 			{icons.map((name) => (
-				<div class="icon-cell">
+				<div class="grid place-items-center gap-1.5 rounded-card border border-hairline px-2 py-4 text-center text-accent">
 					<Icon name={name} size={24} />
-					<code>{name}</code>
+					<code class="font-mono text-[0.6875rem] text-ink-low">{name}</code>
 				</div>
 			))}
 		</div>
 
-		<h2>Radius</h2>
-		<div class="row">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Radius</h2>
+		<div class="flex flex-wrap items-center gap-4">
 			{radii.map((r) => (
-				<div class="radius-demo" style={`border-radius: var(--radius-${r})`}>
-					<code>{r}</code>
+				<div class="grid h-16 w-24 place-items-center border border-hairline bg-surface-1" style={`border-radius: var(--radius-${r})`}>
+					<code class="font-mono text-[0.6875rem] text-ink-low">{r}</code>
 				</div>
 			))}
 		</div>
 
-		<h2>Glow</h2>
-		<div class="row">
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Glow</h2>
+		<div class="flex flex-wrap items-center gap-4">
 			{glows.map((g) => (
-				<div class="glow-demo" style={`box-shadow: var(--shadow-${g})`}>
-					<code>{g}</code>
+				<div class="grid h-16 w-24 place-items-center rounded-card border border-hairline bg-surface-1" style={`box-shadow: var(--shadow-${g})`}>
+					<code class="font-mono text-[0.6875rem] text-ink-low">{g}</code>
 				</div>
 			))}
 		</div>
 
-		<h2>Easing &amp; duration</h2>
+		<h2 class="mt-12 mb-4 border-b border-hairline pb-2 text-display-s">Easing &amp; duration</h2>
 		<DataList
 			items={[
 				{ label: 'instant', value: '120ms' },
@@ -220,143 +273,3 @@ const glows = ['glow-1', 'glow-2', 'glow-3'];
 	</div>
 </BaseLayout>
 
-<style>
-	.dev {
-		position: relative;
-		z-index: var(--z-content);
-		max-width: var(--container-content);
-		margin-inline: auto;
-		padding-block: calc(var(--nav-h) + 3rem) 6rem;
-		padding-inline: var(--gutter);
-	}
-
-	.dev h1 {
-		font-size: var(--text-display-l);
-	}
-
-	.dev h2 {
-		font-size: var(--text-display-s);
-		margin-block: 3rem 1rem;
-		padding-bottom: 0.5rem;
-		border-bottom: 1px solid var(--color-hairline);
-	}
-
-	.dev__note {
-		font-size: var(--text-data);
-		color: var(--color-ink-low);
-	}
-
-	code {
-		font-family: var(--font-mono);
-		font-size: 0.6875rem;
-		color: var(--color-ink-low);
-	}
-
-	.swatches {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-		gap: 1rem;
-	}
-
-	.swatch__chip {
-		height: 4rem;
-		border: 1px solid var(--color-hairline);
-		border-radius: var(--radius-card);
-		margin-bottom: 0.375rem;
-		display: grid;
-		place-items: center;
-	}
-
-	.swatch__chip--text {
-		font-family: var(--font-display);
-		font-size: 1.5rem;
-		background-color: var(--color-surface-0);
-	}
-
-	.stack {
-		display: grid;
-		gap: 0.75rem;
-	}
-
-	.rule {
-		border-top: 1px solid;
-	}
-
-	.type-row {
-		display: grid;
-		gap: 0.25rem;
-		padding-block: 0.5rem;
-		border-bottom: 1px solid var(--color-hairline);
-	}
-
-	.sample {
-		margin: 0;
-		color: var(--color-ink-hi);
-	}
-
-	.sample--display-xl { font-family: var(--font-display); font-size: var(--text-display-xl); }
-	.sample--display-l  { font-family: var(--font-display); font-size: var(--text-display-l); }
-	.sample--display-m  { font-family: var(--font-display); font-size: var(--text-display-m); }
-	.sample--display-s  { font-family: var(--font-display); font-size: var(--text-display-s); }
-	.sample--body-l     { font-size: var(--text-body-l); color: var(--color-ink-mid); }
-	.sample--body       { font-size: var(--text-body); color: var(--color-ink-mid); }
-	.sample--data       { font-family: var(--font-mono); font-size: var(--text-data); letter-spacing: 0.04em; }
-	.sample--label      { font-family: var(--font-mono); font-size: var(--text-label); letter-spacing: 0.14em; color: var(--color-ink-low); }
-
-	.row {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	.row--panels {
-		align-items: stretch;
-	}
-
-	.panel-demo {
-		margin: 0;
-		padding: 2rem 2.5rem;
-		font-family: var(--font-mono);
-		font-size: var(--text-label);
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--color-ink-mid);
-	}
-
-	.datalist-demo {
-		padding: 1.5rem;
-		max-width: var(--container-panel);
-	}
-
-	.icons {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
-		gap: 1rem;
-	}
-
-	.icon-cell {
-		display: grid;
-		gap: 0.375rem;
-		place-items: center;
-		padding: 1rem 0.5rem;
-		border: 1px solid var(--color-hairline);
-		border-radius: var(--radius-card);
-		color: var(--color-ion);
-		text-align: center;
-	}
-
-	.radius-demo,
-	.glow-demo {
-		display: grid;
-		place-items: center;
-		width: 6rem;
-		height: 4rem;
-		background-color: var(--color-surface-1);
-		border: 1px solid var(--color-hairline);
-	}
-
-	.glow-demo {
-		border-radius: var(--radius-card);
-	}
-</style>

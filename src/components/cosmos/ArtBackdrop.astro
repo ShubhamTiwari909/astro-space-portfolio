@@ -1,0 +1,96 @@
+---
+/**
+ * The art layer — master plan §17.1, §3.4.
+ *
+ * This is the load-bearing part of the backdrop, not a nicety. It paints
+ * before any JavaScript, it is the complete no-WebGL experience, and it
+ * survives WebGL context loss because it never unmounts. From Phase 4 the
+ * scene cross-fades *over* this; it never replaces it.
+ *
+ * Lazy by construction: the full-resolution plate is applied inside a
+ * `body[data-band=...]` rule, so a browser only fetches a plate once its
+ * band becomes active. Every plate also carries an inlined LQIP data URI so
+ * it paints instantly with zero requests.
+ *
+ * The generated <style> below is the one place a stylesheet is genuinely
+ * required rather than Tailwind: the selectors are built at build time from
+ * the band data, and no utility can express "fetch this image only when this
+ * attribute matches".
+ */
+import { getImage } from 'astro:assets';
+import fs from 'node:fs';
+import path from 'node:path';
+import { BANDS } from '../../lib/bands';
+
+const art = import.meta.glob<{ default: ImageMetadata }>(
+	'../../assets/art/*.png',
+	{ eager: true },
+);
+
+function plateAsset(name: string): ImageMetadata {
+	const key = Object.keys(art).find((k) => k.endsWith(`/${name}.png`));
+	if (!key) throw new Error(`Missing art plate: ${name}.png — run \`pnpm art\``);
+	return art[key].default;
+}
+
+/** Inline the 32px LQIP so the fallback paints with no request (§17.1). */
+function lqipDataUri(name: string): string {
+	const file = path.join(process.cwd(), 'src/assets/art', `${name}.lqip.png`);
+	return `data:image/png;base64,${fs.readFileSync(file).toString('base64')}`;
+}
+
+// One entry per band. Two bands share `field-deep`; the browser caches it.
+const layers = await Promise.all(
+	BANDS.map(async (band) => {
+		const asset = plateAsset(band.plate);
+		const [full, mobile] = await Promise.all([
+			getImage({ src: asset, format: 'avif', quality: 62, width: 2560 }),
+			getImage({ src: asset, format: 'avif', quality: 58, width: 1280 }),
+		]);
+		return {
+			section: band.section,
+			full: full.src,
+			mobile: mobile.src,
+			lqip: lqipDataUri(band.plate),
+		};
+	}),
+);
+
+const first = layers[0];
+
+const bandCss = [
+	// LQIP is always present; the active band layers its full plate on top.
+	...layers.map(
+		(l) => `
+.art-plate[data-plate-band="${l.section}"]{background-image:url("${l.lqip}")}
+body[data-band="${l.section}"] .art-plate[data-plate-band="${l.section}"]{
+  opacity:1;background-image:url("${l.full}"),url("${l.lqip}")}
+@media (width < 48rem){
+  body[data-band="${l.section}"] .art-plate[data-plate-band="${l.section}"]{
+    background-image:url("${l.mobile}"),url("${l.lqip}")}}`,
+	),
+	// Pre-hydration: before ScrollDriver sets data-band, show the opening
+	// plate at full resolution rather than only its LQIP.
+	`body:not([data-band]) .art-plate[data-plate-band="${first.section}"]{
+  opacity:1;background-image:url("${first.full}"),url("${first.lqip}")}`,
+].join('\n');
+---
+
+{/* The opening plate is on the critical path for perceived quality (§9.3). */}
+<link rel="preload" as="image" href={first.full} fetchpriority="high" />
+
+<div
+	aria-hidden="true"
+	class="fixed inset-0 z-[var(--z-art)] bg-void pointer-events-none"
+>
+	{
+		layers.map((layer) => (
+			<div
+				class="art-plate absolute inset-0 bg-center bg-cover bg-no-repeat opacity-0 transition-opacity duration-[var(--band-fade)] ease-soft"
+				data-plate-band={layer.section}
+			/>
+		))
+	}
+</div>
+
+<style is:inline set:html={bandCss}></style>

@@ -20,15 +20,16 @@
 	--color-ink-mid: #9ba8c2;
 	--color-ink-low: #7c89a5;
 
-	/* ---- accents (one job each) ---- */
-	--color-ion: #7de2ff;
-	--color-plasma: #a78bfa;
-	--color-ember: #ffb454;
+	/* ---- the live band (§3.3) ----
+	   Every accent resolves through --band, so one write re-tints the page.
+	   ScrollDriver sets --band / --band-rgb on <body> per section. */
+	--color-accent: var(--band);
+	--color-accent-dim: color-mix(in oklab, var(--band) 60%, var(--color-ink-mid));
 	--color-danger: #ff8080;
 
-	/* ---- derived ---- */
-	--color-hairline: color-mix(in oklab, var(--color-ion) 12%, transparent);
-	--color-hairline-hi: color-mix(in oklab, var(--color-ion) 24%, transparent);
+	/* ---- derived, band-relative ---- */
+	--color-hairline: color-mix(in oklab, var(--band) 12%, transparent);
+	--color-hairline-hi: color-mix(in oklab, var(--band) 24%, transparent);
 
 	/* ---- families (Astro's Fonts API owns --ff-*) ---- */
 	--font-display: var(--ff-display);
@@ -64,10 +65,10 @@
 	--radius-pill: 999px;
 
 	/* ---- glow ---- */
-	--shadow-glow-1: 0 0 12px -2px color-mix(in oklab, var(--color-ion) 40%, transparent);
-	--shadow-glow-2: 0 0 24px -4px color-mix(in oklab, var(--color-ion) 55%, transparent);
-	--shadow-glow-3: 0 0 48px -8px color-mix(in oklab, var(--color-ember) 45%, transparent);
-	--shadow-panel: inset 0 1px 0 0 color-mix(in oklab, var(--color-ion) 8%, transparent);
+	--shadow-glow-1: 0 0 12px -2px color-mix(in oklab, var(--band) 40%, transparent);
+	--shadow-glow-2: 0 0 24px -4px color-mix(in oklab, var(--band) 55%, transparent);
+	--shadow-glow-3: 0 0 48px -8px color-mix(in oklab, var(--band) 45%, transparent);
+	--shadow-panel: inset 0 1px 0 0 color-mix(in oklab, var(--band) 8%, transparent);
 
 	/* ---- easing ---- */
 	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -82,6 +83,32 @@
 	--container-panel: 45rem;
 }
 
+/* ==========================================================================
+   The eight spectral bands — §3.3
+   Hues are real emission lines and stellar sources, which is why a colourful
+   palette reads as expensive here rather than as a toy. Every one clears
+   4.5:1 on --color-void; measured ratios are in §25.2 and on /dev/tokens.
+   These are NOT in @theme: they are a palette source read by --band and by
+   lib/bands.ts, not a set of utility colours.
+   ========================================================================== */
+:root {
+	--band-ion: #7de2ff; /* O III / starlight        First Light, Uplink */
+	--band-magenta: #ff5fa2; /* H-alpha hydrogen         Observer's Log      */
+	--band-blue: #8fb8ff; /* O/B-type young stars     The Atlas           */
+	--band-ember: #ffb454; /* G-type / ion engine      Trajectory          */
+	--band-violet: #a78bfa; /* reflection nebula        Catalogued Worlds   */
+	--band-aurora: #5be9b9; /* O III aurora             Instrument Bay      */
+	--band-gold: #ffd76e; /* sodium line              Transmissions       */
+
+	/* The live band. Defaults to First Light so the page is correct before
+	   ScrollDriver hydrates, and stays correct if it never does. */
+	--band: var(--band-ion);
+	--band-rgb: 125 226 255;
+
+	/* Cross-fade duration for a band change (§3.3: fade, never cut). */
+	--band-fade: 900ms;
+}
+
 /* Non-namespaced tokens: Tailwind has no z-index/duration theme namespace,
    so these are plain custom properties used via var(). */
 :root {
@@ -93,9 +120,11 @@
 	--duration-ambient: 24s;
 	--stagger: 60ms;
 
+	/* Backdrop stack (§17.1). --z-scene is reserved and left EMPTY in Phase 2;
+	   the WebGL canvas claims it in Phase 4 with no re-stacking needed. */
 	--z-void: 0;
-	--z-nebula: 1;
-	--z-stars: 2;
+	--z-art: 1;
+	--z-scene: 2;
 	--z-grain: 3;
 	--z-content: 10;
 	--z-rail: 40;
@@ -155,12 +184,12 @@
 	}
 
 	:where(a) {
-		color: var(--color-ion);
+		color: var(--color-accent);
 	}
 
-	/* Focus: 2px ion ring, 2px offset, never removed (§25.1) */
+	/* Focus: 2px accent ring, 2px offset, never removed (§25.1) */
 	:focus-visible {
-		outline: 2px solid var(--color-ion);
+		outline: 2px solid var(--color-accent);
 		outline-offset: 2px;
 		border-radius: 2px;
 	}
@@ -175,7 +204,7 @@
 	}
 
 	::selection {
-		background-color: color-mix(in oklab, var(--color-ion) 30%, transparent);
+		background-color: color-mix(in oklab, var(--band) 30%, transparent);
 		color: var(--color-ink-hi);
 	}
 
@@ -262,6 +291,45 @@
 	}
 }
 
+/* ==========================================================================
+   Section entrance — §8.1, §16.3. Driven by the ONE shared observer.
+
+   The hidden state is gated behind BOTH `.js` (a blocking inline script) and
+   `.observer-ready` (set by observeOnce only once an observer actually
+   exists). So with JavaScript disabled, or if that module fails to run, the
+   rule never applies and content is visible immediately. Invisible content
+   is a catastrophe; a missing fade is not.
+   ========================================================================== */
+
+.js.observer-ready [data-observe] {
+	opacity: 0;
+	transform: translateY(1rem);
+	transition:
+		opacity var(--duration-slow) var(--ease-out-expo),
+		transform var(--duration-slow) var(--ease-out-expo);
+}
+
+.js.observer-ready [data-observe].is-revealed {
+	opacity: 1;
+	transform: none;
+}
+
+/* The mobile tab bar is fixed, so the last content needs clearance (§7.3). */
+@media (width < 48rem) {
+	body {
+		padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+	}
+}
+
+/* Reserve the rail's gutter so content never runs under it (§7.2). The rail
+   is server-rendered even though it hydrates on idle, so :has() is reliable. */
+@media (width >= 64rem) {
+	body:has(.rail) main,
+	body:has(.rail) .hero {
+		padding-inline-end: calc(var(--rail-w) + var(--gutter));
+	}
+}
+
 /* Opaque surfaces where transparency is unwanted or unsupported (§17.2) */
 @media (prefers-reduced-transparency: reduce) {
 	.panel {
@@ -272,8 +340,8 @@
 
 @media (prefers-contrast: more) {
 	:root {
-		--color-hairline: color-mix(in oklab, var(--color-ion) 40%, transparent);
-		--color-hairline-hi: color-mix(in oklab, var(--color-ion) 60%, transparent);
+		--color-hairline: color-mix(in oklab, var(--band) 40%, transparent);
+		--color-hairline-hi: color-mix(in oklab, var(--band) 60%, transparent);
 		--color-ink-low: var(--color-ink-mid);
 	}
 }

@@ -10,7 +10,7 @@
  *
  * Height is decided by content: no 100vh sections (mobile URL-bar jump,
  * clipped content). `data-observe` is the hook the single shared
- * IntersectionObserver uses for entrance animation (Phase 2).
+ * IntersectionObserver uses for entrance animation.
  */
 interface Props {
 	id: string;
@@ -22,62 +22,38 @@ interface Props {
 	class?: string;
 }
 
-const { id, codename, readout, title, lede, class: className = '' }: Props = Astro.props;
+const { id, codename, readout, title, lede, class: className = '' }: Props =
+	Astro.props;
 ---
 
-<section id={id} class:list={['section', className]}>
-	<div class="section__inner">
-		<p class="section__eyebrow" data-observe>
+<section
+	id={id}
+	class:list={[
+		'relative z-[var(--z-content)] px-[var(--gutter)] py-[var(--section-y)]',
+		className,
+	]}
+>
+	<div class="mx-auto max-w-content">
+		<p
+			data-observe
+			class="mb-4 font-mono text-label tracking-[0.14em] text-ink-low uppercase"
+		>
 			<span>{codename}</span>
-			{readout && <span class="section__readout"> · {readout}</span>}
+			{readout && <span class="opacity-80"> · {readout}</span>}
 		</p>
-		<h2 class="section__title" data-observe>{title}</h2>
-		{lede && <p class="section__lede" data-observe>{lede}</p>}
-		<div class="section__body">
+		<h2 data-observe class="mb-4 text-display-l">{title}</h2>
+		{
+			lede && (
+				<p
+					data-observe
+					class="mb-12 max-w-[var(--prose)] text-body-l text-ink-mid"
+				>
+					{lede}
+				</p>
+			)
+		}
+		<div class="mt-8">
 			<slot />
 		</div>
 	</div>
 </section>
-
-<style>
-	.section {
-		position: relative;
-		z-index: var(--z-content);
-		padding-block: var(--section-y);
-		padding-inline: var(--gutter);
-	}
-
-	.section__inner {
-		max-width: var(--container-content);
-		margin-inline: auto;
-	}
-
-	.section__eyebrow {
-		font-family: var(--font-mono);
-		font-size: var(--text-label);
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--color-ink-low);
-		margin-bottom: 1rem;
-	}
-
-	.section__readout {
-		color: color-mix(in oklab, var(--color-ink-low) 80%, transparent);
-	}
-
-	.section__title {
-		font-size: var(--text-display-l);
-		margin-bottom: 1rem;
-	}
-
-	.section__lede {
-		font-size: var(--text-body-l);
-		color: var(--color-ink-mid);
-		max-width: var(--prose);
-		margin-bottom: 3rem;
-	}
-
-	.section__body {
-		margin-top: 2rem;
-	}
-</style>

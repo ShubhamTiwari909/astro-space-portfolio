@@ -2,29 +2,9 @@
 /** First focusable element on every page (§7.4). Visible on focus only. */
 ---
 
-<a href="#main" class="skip">Skip to content</a>
-
-<style>
-	.skip {
-		position: absolute;
-		top: 0;
-		left: 50%;
-		translate: -50% -120%;
-		z-index: var(--z-skip);
-		padding: 0.75rem 1.25rem;
-		background-color: var(--color-surface-2);
-		border: 1px solid var(--color-ion);
-		border-radius: 0 0 var(--radius-card) var(--radius-card);
-		color: var(--color-ion);
-		font-family: var(--font-mono);
-		font-size: var(--text-label);
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		text-decoration: none;
-		transition: translate var(--duration-fast) var(--ease-ui);
-	}
-
-	.skip:focus-visible {
-		translate: -50% 0;
-	}
-</style>
+<a
+	href="#main"
+	class="absolute left-1/2 top-0 z-[var(--z-skip)] -translate-x-1/2 -translate-y-[120%] rounded-b-card border border-accent bg-surface-2 px-5 py-3 font-mono text-label tracking-[0.14em] text-accent uppercase no-underline transition-transform duration-[var(--duration-fast)] ease-ui focus-visible:translate-y-0"
+>
+	Skip to content
+</a>
