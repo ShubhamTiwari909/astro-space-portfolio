@@ -1,0 +1,88 @@
+---
+/**
+ * The skill list — master plan §11.3, §11.4.
+ *
+ * THE SOURCE OF TRUTH. The map is supplementary; this is what a recruiter's
+ * eye actually scans and the only path assistive technology takes. Grouped
+ * by tier rather than constellation, because "how deep" is the question a
+ * reader has; each row shows its constellation as a mono suffix.
+ *
+ * Tier is conveyed by a written word, never by size or glow alone (§11.4).
+ */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	skills: CollectionEntry<'skills'>[];
+	class?: string;
+}
+
+const { skills, class: className = '' }: Props = Astro.props;
+
+const TIERS = [
+	{
+		id: 'CORE',
+		label: 'Core',
+		blurb: 'Daily. Can debug deeply and would defend design decisions.',
+	},
+	{
+		id: 'WORKING',
+		label: 'Working',
+		blurb: 'Shipped production work; comfortable without hand-holding.',
+	},
+	{
+		id: 'FAMILIAR',
+		label: 'Familiar',
+		blurb: 'Used and functional; would need a ramp-up.',
+	},
+] as const;
+
+const CONSTELLATION_PLAIN: Record<string, string> = {
+	INTERFACE: 'Frontend',
+	SUBSTRATE: 'Backend',
+	OPERATIONS: 'Tooling',
+};
+
+const grouped = TIERS.map((tier) => ({
+	...tier,
+	items: skills
+		.filter((s) => s.data.tier === tier.id)
+		.sort((a, b) => b.data.sortScore - a.data.sortScore),
+}));
+---
+
+<div class:list={['grid gap-8', className]}>
+	{
+		grouped.map((tier) => (
+			<section data-observe>
+				<h3 class="mb-1 flex items-baseline gap-2">
+					<span
+						class="font-mono text-label tracking-[0.14em] text-accent uppercase"
+					>
+						{tier.label}
+					</span>
+					<span class="font-mono text-[0.6875rem] text-ink-low">
+						({tier.items.length})
+					</span>
+				</h3>
+				<p class="mb-3 text-[0.6875rem] leading-snug text-ink-low">
+					{tier.blurb}
+				</p>
+				<ul class="m-0 grid list-none gap-0 p-0">
+					{tier.items.map((skill) => (
+						<li
+							data-skill-row={skill.id}
+							class="flex items-baseline justify-between gap-3 border-b border-hairline py-1.5 last:border-b-0"
+						>
+							<span class="text-data text-ink-hi">{skill.data.name}</span>
+							<span
+								class="shrink-0 font-mono text-[0.625rem] tracking-[0.08em] text-ink-low uppercase"
+							>
+								{CONSTELLATION_PLAIN[skill.data.constellation]}
+							</span>
+						</li>
+					))}
+				</ul>
+			</section>
+		))
+	}
+</div>

@@ -140,6 +140,11 @@
 
 	--prose: 68ch;
 
+	/* Print is the one context outside the dark palette: paper is white and
+	   toner is black, so /dossier prints as a document (§8.3). */
+	--color-print-bg: #ffffff;
+	--color-print-ink: #000000;
+
 	color-scheme: dark;
 }
 

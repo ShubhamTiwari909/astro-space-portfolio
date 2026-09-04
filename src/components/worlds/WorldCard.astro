@@ -1,0 +1,58 @@
+---
+/**
+ * A catalogued world — master plan §10.2.
+ *
+ * The whole card is one <a>: one focus stop, one hit target, and native
+ * middle-click / cmd-click behaviour. It links straight to the live site,
+ * because there are no case-study routes (§10.3).
+ */
+import type { CollectionEntry } from 'astro:content';
+import Panel from '../ui/Panel.astro';
+import WorldSphere from './WorldSphere.astro';
+import WorldRecord from './WorldRecord.astro';
+import Icon from '../ui/Icon.astro';
+import { plateHueForIndex } from '../../data/seed';
+
+interface Props {
+	project: CollectionEntry<'projects'>['data'];
+}
+
+const { project }: Props = Astro.props;
+const hue = plateHueForIndex(project.order - 1);
+---
+
+<Panel as="li" variant="subtle" class="group/world overflow-hidden" data-observe>
+	<a
+		href={project.liveUrl}
+		target="_blank"
+		rel="noopener noreferrer"
+		data-analytics="world_link_click"
+		data-analytics-slug={project.slug}
+		aria-label={`${project.name} — ${project.oneLiner}`}
+		class="grid h-full gap-5 p-6 no-underline"
+	>
+		<div class="flex items-start gap-5">
+			<WorldSphere
+				slug={project.slug}
+				hue={hue}
+				class="transition-transform duration-[var(--duration-base)] ease-ui group-hover/world:rotate-3 group-hover/world:scale-105"
+			/>
+			<div class="min-w-0 flex-1">
+				<WorldRecord project={project} />
+			</div>
+		</div>
+
+		<footer
+			class="mt-auto flex items-center justify-between gap-3 border-t border-hairline pt-4"
+		>
+			<span class="font-mono text-[0.6875rem] text-ink-low">{project.year}</span>
+			<span
+				class="inline-flex items-center gap-1.5 font-mono text-label tracking-[0.14em] text-accent uppercase"
+			>
+				Open live
+				<Icon name="arrow-up-right" size={14} />
+			</span>
+		</footer>
+		<span class="sr-only">(opens in a new tab)</span>
+	</a>
+</Panel>

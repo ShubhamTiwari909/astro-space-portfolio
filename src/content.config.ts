@@ -1,5 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { file } from 'astro/loaders';
+import { readFile } from 'node:fs/promises';
+import { fetchArticles, type ArticleRecord } from './lib/devto';
 // Imported directly rather than from `astro:content`, whose `z` re-export is
 // deprecated in Astro 7. Version pinned to match Astro's own zod (4.5.x).
 import * as z from 'zod';
@@ -83,8 +85,21 @@ const skills = defineCollection({
 	}),
 });
 
+/**
+ * Articles come from dev.to at build time, with the committed JSON as the
+ * fallback (§20.4). A custom loader rather than `file()` so the network path
+ * and the fallback live in one place.
+ */
 const articles = defineCollection({
-	loader: file('src/content/articles.json'),
+	loader: async (): Promise<ArticleRecord[]> => {
+		const live = await fetchArticles();
+		if (live) return live;
+		// Committed fallback: a network hiccup makes the list stale, never
+		// empty, and never fails the build (§20.4).
+		return JSON.parse(
+			await readFile('src/content/articles.json', 'utf8'),
+		) as ArticleRecord[];
+	},
 	schema: z.object({
 		title: z.string(),
 		url: z.url(),

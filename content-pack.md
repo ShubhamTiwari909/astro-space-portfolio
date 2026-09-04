@@ -42,8 +42,8 @@ All eight content gaps (C1–C8) are resolved. Every field below is final copy �
 - **Lede:** I build fast, accessible web platforms — and the systems that keep them fast as they grow.
 - **Primary CTA:** VIEW THE WORK → `#worlds`
 - **Secondary CTA:** DOWNLOAD RÉSUMÉ → `/Shubham_resume_2026.pdf`
-- **Stat strip:** `4 YEARS` · `23 TECHNOLOGIES` · `3 SHIPPED WORLDS`
-  (technology and world counts are computed from collections at build time, never hardcoded)
+- **Stat strip:** `4 YEARS` · `24 TECHNOLOGIES` · `4 SHIPPED WORLDS`
+  (technology and world counts are computed from collections at build time, never hardcoded — they updated themselves when Zentauri was added)
 
 ---
 
@@ -167,7 +167,23 @@ Use **"14× faster page delivery"** as the headline metric — it is stronger an
 
 **No screenshots.** Every project uses the theme's procedural gradient visual (§10.2 / §10.6 of the plan). **No detailed case studies** — cards carry the full record and link straight to the live site.
 
-### SHB-1b — Payload CMS *(featured)*
+### SHB-1b — Zentauri UI *(featured)*
+
+- **One-liner:** A published React + Tailwind v4 component library with token-first theming and axe-core in CI.
+- **Description:** A React and Tailwind v4 component library published to npm, built on a `--zui-*` token contract with CVA-backed variant APIs, optional Framer Motion entry points, a headless hooks catalog, and a CLI for scaffolding. Covered by 1,359 assertions across 139 test files, including 46 accessibility tests that run axe-core and keyboard interaction against every interactive component.
+- **Stack:** React · Tailwind CSS · TypeScript · Framer Motion · Vitest
+- **Status:** LIVE · **Year:** 2026
+- **Live:** https://zentauri-ui.vercel.app
+- **npm:** `@zentauri-ui/zentauri-components`
+
+> **Why this is featured rather than Payload CMS.** The plan's selection rule
+> is depth of demonstrable engineering, not trendiness (§10.1). A published
+> package with a CLI, typed variant APIs, 1,359 assertions and axe-core
+> running in CI is the strongest evidence in the portfolio. It is also
+> instrument **I-01**, so the project entry and the Instrument Bay reinforce
+> each other rather than duplicating.
+
+### SHB-2b — Payload CMS
 
 - **One-liner:** A blog CMS with authentication, an admin dashboard, and on-demand revalidation.
 - **Description:** A personal blog content management system built with Next.js, Tailwind CSS, and MongoDB. Includes user authentication, an admin dashboard, content and media management, analytics, PageSpeed testing, and on-demand revalidation.
@@ -175,7 +191,7 @@ Use **"14× faster page delivery"** as the headline metric — it is stronger an
 - **Status:** LIVE · **Year:** 2025
 - **Live:** https://blazing-blogs-frontend.vercel.app
 
-### SHB-2b — Gemini Zentauri
+### SHB-3b — Gemini Zentauri
 
 - **One-liner:** AI content and image generation behind a social-feed interface.
 - **Description:** An AI-powered app for generating content and images, wrapped in a social-media-style feed with posting and interaction features.
@@ -183,7 +199,7 @@ Use **"14× faster page delivery"** as the headline metric — it is stronger an
 - **Status:** LIVE · **Year:** 2025
 - **Live:** https://gemini-ai-agent.vercel.app/
 
-### SHB-3b — Portfolio v1 *(replaces "Static Websites")*
+### SHB-4b — Portfolio v1 *(replaces "Static Websites")*
 
 - **One-liner:** The predecessor to this site — a Material-3 token system with a live dev.to feed.
 - **Description:** A single-page developer portfolio built on a Material-3 inspired token system, with a live dev.to article feed, a mobile-first bottom-tab navigation pattern, and animated section reveals.
@@ -201,7 +217,7 @@ Use **"14× faster page delivery"** as the headline metric — it is stronger an
 
 | ID | Name | Claim | Evidence |
 |----|------|-------|----------|
-| I-01 | Component library | Tailwind v4 + Framer Motion + typed hooks | The Apr 2026 dev.to article + 3–4 live component demos |
+| I-01 | **Zentauri UI** | React + Tailwind v4, token-first, axe-core in CI | Live docs at zentauri-ui.vercel.app + the Apr 2026 dev.to write-up. Also project `SHB-1b` |
 | I-02 | Playwright automation suite | E2E, API, snapshot, a11y, link validation, auth flows | Coverage matrix + one annotated spec excerpt |
 | I-03 | Multi-brand monorepo CMS | Next.js + Payload + PostgreSQL across brands | Architecture SVG + reuse/onboarding outcome |
 | I-04 | Orbit | Canvas n-body simulation with live telemetry | Built for this site |

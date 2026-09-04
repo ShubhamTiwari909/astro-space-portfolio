@@ -1,0 +1,130 @@
+---
+/**
+ * The constellation map — master plan §11.2, §11.4.
+ *
+ * Server-rendered SVG built from the skills collection, so the map is in the
+ * initial HTML and needs no JavaScript to appear. Phase 4b replaces it with
+ * the 3D globe on capable devices; this stays as the fallback everywhere
+ * else, and remains the *only* map below `md`.
+ *
+ * Accessibility: this is supplementary. The tier-grouped list beside it is
+ * the canonical, sole tab path (§11.4), so every star here is excluded from
+ * the tab order and the whole SVG carries one summarising label. Duplicating
+ * 24 tab stops would be hostile.
+ */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	skills: CollectionEntry<'skills'>[];
+	class?: string;
+}
+
+const { skills, class: className = '' }: Props = Astro.props;
+
+/** Star radius by tier — magnitude encodes depth of experience (§11.1). */
+const RADIUS = { CORE: 7, WORKING: 5, FAMILIAR: 3 } as const;
+
+const byId = new Map(skills.map((s) => [s.id, s]));
+
+/**
+ * Relationship lines, de-duplicated. These encode real dependencies, so a
+ * visitor tracing one learns something true about the stack (§11.2).
+ */
+const seen = new Set<string>();
+const lines = skills.flatMap((skill) =>
+	(skill.data.connections ?? []).flatMap((targetId) => {
+		const target = byId.get(targetId);
+		if (!target) return [];
+		const key = [skill.id, targetId].sort().join('~');
+		if (seen.has(key)) return [];
+		seen.add(key);
+		return [
+			{
+				x1: skill.data.x,
+				y1: skill.data.y,
+				x2: target.data.x,
+				y2: target.data.y,
+			},
+		];
+	}),
+);
+
+/** Constellation labels, positioned under each cluster. */
+const CLUSTERS = [
+	{ name: 'Interface', plain: 'Frontend', x: 60, y: 300 },
+	{ name: 'Substrate', plain: 'Backend & data', x: 470, y: 340 },
+	{ name: 'Operations', plain: 'Tooling & quality', x: 130, y: 592 },
+] as const;
+
+const constellationCount = new Set(skills.map((s) => s.data.constellation)).size;
+---
+
+<svg
+	viewBox="0 0 800 620"
+	role="img"
+	aria-label={`Star chart of ${skills.length} technologies in ${constellationCount} groups. The list beside it contains the same information as text.`}
+	class:list={['h-auto w-full overflow-visible', className]}
+>
+	{/* Relationship lines sit behind the stars. */}
+	<g stroke="var(--band)" stroke-width="1" opacity="0.3">
+		{lines.map((l) => <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />)}
+	</g>
+
+	{/* Constellation labels — codename plus plain name (P3). */}
+	<g fill="var(--color-ink-low)" font-family="var(--font-mono)">
+		{
+			CLUSTERS.map((c) => (
+				<>
+					<text
+						x={c.x}
+						y={c.y}
+						font-size="13"
+						letter-spacing="2.4"
+						style="text-transform: uppercase"
+					>
+						{c.name}
+					</text>
+					<text x={c.x} y={c.y + 16} font-size="11" opacity="0.7">
+						{c.plain}
+					</text>
+				</>
+			))
+		}
+	</g>
+
+	{
+		skills.map((skill) => {
+			const { x, y, tier, name } = skill.data;
+			const r = RADIUS[tier];
+			const isCore = tier === 'CORE';
+			return (
+				<g data-skill={skill.id}>
+					{/* Halo: the visual "magnitude" of a bright star. */}
+					{tier !== 'FAMILIAR' && (
+						<circle
+							cx={x}
+							cy={y}
+							r={r * 2.6}
+							fill="var(--band)"
+							opacity={isCore ? 0.2 : 0.1}
+						/>
+					)}
+					<circle cx={x} cy={y} r={r} fill="var(--band)" />
+					{/* Core labels are ALWAYS rendered — no hover needed for the
+					    ten most important entries (§11.4). */}
+					{isCore && (
+						<text
+							x={x + r + 8}
+							y={y + 4}
+							font-size="12"
+							font-family="var(--font-mono)"
+							fill="var(--color-ink-hi)"
+						>
+							{name}
+						</text>
+					)}
+				</g>
+			);
+		})
+	}
+</svg>

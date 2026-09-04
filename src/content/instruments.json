@@ -2,12 +2,16 @@
   {
     "id": "component-library",
     "designation": "I-01",
-    "name": "Component library",
-    "claim": "Tailwind v4 + Framer Motion + typed hooks",
-    "body": "A component library built on Tailwind v4 with Framer Motion for movement and fully typed hooks for behaviour. The interesting parts are the API surface — how much a consumer has to know to use a component correctly — and keeping animation configurable without leaking implementation detail into props.",
+    "name": "Zentauri UI",
+    "claim": "React + Tailwind v4, token-first, axe-core in CI",
+    "body": "A component library published to npm as @zentauri-ui/zentauri-components. The interesting parts are the API surface \u2014 how much a consumer has to know to use a component correctly \u2014 and keeping motion optional without leaking implementation detail into props. Accessibility is exercised in CI rather than documented: 46 dedicated tests pair axe-core audits with keyboard interaction across every interactive and compound component, each asserting zero violations.",
     "order": 1,
-    "evidence": "demo",
+    "evidence": "live",
     "links": [
+      {
+        "label": "Live docs",
+        "url": "https://zentauri-ui.vercel.app"
+      },
       {
         "label": "Read the write-up",
         "url": "https://dev.to/shubhamtiwari909/i-built-a-react-component-library-with-tailwind-v4-framer-motion-typed-hooks-19ci"
@@ -37,7 +41,7 @@
     "designation": "I-04",
     "name": "Orbit",
     "claim": "Canvas n-body simulation with live telemetry",
-    "body": "An n-body gravity simulation on Canvas 2D, built for this site. It reports its own frame time, body count and device pixel ratio, halves its workload when it falls behind, and stops entirely when off-screen or hidden. Canvas rather than WebGL because 200 bodies do not need a GPU pipeline — which is the point.",
+    "body": "An n-body gravity simulation on Canvas 2D, built for this site. It reports its own frame time, body count and device pixel ratio, halves its workload when it falls behind, and stops entirely when off-screen or hidden. Canvas rather than WebGL because 200 bodies do not need a GPU pipeline \u2014 which is the point.",
     "order": 4,
     "evidence": "live"
   }

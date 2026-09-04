@@ -195,9 +195,10 @@ const reveal =
 		}
 	}
 
-	/* Bring a light studio backdrop into the site's value range. */
+	/* The portrait already sits in the site's value range, so this is a light
+	   touch — just enough to seat it in the composition. */
 	.hero-portrait {
-		filter: brightness(0.78) contrast(1.08) saturate(0.9);
+		filter: contrast(1.04) saturate(0.96);
 	}
 
 	/*
@@ -209,19 +210,13 @@ const reveal =
 		background:
 			linear-gradient(
 				to top,
-				var(--color-void) 0%,
-				color-mix(in oklab, var(--color-void) 55%, transparent) 22%,
-				transparent 58%
-			),
-			linear-gradient(
-				to bottom,
-				color-mix(in oklab, var(--color-void) 62%, transparent) 0%,
-				transparent 30%
+				color-mix(in oklab, var(--color-void) 78%, transparent) 0%,
+				transparent 34%
 			),
 			radial-gradient(
-				ellipse 120% 60% at 50% 4%,
-				color-mix(in oklab, var(--band) 20%, transparent),
-				transparent 62%
+				ellipse 120% 60% at 50% 6%,
+				color-mix(in oklab, var(--band) 16%, transparent),
+				transparent 60%
 			);
 	}
 </style>

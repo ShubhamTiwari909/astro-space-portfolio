@@ -1,0 +1,95 @@
+---
+/**
+ * Observer's Log — master plan §13.
+ *
+ * The only section written in a human voice. Left column is the instrument
+ * metadata panel (field notes as a real <dl>); right column is the
+ * philosophy pull-quote, the prose, and the open questions.
+ *
+ * The open-questions block is the section's distinctive move: it converts
+ * "I'm always learning" into something specific and dated, and hands an
+ * interviewer an obvious first question (§13.2).
+ */
+import type { CollectionEntry } from 'astro:content';
+import Panel from '../ui/Panel.astro';
+import DataList from '../ui/DataList.astro';
+import Chip from '../ui/Chip.astro';
+
+interface Props {
+	profile: CollectionEntry<'profile'>['data'];
+}
+
+const { profile }: Props = Astro.props;
+---
+
+<div class="grid gap-10 lg:grid-cols-[5fr_7fr] lg:gap-16">
+	<Panel variant="standard" class="h-fit p-6" data-observe>
+		{
+			profile.fieldNotes && (
+				<DataList
+					items={profile.fieldNotes.map((note) => ({
+						label: note.label,
+						value: note.value,
+					}))}
+				/>
+			)
+		}
+	</Panel>
+
+	<div>
+		{
+			profile.philosophy && (
+				<blockquote
+					data-observe
+					class="m-0 mb-8 border-s-2 border-accent ps-5 font-display text-display-m italic text-ink-hi"
+				>
+					{profile.philosophy}
+				</blockquote>
+			)
+		}
+
+		{
+			profile.prose?.map((paragraph) => (
+				<p data-observe class="mb-5 max-w-[var(--prose)] text-body-l">
+					{paragraph}
+				</p>
+			))
+		}
+
+		{
+			profile.openQuestions && profile.openQuestions.length > 0 && (
+				<div data-observe class="mt-10">
+					<h3
+						class="mb-4 font-mono text-label tracking-[0.14em] text-ink-low uppercase"
+					>
+						Open questions
+					</h3>
+					<ul class="m-0 grid list-none gap-3 p-0">
+						{profile.openQuestions.map((question) => (
+							<li class="grid grid-cols-[1rem_1fr] gap-3 text-body text-ink-mid">
+								<span aria-hidden="true" class="font-mono text-accent">→</span>
+								<span>{question}</span>
+							</li>
+						))}
+					</ul>
+				</div>
+			)
+		}
+
+		{
+			profile.tags && (
+				<ul
+					data-observe
+					class="mt-8 flex list-none flex-wrap gap-2 p-0"
+					aria-label="Focus areas"
+				>
+					{profile.tags.map((tag) => (
+						<li>
+							<Chip>{tag}</Chip>
+						</li>
+					))}
+				</ul>
+			)
+		}
+	</div>
+</div>

@@ -44,5 +44,15 @@ export function plateHue(slug: string): number {
 	return PLATE_HUES[hashString(slug) % PLATE_HUES.length];
 }
 
+/**
+ * Hue by catalogue position. Preferred over `plateHue` wherever an order
+ * exists, because a slug hash can collide — and two projects sharing a hue
+ * defeats the whole point of hue-as-identity. Wraps if the set ever exceeds
+ * the palette.
+ */
+export function plateHueForIndex(index: number): number {
+	return PLATE_HUES[index % PLATE_HUES.length];
+}
+
 /** Star-field seed. Fixed constant: the sky is the same on every visit. */
 export const SKY_SEED = 0x5eed_5147;

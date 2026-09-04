@@ -1,0 +1,35 @@
+---
+/**
+ * Catalogued Worlds — master plan §10.
+ *
+ * A featured panel plus a 2-up grid. Every card links to a live site; a
+ * project without one fails the schema rather than rendering a dead card.
+ */
+import type { CollectionEntry } from 'astro:content';
+import FeaturedWorld from './FeaturedWorld.astro';
+import WorldCard from './WorldCard.astro';
+
+interface Props {
+	projects: CollectionEntry<'projects'>[];
+}
+
+const { projects }: Props = Astro.props;
+
+const ordered = [...projects].sort((a, b) => a.data.order - b.data.order);
+const featured = ordered.find((p) => p.data.featured);
+const rest = ordered.filter((p) => !p.data.featured);
+---
+
+<div class="grid gap-6">
+	{featured && <FeaturedWorld project={featured.data} />}
+
+	{
+		rest.length > 0 && (
+			<ul class="m-0 grid list-none gap-6 p-0 lg:grid-cols-2">
+				{rest.map((project) => (
+					<WorldCard project={project.data} />
+				))}
+			</ul>
+		)
+	}
+</div>

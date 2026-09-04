@@ -1,24 +1,221 @@
 ---
-import { getEntry } from 'astro:content';
+/**
+ * Mission Dossier — master plan §8.3.
+ *
+ * A readable HTML résumé plus the PDF for ATS pipelines. HTML is indexable,
+ * linkable and readable on a phone in a way a PDF is not; the PDF exists
+ * because ATS pipelines need it.
+ *
+ * Both are generated from the same collections, so the two can't drift —
+ * divergence between page and PDF is a credibility risk.
+ *
+ * The print stylesheet strips the backdrop to white-on-black text (§8.3).
+ */
+import { getCollection, getEntry } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Section from '../components/ui/Section.astro';
+import Button from '../components/ui/Button.astro';
+import DataList from '../components/ui/DataList.astro';
+import Panel from '../components/ui/Panel.astro';
+import Chip from '../components/ui/Chip.astro';
 
 const profile = await getEntry('profile', 'shubham-tiwari');
 if (!profile) throw new Error('profile entry missing');
+
+const [experience, skills, projects] = await Promise.all([
+	getCollection('experience'),
+	getCollection('skills'),
+	getCollection('projects'),
+]);
+
+const core = skills
+	.filter((s) => s.data.tier === 'CORE')
+	.sort((a, b) => b.data.sortScore - a.data.sortScore);
+const working = skills
+	.filter((s) => s.data.tier === 'WORKING')
+	.sort((a, b) => b.data.sortScore - a.data.sortScore);
 ---
 
 <BaseLayout
 	title="Résumé · Shubham Tiwari"
-	description="Frontend Engineer with 4 years building fast, accessible web platforms. Readable résumé plus PDF download."
+	description={`${profile.data.role} with ${profile.data.yearsExperience} years building fast, accessible web platforms. Readable résumé plus PDF download.`}
 >
 	<Section
 		id="dossier"
 		codename="Mission Dossier"
-		readout={`${profile.data.yearsExperience} years`}
+		readout={`${profile.data.yearsExperience} years · ${profile.data.location}`}
 		title="Résumé"
 		lede="A readable version, plus the PDF for ATS pipelines."
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">HTML résumé and print stylesheet — Phase 3.</p>
+		<div class="grid max-w-panel gap-10">
+			<div class="flex flex-wrap gap-3 print:hidden">
+				<Button
+					variant="primary"
+					href={profile.data.resumePdf}
+					icon="arrow-down"
+					download
+					data-analytics="dossier_download"
+					data-analytics-location="dossier"
+				>
+					Download PDF
+				</Button>
+				<Button variant="secondary" href="/#uplink" icon="arrow-right">
+					Get in touch
+				</Button>
+			</div>
+
+			<Panel variant="subtle" class="p-6 print:border-0 print:p-0">
+				{
+					profile.data.fieldNotes && (
+						<DataList items={profile.data.fieldNotes} />
+					)
+				}
+			</Panel>
+
+			{
+				profile.data.philosophy && (
+					<blockquote
+						class="m-0 border-s-2 border-accent ps-5 font-display text-display-s italic text-ink-hi"
+					>
+						{profile.data.philosophy}
+					</blockquote>
+				)
+			}
+
+			<section>
+				<h3 class="mb-5 text-display-s">Experience</h3>
+				<ol class="m-0 grid list-none gap-8 p-0">
+					{
+						experience.map((position) => (
+							<li>
+								<h4 class="text-display-s">{position.data.role}</h4>
+								<p
+									class="mt-1 mb-4 font-mono text-label tracking-[0.14em] text-accent uppercase"
+								>
+									{position.data.durationLabel}
+								</p>
+								<ul class="m-0 grid list-none gap-3 p-0">
+									{position.data.achievements.map((event) => (
+										<li class="grid grid-cols-[0.75rem_1fr] gap-3">
+											<span aria-hidden="true" class="text-accent">·</span>
+											<span>
+												<strong class="font-normal text-ink-hi">
+													{event.title}.
+												</strong>{' '}
+												{event.description}
+												{event.metric && (
+													<>
+														{' '}
+														<strong class="text-ink-hi">
+															{event.metric.value} {event.metric.label}
+														</strong>{' '}
+														<span class="text-ink-low">
+															({event.metric.basis}.)
+														</span>
+													</>
+												)}
+											</span>
+										</li>
+									))}
+								</ul>
+							</li>
+						))
+					}
+				</ol>
+			</section>
+
+			<section>
+				<h3 class="mb-5 text-display-s">Skills</h3>
+				<div class="grid gap-5">
+					<div>
+						<p
+							class="mb-2 font-mono text-label tracking-[0.14em] text-ink-low uppercase"
+						>
+							Core
+						</p>
+						<ul class="m-0 flex list-none flex-wrap gap-2 p-0">
+							{core.map((s) => (
+								<li>
+									<Chip>{s.data.name}</Chip>
+								</li>
+							))}
+						</ul>
+					</div>
+					<div>
+						<p
+							class="mb-2 font-mono text-label tracking-[0.14em] text-ink-low uppercase"
+						>
+							Working
+						</p>
+						<ul class="m-0 flex list-none flex-wrap gap-2 p-0">
+							{working.map((s) => (
+								<li>
+									<Chip>{s.data.name}</Chip>
+								</li>
+							))}
+						</ul>
+					</div>
+				</div>
+			</section>
+
+			<section>
+				<h3 class="mb-5 text-display-s">Selected projects</h3>
+				<ul class="m-0 grid list-none gap-4 p-0">
+					{
+						projects
+							.sort((a, b) => a.data.order - b.data.order)
+							.map((project) => (
+								<li>
+									<p class="m-0">
+										<strong class="font-normal text-ink-hi">
+											{project.data.name}
+										</strong>{' '}
+										<span class="text-ink-low">
+											· {project.data.stack.join(', ')}
+										</span>
+									</p>
+									<p class="m-0 text-data">{project.data.oneLiner}</p>
+									<a
+										href={project.data.liveUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="font-mono text-[0.6875rem]"
+									>
+										{project.data.liveUrl.replace('https://', '')}
+									</a>
+								</li>
+							))
+					}
+				</ul>
+			</section>
+		</div>
 	</Section>
 </BaseLayout>
 
+<style>
+	/*
+	 * Print: strip the backdrop and the site chrome so the page prints as a
+	 * document rather than a screenshot of one (§8.3).
+	 */
+	@media print {
+		:global(body) {
+			background: var(--color-print-bg) !important;
+			color: var(--color-print-ink) !important;
+		}
+
+		:global(header),
+		:global(footer),
+		:global(nav),
+		:global([aria-hidden='true']) {
+			display: none !important;
+		}
+
+		:global(h1),
+		:global(h2),
+		:global(h3),
+		:global(h4),
+		:global(strong) {
+			color: var(--color-print-ink) !important;
+		}
+	}
+</style>

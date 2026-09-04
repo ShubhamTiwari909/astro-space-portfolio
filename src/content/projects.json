@@ -1,44 +1,80 @@
 [
   {
-    "id": "payload-cms",
+    "id": "zentauri-ui",
     "designation": "SHB-1b",
-    "slug": "payload-cms",
-    "name": "Payload CMS",
-    "oneLiner": "A blog CMS with authentication, an admin dashboard, and on-demand revalidation.",
-    "description": "A personal blog content management system built with Next.js, Tailwind CSS, and MongoDB. Includes user authentication, an admin dashboard, content and media management, analytics, PageSpeed testing, and on-demand revalidation.",
-    "stack": ["Next.js", "Tailwind CSS", "MongoDB", "Node.js"],
+    "slug": "zentauri-ui",
+    "name": "Zentauri UI",
+    "oneLiner": "A published React + Tailwind v4 component library with token-first theming and axe-core in CI.",
+    "description": "A React and Tailwind v4 component library published to npm, built on a --zui-* token contract with CVA-backed variant APIs, optional Framer Motion entry points, a headless hooks catalog, and a CLI for scaffolding. Covered by 1,359 assertions across 139 test files, including 46 accessibility tests that run axe-core and keyboard interaction against every interactive component.",
+    "stack": [
+      "React",
+      "Tailwind CSS",
+      "TypeScript",
+      "Framer Motion",
+      "Vitest"
+    ],
     "status": "LIVE",
-    "year": 2025,
-    "liveUrl": "https://blazing-blogs-frontend.vercel.app",
+    "year": 2026,
+    "liveUrl": "https://zentauri-ui.vercel.app",
     "featured": true,
     "order": 1
   },
   {
-    "id": "gemini-zentauri",
+    "id": "payload-cms",
     "designation": "SHB-2b",
-    "slug": "gemini-zentauri",
-    "name": "Gemini Zentauri",
-    "oneLiner": "AI content and image generation behind a social-feed interface.",
-    "description": "An AI-powered app for generating content and images, wrapped in a social-media-style feed with posting and interaction features.",
-    "stack": ["Next.js", "Tailwind CSS", "MongoDB", "Node.js", "Gemini API"],
+    "slug": "payload-cms",
+    "name": "Payload CMS",
+    "oneLiner": "A blog CMS with authentication, an admin dashboard, and on-demand revalidation.",
+    "description": "A personal blog content management system built with Next.js, Tailwind CSS, and MongoDB. Includes user authentication, an admin dashboard, content and media management, analytics, PageSpeed testing, and on-demand revalidation.",
+    "stack": [
+      "Next.js",
+      "Tailwind CSS",
+      "MongoDB",
+      "Node.js"
+    ],
     "status": "LIVE",
     "year": 2025,
-    "liveUrl": "https://gemini-ai-agent.vercel.app",
+    "liveUrl": "https://blazing-blogs-frontend.vercel.app",
     "featured": false,
     "order": 2
   },
   {
-    "id": "portfolio-v1",
+    "id": "gemini-zentauri",
     "designation": "SHB-3b",
+    "slug": "gemini-zentauri",
+    "name": "Gemini Zentauri",
+    "oneLiner": "AI content and image generation behind a social-feed interface.",
+    "description": "An AI-powered app for generating content and images, wrapped in a social-media-style feed with posting and interaction features.",
+    "stack": [
+      "Next.js",
+      "Tailwind CSS",
+      "MongoDB",
+      "Node.js",
+      "Gemini API"
+    ],
+    "status": "LIVE",
+    "year": 2025,
+    "liveUrl": "https://gemini-ai-agent.vercel.app",
+    "featured": false,
+    "order": 3
+  },
+  {
+    "id": "portfolio-v1",
+    "designation": "SHB-4b",
     "slug": "portfolio-v1",
     "name": "Portfolio v1",
-    "oneLiner": "The predecessor to this site — a Material-3 token system with a live dev.to feed.",
+    "oneLiner": "The predecessor to this site \u2014 a Material-3 token system with a live dev.to feed.",
     "description": "A single-page developer portfolio built on a Material-3 inspired token system, with a live dev.to article feed, a mobile-first bottom-tab navigation pattern, and animated section reveals.",
-    "stack": ["Next.js", "React", "Tailwind CSS", "dev.to API"],
+    "stack": [
+      "Next.js",
+      "React",
+      "Tailwind CSS",
+      "dev.to API"
+    ],
     "status": "LIVE",
     "year": 2026,
     "liveUrl": "https://shubham-portfolio-modern.vercel.app",
     "featured": false,
-    "order": 3
+    "order": 4
   }
 ]

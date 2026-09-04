@@ -1,0 +1,86 @@
+---
+/**
+ * Uplink — master plan §15.
+ *
+ * Email-first, no contact form: a form needs an endpoint, spam protection,
+ * delivery monitoring and success/error states, and recruiters prefer email
+ * anyway (§15.1). A mailto plus a copy button never breaks.
+ *
+ * No response-time claim is made — the owner did not commit to one, and an
+ * unmet "replies within 24h" is worse than silence (§15.2).
+ */
+import type { CollectionEntry } from 'astro:content';
+import Panel from '../ui/Panel.astro';
+import Button from '../ui/Button.astro';
+import Icon, { type IconName } from '../ui/Icon.astro';
+import StatusDot from '../ui/StatusDot.astro';
+import CopyEmail from './CopyEmail';
+
+interface Props {
+	profile: CollectionEntry<'profile'>['data'];
+}
+
+const { profile }: Props = Astro.props;
+
+/** Professional links only here; Instagram lives in the footer (§9.5). */
+const links = profile.socials.filter((s) => s.professional);
+const emailId = 'uplink-email';
+---
+
+<Panel variant="strong" class="mx-auto max-w-panel p-8 md:p-12" data-observe>
+	<div class="grid justify-items-center gap-8 text-center">
+		<h3 class="text-display-m">Let's build something together.</h3>
+
+		<StatusDot
+			status="OPEN"
+			label={`Open to ${profile.openTo} · ${profile.availability}`}
+		/>
+
+		{/* The mailto is the link; Copy is a sibling button, never nested. */}
+		<div
+			class="flex w-full flex-wrap items-center justify-center gap-3 rounded-card border border-hairline bg-surface-0/60 p-3 sm:flex-nowrap"
+		>
+			<a
+				href={`mailto:${profile.email}`}
+				id={emailId}
+				class="min-w-0 flex-1 truncate text-start font-mono text-data text-ink-hi no-underline hover:text-accent max-sm:text-center"
+			>
+				<Icon name="mail" size={16} class="me-2 inline-block align-[-0.2em]" />
+				{profile.email}
+			</a>
+			<CopyEmail client:visible email={profile.email} targetId={emailId} />
+		</div>
+
+		<ul class="m-0 flex list-none flex-wrap justify-center gap-6 p-0">
+			{
+				links.map((social) => (
+					<li>
+						<a
+							href={social.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							data-analytics="uplink_social_click"
+							data-analytics-network={social.network}
+							class="inline-flex min-h-11 items-center gap-1.5 font-mono text-label tracking-[0.14em] text-ink-mid uppercase no-underline transition-colors duration-[var(--duration-fast)] ease-ui hover:text-accent"
+						>
+							<Icon name={social.network as IconName} size={16} />
+							<span>{social.label}</span>
+							<span class="sr-only">(opens in a new tab)</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+
+		<Button
+			variant="secondary"
+			href={profile.resumePdf}
+			icon="arrow-down"
+			download
+			data-analytics="dossier_download"
+			data-analytics-location="uplink"
+		>
+			Download résumé
+		</Button>
+	</div>
+</Panel>

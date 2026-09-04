@@ -1,0 +1,96 @@
+---
+/**
+ * The featured world — master plan §10.1.
+ *
+ * Asymmetric split: a gradient surface plate with the world composited into
+ * it, beside the record. Selection rule is engineering depth, not trendiness
+ * — Payload CMS spans auth, an admin surface, media, analytics and cache
+ * revalidation, which is simply the most to talk about.
+ */
+import type { CollectionEntry } from 'astro:content';
+import Panel from '../ui/Panel.astro';
+import WorldSphere from './WorldSphere.astro';
+import WorldRecord from './WorldRecord.astro';
+import Button from '../ui/Button.astro';
+import { plateHueForIndex } from '../../data/seed';
+
+interface Props {
+	project: CollectionEntry<'projects'>['data'];
+}
+
+const { project }: Props = Astro.props;
+const hue = plateHueForIndex(project.order - 1);
+---
+
+<Panel
+	as="article"
+	variant="standard"
+	class="group/featured overflow-hidden"
+	data-observe
+>
+	<div class="grid lg:grid-cols-[7fr_5fr]">
+		{/* Gradient surface plate — Phase 4b puts the real planet here. */}
+		<div
+			class="world-plate relative grid min-h-56 place-items-center overflow-hidden border-hairline max-lg:border-b lg:min-h-80 lg:border-e"
+			style={`--h: ${hue}`}
+			aria-hidden="true"
+		>
+			<WorldSphere
+				slug={project.slug}
+				hue={hue}
+				size="lg"
+				ring
+				class="transition-transform duration-[var(--duration-slow)] ease-out-expo group-hover/featured:scale-[1.04]"
+			/>
+			<span
+				class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-hairline-hi to-transparent"
+			></span>
+		</div>
+
+		<div class="grid gap-6 p-6 md:p-8">
+			<div class="flex items-center gap-2">
+				<span
+					class="rounded-chip border border-accent/40 px-2 py-1 font-mono text-[0.625rem] tracking-[0.14em] text-accent uppercase"
+				>
+					Featured
+				</span>
+			</div>
+
+			<WorldRecord project={project} featured />
+
+			<div class="mt-auto flex flex-wrap gap-3">
+				<Button
+					variant="primary"
+					href={project.liveUrl}
+					icon="arrow-up-right"
+					external
+					data-analytics="world_link_click"
+					data-analytics-slug={project.slug}
+				>
+					Open live
+				</Button>
+			</div>
+		</div>
+	</div>
+</Panel>
+
+<style>
+	/*
+	 * The plate: two soft radials in the world's own hue over the surface,
+	 * plus a horizon line at the lower third. Muted enough to sit under text
+	 * and cost zero bytes (§10.6).
+	 */
+	.world-plate {
+		background-image:
+			radial-gradient(
+				ellipse 90% 70% at 30% 18%,
+				hsl(var(--h) 70% 55% / 0.16),
+				transparent 70%
+			),
+			radial-gradient(
+				ellipse 70% 60% at 78% 88%,
+				hsl(var(--h) 80% 60% / 0.1),
+				transparent 65%
+			);
+	}
+</style>

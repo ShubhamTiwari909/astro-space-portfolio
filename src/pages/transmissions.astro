@@ -1,14 +1,21 @@
 ---
+/**
+ * Full writing index — master plan §5, §8.2. Excerpt-only, links out to
+ * dev.to (§27.3). This route deliberately does not mount the scene in
+ * Phase 4: it is a reading route and keeps the lighter budgets (§26.2).
+ */
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Section from '../components/ui/Section.astro';
+import Transmissions from '../components/transmissions/Transmissions.astro';
+import Button from '../components/ui/Button.astro';
 
 const articles = await getCollection('articles');
 ---
 
 <BaseLayout
 	title="Writing · Shubham Tiwari"
-	description="Articles on frontend platforms, Next.js, Tailwind, and testing — published on dev.to."
+	description="Articles on frontend platforms, Next.js, Tailwind, testing and performance — published on dev.to."
 >
 	<Section
 		id="transmissions"
@@ -17,7 +24,20 @@ const articles = await getCollection('articles');
 		title="Writing"
 		lede="Everything published so far. Full posts live on dev.to."
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">Full transmission index — Phase 3.</p>
+		<Transmissions articles={articles} />
+
+		<div class="mt-10 flex flex-wrap gap-3">
+			<Button variant="secondary" href="/" icon="arrow-right">
+				Back to the survey
+			</Button>
+			<Button
+				variant="ghost"
+				href="https://dev.to/shubhamtiwari909"
+				icon="arrow-up-right"
+				external
+			>
+				dev.to profile
+			</Button>
+		</div>
 	</Section>
 </BaseLayout>
-

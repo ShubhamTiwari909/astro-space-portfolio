@@ -1,16 +1,25 @@
 ---
 /**
- * The survey. Phase 2 delivers the hero and the eight anchor shells with
- * their real codenames, titles and readouts; content lands in Phase 3, the
- * WebGL spine in Phase 4.
+ * The survey — master plan §5.
  *
- * Anchor ids are frozen from here on — they are a public API (§23).
+ * Phase 3 fills every section with real content. This is the shippable
+ * milestone: if Phases 4+ never happened, this would still be a complete
+ * portfolio (§31).
+ *
+ * Anchor ids are frozen — they are a public API (§23).
  */
 import { getCollection, getEntry } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Section from '../components/ui/Section.astro';
 import Hero from '../components/hero/Hero.astro';
 import ScrollHint from '../components/hero/ScrollHint.astro';
+import ObserversLog from '../components/about/ObserversLog.astro';
+import Atlas from '../components/atlas/Atlas.astro';
+import Trajectory from '../components/trajectory/Trajectory.astro';
+import WorldsSection from '../components/worlds/WorldsSection.astro';
+import InstrumentTeaser from '../components/instruments/InstrumentTeaser.astro';
+import Transmissions from '../components/transmissions/Transmissions.astro';
+import Uplink from '../components/uplink/Uplink.astro';
 
 const profile = await getEntry('profile', 'shubham-tiwari');
 if (!profile) throw new Error('profile entry missing');
@@ -28,6 +37,7 @@ const burnEvents = experience.reduce(
 	(sum, entry) => sum + entry.data.achievements.length,
 	0,
 );
+const LATEST = 6;
 ---
 
 <BaseLayout
@@ -49,7 +59,7 @@ const burnEvents = experience.reduce(
 		readout={`${profile.data.yearsExperience} years · ${profile.data.location}`}
 		title="About"
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">Observer's Log — Phase 3.</p>
+		<ObserversLog profile={profile.data} />
 	</Section>
 
 	<Section
@@ -57,8 +67,9 @@ const burnEvents = experience.reduce(
 		codename="The Atlas"
 		readout={`${skills.length} entries · ${constellations.size} constellations`}
 		title="Skills"
+		lede="Magnitude encodes depth of experience, not preference. The lines are real dependencies — React to TypeScript, Payload to MongoDB, Next.js out to Vercel."
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">Constellation map and skill list — Phase 3.</p>
+		<Atlas skills={skills} />
 	</Section>
 
 	<Section
@@ -66,8 +77,9 @@ const burnEvents = experience.reduce(
 		codename="Trajectory"
 		readout={`${profile.data.yearsExperience} years · ${burnEvents} burn events`}
 		title="Experience"
+		lede="Each burn is a moment where deliberate effort changed the vehicle's course."
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">Trajectory spine — Phase 3.</p>
+		<Trajectory positions={experience} />
 	</Section>
 
 	<Section
@@ -76,7 +88,7 @@ const burnEvents = experience.reduce(
 		readout={`${projects.length} catalogued`}
 		title="Projects"
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">World records — Phase 3. Planets — Phase 4b.</p>
+		<WorldsSection projects={projects} />
 	</Section>
 
 	<Section
@@ -84,17 +96,23 @@ const burnEvents = experience.reduce(
 		codename="Instrument Bay"
 		readout={`${instruments.length} instruments`}
 		title="What I Build"
+		lede="The tools and systems behind the products, rather than the products themselves."
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">Instrument teaser — Phase 3.</p>
+		<InstrumentTeaser instruments={instruments} />
 	</Section>
 
 	<Section
 		id="transmissions"
 		codename="Transmissions"
-		readout={`${articles.length} latest`}
+		readout={`${Math.min(LATEST, articles.length)} of ${articles.length}`}
 		title="Writing"
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">Transmission list — Phase 3.</p>
+		<Transmissions
+			articles={articles}
+			limit={LATEST}
+			moreHref="/transmissions"
+			moreLabel="All writing"
+		/>
 	</Section>
 
 	<Section
@@ -103,7 +121,6 @@ const burnEvents = experience.reduce(
 		readout={`${profile.data.timezone} · ${profile.data.availability}`}
 		title="Contact"
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">Uplink panel — Phase 3.</p>
+		<Uplink profile={profile.data} />
 	</Section>
 </BaseLayout>
-

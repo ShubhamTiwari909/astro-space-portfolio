@@ -13,7 +13,8 @@
     "check": "astro check",
     "art": "node scripts/generate-art.mjs",
     "lint:tokens": "node scripts/lint-tokens.mjs",
-    "verify": "pnpm lint:tokens && pnpm check && pnpm build"
+    "verify": "pnpm lint:tokens && pnpm check && pnpm build && pnpm test:content",
+    "test:content": "node tests/content-in-html.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.5",

@@ -1,0 +1,47 @@
+---
+/**
+ * The world's data readout — master plan §10.1.
+ *
+ * A data table, not prose. Because there are no case-study routes (§10.3),
+ * the card is the entire record, so everything a visitor learns about a
+ * project has to be here.
+ */
+import type { CollectionEntry } from 'astro:content';
+import Chip from '../ui/Chip.astro';
+import StatusDot from '../ui/StatusDot.astro';
+
+interface Props {
+	project: CollectionEntry<'projects'>['data'];
+	headingLevel?: 'h3' | 'h4';
+	featured?: boolean;
+}
+
+const { project, headingLevel: Heading = 'h3', featured = false }: Props =
+	Astro.props;
+---
+
+<div class="grid gap-4">
+	<div class="flex flex-wrap items-center justify-between gap-3">
+		<span
+			class="font-mono text-[0.6875rem] tracking-[0.14em] text-ink-low uppercase"
+		>
+			{project.designation}
+		</span>
+		<StatusDot status={project.status} />
+	</div>
+
+	<Heading class:list={[featured ? 'text-display-m' : 'text-display-s']}>
+		{project.name}
+	</Heading>
+
+	<p class="m-0 text-ink-mid">{project.description}</p>
+
+	<ul class="m-0 flex list-none flex-wrap gap-2 p-0">
+		<li class="sr-only">Built with</li>
+		{project.stack.map((tech) => (
+			<li>
+				<Chip>{tech}</Chip>
+			</li>
+		))}
+	</ul>
+</div>

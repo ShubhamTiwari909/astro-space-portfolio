@@ -1,0 +1,28 @@
+---
+/**
+ * The Atlas — master plan §11.3.
+ *
+ * Map and list coexist on desktop: the map gives shape and memorability,
+ * the list gives scannability. Below `md` the map is dropped entirely and
+ * the list carries everything — no information is lost, and no SVG or canvas
+ * cost is paid on a phone (§11.5).
+ */
+import type { CollectionEntry } from 'astro:content';
+import ConstellationMap from './ConstellationMap.astro';
+import SkillList from './SkillList.astro';
+
+interface Props {
+	skills: CollectionEntry<'skills'>[];
+}
+
+const { skills }: Props = Astro.props;
+---
+
+<div class="grid gap-10 lg:grid-cols-[7fr_5fr] lg:items-start lg:gap-12">
+	{/* Map: supplementary, hidden below md (§11.5). */}
+	<div class="max-md:hidden" data-observe>
+		<ConstellationMap skills={skills} />
+	</div>
+
+	<SkillList skills={skills} />
+</div>

@@ -1,0 +1,45 @@
+---
+/**
+ * Instrument Bay teaser — master plan §14.4.
+ *
+ * Compact and zero-JS: four mono rows and a link. All the weight stays on
+ * /instruments, which is where the Canvas experiment lives.
+ */
+import type { CollectionEntry } from 'astro:content';
+import Button from '../ui/Button.astro';
+
+interface Props {
+	instruments: CollectionEntry<'instruments'>[];
+}
+
+const { instruments }: Props = Astro.props;
+const ordered = [...instruments].sort((a, b) => a.data.order - b.data.order);
+---
+
+<div class="grid gap-8" data-observe>
+	<ul class="m-0 grid list-none p-0">
+		{
+			ordered.map((instrument) => (
+				<li
+					class="grid grid-cols-[3rem_1fr] items-baseline gap-x-4 gap-y-1 border-b border-hairline py-4 last:border-b-0 md:grid-cols-[3rem_14rem_1fr]"
+				>
+					<span
+						class="font-mono text-[0.6875rem] tracking-[0.08em] text-ink-low uppercase"
+					>
+						{instrument.data.designation}
+					</span>
+					<span class="text-data text-ink-hi">{instrument.data.name}</span>
+					<span class="text-data text-ink-low max-md:col-span-2">
+						{instrument.data.claim}
+					</span>
+				</li>
+			))
+		}
+	</ul>
+
+	<div>
+		<Button variant="secondary" href="/instruments" icon="arrow-right">
+			Open Instrument Bay
+		</Button>
+	</div>
+</div>

@@ -1,0 +1,47 @@
+---
+/**
+ * Transmissions — master plan §8.2.
+ *
+ * Excerpt-only, always linking out to dev.to. Mirroring full bodies would
+ * make this site compete with the owner's own dev.to ranking (§27.3).
+ */
+import type { CollectionEntry } from 'astro:content';
+import TransmissionRow from './TransmissionRow.astro';
+import Button from '../ui/Button.astro';
+
+interface Props {
+	articles: CollectionEntry<'articles'>[];
+	/** Home shows the latest few and links to the full index. */
+	limit?: number;
+	moreHref?: string;
+	moreLabel?: string;
+}
+
+const { articles, limit, moreHref, moreLabel = 'Load more' }: Props =
+	Astro.props;
+
+const sorted = [...articles].sort((a, b) =>
+	b.data.publishedAt.localeCompare(a.data.publishedAt),
+);
+const shown = limit ? sorted.slice(0, limit) : sorted;
+---
+
+<div class="grid gap-8" data-observe>
+	<ol class="m-0 grid list-none p-0">
+		{
+			shown.map((article) => (
+				<TransmissionRow article={article.data} slug={article.id} />
+			))
+		}
+	</ol>
+
+	{
+		moreHref && (
+			<div>
+				<Button variant="secondary" href={moreHref} icon="arrow-right">
+					{moreLabel}
+				</Button>
+			</div>
+		)
+	}
+</div>
