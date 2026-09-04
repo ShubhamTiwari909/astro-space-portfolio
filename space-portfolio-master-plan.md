@@ -2,9 +2,67 @@
 
 **Codename:** DEEP FIELD
 **Owner:** Shubham Tiwari — Frontend Engineer
-**Stack:** Astro 7 (islands) + React 19 + TypeScript (strict) + Tailwind CSS v4
-**Document status:** Implementation blueprint. No code in this document.
+**Stack:** Astro 7 (islands) + React 19 + React Three Fiber + TypeScript (strict) + Tailwind CSS v4
+**Document status:** Implementation blueprint — **Revision 2**. No code in this document.
 **Consumed by:** an AI coding agent or developer, executing phase by phase.
+
+---
+
+## Revision 2 — the maximalist turn
+
+Revision 1 was a deliberately restrained site: a static page, a CSS star field, three accent colours, six tiny islands, no WebGL and no raster imagery. It would have been fast and tasteful and **not memorable enough**. The owner's call, and it is the right one for a portfolio whose job is to be remembered:
+
+> Space-related imagery, 3D components, something unique, React for the interactive and complex parts, and multiple space colours.
+
+**Four decisions define Revision 2:**
+
+| # | Decision | What it replaces |
+|---|----------|-----------------|
+| 1 | **A single persistent WebGL scene spans the whole site.** Scroll drives a camera along a continuous flight path from intergalactic space to an orbital station. | A static CSS star field |
+| 2 | **Eight spectral bands.** Each section owns an accent hue drawn from real emission-line astronomy, and that hue drives both the DOM accents and the 3D scene's lighting at that point in the flight. | Three fixed accents |
+| 3 | **AI-generated space art**, tuned to the palette, for backdrops, planet textures and no-WebGL fallbacks. | Zero raster imagery |
+| 4 | **React owns everything interactive or complex** — the scene graph, planets, the skills globe, the simulation. | Six ≤12KB islands |
+
+### What this costs, stated plainly
+
+Revision 1's budgets are unreachable now, and pretending otherwise would make this document useless. The honest new numbers (full detail in §26):
+
+| | Revision 1 | Revision 2 |
+|---|---|---|
+| Desktop JS | ≤60KB gz | **≤340KB gz** (three.js ~150KB + R3F ~40KB + drei subset + app) |
+| Mobile JS | ≤20KB gz | **≤190KB gz** (mobile keeps the 3D, at reduced fidelity) |
+| Images | ~60KB | **≤1.6MB** desktop / ≤600KB mobile (AVIF) |
+| Desktop LCP | ≤1.2s | **≤2.2s** |
+| Mobile LCP | ≤1.8s | **≤3.0s** |
+| Lighthouse mobile | ≥95 | **≥78** |
+| Lighthouse a11y | 100 | **100 — unchanged, non-negotiable** |
+
+**Accessibility does not move.** Nor does the content contract. Everything else was negotiable; these two are not, and §25 gets *stricter* in this revision, not looser, because a WebGL spine is exactly the architecture that tends to eat its own content.
+
+### The one rule that makes a 3D spine survivable
+
+**The canvas is a layer, never a container.**
+
+The 3D scene sits `position: fixed` behind the page at `--z-scene`. The DOM content scrolls over it as ordinary, selectable, crawlable, keyboard-navigable HTML. Scroll position drives the camera; scroll itself is never intercepted.
+
+```text
+┌─ DOM (scrolls normally, owns all content) ──────────┐
+│  <main> — headings, prose, records, links, lists    │  z: 10+
+├─ Canvas (fixed, aria-hidden, decorative) ───────────┤
+│  camera position = f(scrollProgress)                │  z: 2
+├─ AI-art stills + CSS gradients (fixed) ─────────────┤
+│  the no-WebGL fallback, always present underneath   │  z: 1
+└─────────────────────────────────────────────────────┘
+```
+
+Consequences, all load-bearing:
+
+1. **Delete the canvas and the site still works completely.** Same headings, same reading order, same links. The backdrop degrades to AI-art stills — a designed state, not a blank page.
+2. **LCP stays text.** The hero heading paints from static HTML; R3F hydrates after first paint and cross-fades in over the still. The canvas is never the LCP element.
+3. **No scroll-jacking, ever.** The camera follows the scrollbar; the scrollbar never follows the camera. A visitor can flick from top to Contact in one gesture and the camera simply arrives with them.
+4. **Nothing is gated behind an animation.** No "scroll to continue", no minimum dwell, no transition that must finish before text is readable.
+
+Any implementation that violates one of these four is wrong, however good it looks.
 
 ---
 
@@ -49,21 +107,23 @@ All eight content gaps are closed. Their resolutions changed several design deci
 
 ## 1. Vision
 
-> **You are looking through my telescope. The longer you look at a small patch of sky, the more worlds you find.**
+> **A single continuous descent — from the deep field, through a nebula, into a star system where each world is something I built.**
 
-The Hubble Deep Field pointed at an apparently empty speck of sky for ten days and found thousands of galaxies. That is the organising idea of this portfolio: **depth over spectacle**. A visitor arrives at what looks like a quiet, elegant, near-black page and progressively discovers a structured, data-dense body of engineering work.
+The site is one flight. You begin in intergalactic space with nothing but distant galaxies and dust; you scroll, and the camera moves. A nebula wall fills the frame while you read who this engineer is. A star cluster resolves into a constellation of the technologies they operate. A probe trail arcs past, marked with the moments their work changed something. Then three planets — the projects — and finally an orbital station, and a view back across the whole system you just crossed.
 
-This inverts the usual space-portfolio failure mode. Most are loud on arrival and empty underneath — a particle explosion in the hero and three thin project cards below. DEEP FIELD is quiet on arrival and dense underneath.
+The metaphor is not decoration layered onto a page. **The page's reading order and the flight path are the same sequence**, which is what makes the 3D earn its weight: scrolling forward is travelling forward, and arriving somewhere new means learning something new.
+
+**Why maximalism is the right call here.** A portfolio's job is to be remembered by someone who looked at nine others the same afternoon. Restraint is the safer aesthetic and the weaker strategy. The risk of maximalism is that spectacle replaces substance — so the structure of this plan is designed so that **substance ships first and spectacle is layered on top of it, removably** (see §31: the site is complete and launchable at the end of Phase 3, before any of the 3D exists).
 
 **What the portfolio must achieve, in priority order:**
 
-1. A recruiter or engineering manager can answer *who, what, which technologies, what work, how to contact* in under 60 seconds without scrolling past the fold twice.
-2. The visual and interaction craft is itself evidence of frontend skill — the medium is a work sample.
-3. It loads and responds fast enough that the craft claim is credible (a slow "performance engineer" portfolio is a self-refuting artifact).
-4. It is memorable — a person who saw it a week ago can describe it.
-5. It works completely with JavaScript disabled, motion disabled, or on a low-end Android phone.
+1. A recruiter or engineering manager can answer *who, what, which technologies, what work, how to contact* in under 60 seconds — and on a phone.
+2. It is **memorable**. Someone who saw it last week can describe it unprompted.
+3. The visual and interaction craft is itself evidence of frontend skill — a 60fps scroll-driven WebGL scene that degrades cleanly is a stronger work sample than any bullet point about it.
+4. It stays fast enough that the craft claim is credible. Ambition is not an excuse for a 6-second load.
+5. It works completely with WebGL unavailable, JavaScript disabled, motion disabled, or on a low-end Android phone.
 
-**Anti-goals.** Not a game. Not a WebGL demo reel. Not neon cyberpunk. Not scroll-jacked. Not a preloader with a fake percentage bar (the current live site's simulated `zsh` boot screen is explicitly removed — it delays first contentful paint to perform work that isn't happening).
+**Anti-goals.** Not a game — there is no win state and no controls to learn. Not a demo reel — every effect sits behind real content, never instead of it. Not scroll-jacked. Not neon cyberpunk (colour is emission-line accurate, §3.3). No loading gate: no fake percentage bar, no "Enter" button, no simulated boot screen — the previous site's `zsh` splash stays deleted, and a WebGL scene is *not* a licence to reintroduce it.
 
 ---
 
@@ -73,14 +133,15 @@ These are tie-breakers. When two implementations are both defensible, the one th
 
 | # | Principle | Practical test |
 |---|-----------|----------------|
-| P1 | **Content is never inside the effect.** | Disable canvas/WebGL: is every fact still on screen and selectable? |
-| P2 | **Instruments, not decorations.** Space visuals encode real data or spatial position. | Point at any glowing thing: what does it *tell* you? If nothing, cut it. |
+| P1 | **Content is never inside the effect.** The canvas is a layer, never a container. | Delete the canvas element: is every fact still on screen, selectable and in reading order? |
+| P2 | **Spectacle must carry meaning.** 3D that encodes position, progress, relationship or identity earns its bytes; 3D that is merely pretty does not. | Point at any moving thing: what does it *tell* you? Beauty alone is only allowed in the backdrop. |
 | P3 | **The metaphor is a subtitle, never the label.** Every codename ships with its plain name. | Can someone who dislikes space navigate with zero confusion? |
-| P4 | **Scroll belongs to the user.** No hijacking, no snap-locking, no minimum-dwell gates. | Can you flick from top to Contact in one gesture? |
-| P5 | **One background, many panels.** Spatial continuity comes from a single persistent cosmos, not per-section effects. | Count animated background systems on the home route: must be exactly 1. |
-| P6 | **Cheapest medium that works.** CSS → SVG → Canvas → WebGL, in that order. | Is there a CSS/SVG version of this effect? Then WebGL is unjustified. |
-| P7 | **Degrade to elegant, not to broken.** Every fallback is a designed state. | Screenshot the reduced-motion, no-JS, and mobile versions: are they all beautiful? |
-| P8 | **Density is the flex.** Precision, alignment, and real data impress engineers more than motion. | Would a senior engineer find something to respect on a still screenshot? |
+| P4 | **Scroll belongs to the user.** The camera follows the scrollbar; the scrollbar never follows the camera. | Can you flick from top to Contact in one gesture and have the camera simply arrive with you? |
+| P5 | **One scene, one canvas.** Spatial continuity comes from a single persistent WebGL scene driven by scroll — never per-section canvases. | Count `<canvas>` elements on the home route: must be exactly 1. |
+| P6 | **Cheapest medium that reaches the bar.** CSS → SVG → Canvas → WebGL still holds *below* the spine; the spine itself is the one sanctioned exception, because no cheaper medium produces a continuous camera path through a volumetric scene. | Is this effect part of the spine? If not, could CSS or SVG do it? Then do that. |
+| P7 | **Every fallback is a designed state.** No-WebGL, reduced-motion, no-JS and low-end mobile each get a deliberate composition — not a broken one and not a blank one. | Screenshot all four: would you ship any of them on its own? |
+| P8 | **Substance ships first.** The site must be complete and launchable before the spine exists (§31). | If Phases 4–6 were cancelled today, is this still a strong portfolio? |
+| P9 | **Frame budget is a feature.** A dropped frame is a bug with the same severity as a broken link. | 60fps desktop / 30fps floor mobile, verified under 4× CPU throttle. |
 
 ---
 
@@ -88,41 +149,106 @@ These are tie-breakers. When two implementations are both defensible, the one th
 
 ### 3.1 The reference frame
 
-The interface language is a **modern observatory survey console** — think ESA's Gaia archive, the Aladin Sky Atlas, NASA Eyes, and JWST press-release plates. These interfaces are dark, hairline-ruled, monospace-labelled, coordinate-annotated, and genuinely beautiful because the data is the ornament.
+Two references, deliberately fused:
+
+**For the 3D backdrop — the cinematic space film.** *Interstellar*, *Gravity*, *Ad Astra*, and JWST press plates. Volumetric, layered, enormous. Real astrophotography is not clean: it has dust lanes, chromatic depth, bloom around bright stars, and colour that comes from physics. The backdrop should feel photographed, not rendered.
+
+**For the interface on top — the observatory survey console.** ESA's Gaia archive, the Aladin Sky Atlas, NASA Eyes. Dark, hairline-ruled, monospace-labelled, coordinate-annotated. The data is the ornament.
+
+The tension between the two *is* the design: a precise, almost clinical instrument panel floating in front of something vast and beautiful. Neither half works alone — the console alone is Revision 1 (tasteful, forgettable); the film alone is a screensaver.
 
 The emotional register is **cinematic + scientific + futuristic + elegant**:
 
-- **Cinematic** — deep blacks, wide letter-spaced type, generous negative space, slow deliberate motion with mass.
-- **Scientific** — coordinate readouts, magnitude scales, catalog IDs, units, hairline grids, tabular numerals.
-- **Futuristic** — restrained. Achieved through precision and light, not chrome and neon.
+- **Cinematic** — volumetric depth, real bloom, slow camera moves with mass, wide letter-spaced type over negative space.
+- **Scientific** — emission-line-accurate colour, coordinate readouts, magnitude scales, catalog IDs, tabular numerals.
+- **Futuristic** — achieved through precision and light, not chrome and neon.
 - **Elegant** — a high-contrast serif for statements against monospace for data. Editorial, not arcade.
 
 ### 3.2 What this explicitly is not
 
+Revision 2 raises the ceiling on ambition; it does not remove the floor on taste.
+
 | Avoid | Because |
 |-------|---------|
-| Neon cyan-on-magenta glow everywhere | Reads as gaming/cyberpunk; destroys the scientific register |
-| Multiple competing accent colors | Three accents, each with a fixed job (§18) |
-| Glow on body text | Destroys legibility and contrast compliance |
-| Full-bleed nebula JPEGs | 1–3MB for decoration; we generate nebulae with 2 CSS gradients |
-| Animated section dividers, wipes, curtains | Level-4 motion used at Level-1 frequency; nauseating |
+| Saturated neon-on-black gaming palette | Colour here is emission-line accurate (§3.3), which is *why* it looks expensive rather than cheap |
+| All eight band hues visible at once | One dominant hue per viewport. The palette is a journey, not a swatch dump (§3.3) |
+| Glow on body text | Destroys legibility and contrast compliance, at any ambition level |
+| Lens flares, god rays, chromatic aberration on everything | Post-processing is a scalpel: bloom only, on bright emitters only (§17.1) |
+| A loading gate, progress bar, or "Enter" button | Still forbidden. The scene arrives *behind* content that is already readable |
+| Scroll-snapping between sections | Still forbidden (P4). Long-form scroll, camera follows |
+| Text baked into textures or rendered in the canvas | Still forbidden (P1). All type is DOM type |
+| Animated section wipes and curtains | L4 motion at L1 frequency; nauseating |
 | Icon fonts (the current site loads Material Symbols) | ~100KB+ for ~20 glyphs; use an inline SVG sprite |
 
-### 3.3 Visual language
+### 3.3 Colour — eight spectral bands
 
-- **Background treatment.** Three stacked layers, all fixed, forming one cosmos: (1) base void color, (2) two large low-opacity radial gradients as nebula fields, drifting on a 60–90s loop, (3) procedural star field on one canvas. Above them, a 2KB tiling grain PNG at 3% opacity to kill gradient banding on cheap panels. No raster space photography anywhere.
-- **Surfaces.** Content sits on near-transparent "instrument panels": `--surface-1` at 60–80% opacity with `backdrop-filter: blur(12px)` on capable browsers, solid `--surface-1` otherwise. Panels feel like glass readouts over the sky, not cards on a page.
-- **Borders.** 1px hairlines in `--hairline` (ion at 12% alpha). Corner ticks — 8px L-shaped marks at panel corners — replace heavy borders on hero-level panels. This single motif does more theming work than any glow.
-- **Glow.** Reserved for: stars, focused/hovered interactive elements, and the primary CTA. Three tiers as tokens (§18). Never on text under 1.5rem. Never static on more than 3 elements per viewport.
-- **Gradients.** Only two kinds: large soft radial (nebula, background only) and 1px linear hairline fades (panel edges, dividers). No 45° "gamer" gradients on buttons.
-- **Shadows.** Ambient dark shadows are near-invisible on a black ground, so depth comes from *light*: glow, hairline brightness, and blur/parallax offset instead of drop shadows.
-- **Iconography.** One inline SVG sprite, 1.5px stroke, 24px grid, geometric, no filled pictograms. ~16 icons total.
-- **Illustration style.** Procedural and generated: CSS/SVG spheres for project worlds (radial-gradient limb + terminator shading, seeded per project), SVG constellation lines, SVG orbit paths. Zero illustration assets to commission.
-- **Typography.** High-contrast serif display against a neutral grotesque body against a technical mono. See §18.
+The brief asked for multiple space colours. The failure mode is a rainbow, so the palette is **systematic rather than decorative**: each section owns one accent hue, and the hues are drawn from **real emission lines and real astrophysical sources**. That grounding is what keeps a colourful site from looking like a toy.
 
-### 3.4 Motion language, in one sentence
+| Order | Section | Band | Hex | Physical source |
+|-------|---------|------|-----|-----------------|
+| 1 | First Light | **Ion Cyan** | `#7DE2FF` | O III / instrument starlight |
+| 2 | Observer's Log | **Nebula Magenta** | `#FF5FA2` | H-alpha hydrogen emission — the colour of most nebulae |
+| 3 | The Atlas | **Stellar Blue** | `#8FB8FF` | Hot O/B-type young stars |
+| 4 | Trajectory | **Solar Ember** | `#FFB454` | G-type stellar warmth, ion-engine glow |
+| 5 | Catalogued Worlds | **Plasma Violet** | `#A78BFA` | Deep-space reflection nebulae |
+| 6 | Instrument Bay | **Aurora Green** | `#5BE9B9` | O III aurora / oxygen airglow |
+| 7 | Transmissions | **Signal Gold** | `#FFD76E` | Sodium-line / relay beacon |
+| 8 | Uplink | **Ion Cyan** (returns) | `#7DE2FF` | Closes the loop where it began |
 
-**Everything has mass and nothing snaps.** Objects accelerate out of rest and decelerate into place on an expo-out curve; ambient motion is linear and imperceptibly slow; interaction feedback is fast and short. Nothing in the interface moves for longer than 900ms except the sky.
+**How a band is used.** At any scroll position exactly one band is dominant. Its hue drives, in the same breath:
+
+- the section's DOM accents — eyebrow, hairlines, focus ring tint, active nav tick, link colour;
+- the **3D scene's key light and nebula tint** at that point on the flight path;
+- the bloom colour on bright emitters in frame.
+
+So the whole composition — page and scene together — shifts hue as you travel. Bands **cross-fade over the scroll distance between sections**, never cut. One CSS custom property (`--band`) and one uniform in the scene read from the same source of truth, so DOM and WebGL can never disagree.
+
+**Discipline rules, non-negotiable:**
+
+1. `--color-ink-*` never changes. Body text is the same near-white in every band, so reading never gets harder.
+2. Band hue is applied to accents, never to large text or backgrounds.
+3. Every band must clear 4.5:1 on `--color-void` at label sizes — verified in §25.2. This is why the bands are all light, high-value hues rather than saturated mid-tones.
+4. Bloom intensity is fixed across bands; only hue changes. Varying both produces "one section is broken" perception.
+
+### 3.4 AI-generated art — the specification
+
+Backdrops, planet textures and every no-WebGL fallback still are generated art, tuned to the palette (owner's decision; no attribution burden, perfect palette consistency). Generated art is only an asset if it is *consistent*, so it is specified rather than vibed:
+
+**Global prompt contract** — every generated asset shares these: deep near-black `#04060D` ground; one dominant band hue plus at most one neighbouring hue; volumetric dust with visible depth layers; no visible planets/spacecraft unless the asset is specifically a planet; no text, no logos, no lens flares; astrophotography realism, not painterly or "digital art" styling; 16:9 or square; generated at 2× the delivered resolution and downsampled for grain.
+
+**Per-asset list, target sizes after AVIF encode:**
+
+| Asset | Use | Delivered | Budget |
+|-------|-----|----------|--------|
+| `field-deep.avif` | Hero fallback still + scene skybox base | 2560×1440 | ≤180KB |
+| `nebula-magenta.avif` | Observer's Log backdrop + scene volume texture | 2048×2048 | ≤160KB |
+| `cluster-blue.avif` | The Atlas backdrop | 2048×1152 | ≤140KB |
+| `trail-ember.avif` | Trajectory backdrop | 2048×1152 | ≤140KB |
+| `system-violet.avif` | Worlds backdrop | 2560×1440 | ≤180KB |
+| `station-aurora.avif` | Instrument Bay backdrop | 2048×1152 | ≤140KB |
+| `planet-{slug}.avif` ×3 | Planet surface maps (equirectangular 2:1) | 2048×1024 | ≤120KB each |
+| `planet-{slug}-still.avif` ×3 | Mobile/no-WebGL planet stills | 800×800 | ≤60KB each |
+
+Each backdrop also ships a **32×18 LQIP** inlined as a data URI, so the fallback layer paints instantly with no request.
+
+**Honest caveat to hold.** Some engineers recognise and discount AI imagery. Two mitigations: the art is **backdrop only** — never presented as a photograph of anything, never captioned as real astronomy — and the *foreground* craft (the scene, the type, the data density) is what carries the credibility. If an asset ever reads as generic "AI space art", regenerate it tighter to the contract rather than shipping it.
+
+### 3.5 Visual language
+
+- **Backdrop stack.** Four fixed layers behind all content (detail in §17.1): (1) void ground, (2) the band-tinted AI-art still with its inlined LQIP — always present, and the complete no-WebGL fallback, (3) **the WebGL scene**, cross-faded in after first paint, (4) a 2KB tiling grain PNG at 3% opacity, which also kills banding in the gradients and unifies art and render into one image.
+- **Surfaces.** Content sits on "instrument panels": `--surface-1` at 60–80% opacity with `backdrop-filter: blur(12px)`, solid otherwise. Over a live 3D scene the blur does real work — it separates the console from the vastness behind it, and it is the single most important element in keeping text legible against a moving backdrop.
+- **Panel legibility contract (new in R2).** Any panel containing body copy must sit on ≥68% opacity surface *and* carry a subtle inward vignette, so the text's local contrast never depends on what the camera happens to be looking at. Verified by screenshotting each section at three scroll offsets (§34.2).
+- **Borders.** 1px hairlines tinted with the active band at 12% alpha. Corner ticks — 8px L-marks — remain the signature motif; they now also read as instrument reticles over the scene.
+- **Glow / bloom.** Two systems that must not be confused: **DOM glow** (three `--shadow-glow-*` tiers, for focus and CTAs) and **scene bloom** (post-processing on bright emitters only — stars, planet limbs, engine trails). Fixed intensity, band-tinted hue. Never bloom on anything text-adjacent.
+- **Gradients.** Large soft radials (backdrop only) and 1px hairline fades (panel edges). No 45° gamer gradients on buttons, at any ambition level.
+- **Depth cues.** On a black ground, drop shadows are invisible, so depth comes from *light and parallax*: bloom, hairline brightness, blur separation, and the scene's own perspective. The DOM never fakes depth the scene is already providing.
+- **Iconography.** One inline SVG sprite, 1.5px stroke, 24px grid, geometric. ~17 icons.
+- **Illustration.** Generated art (§3.4) for backdrops and planet maps; procedural CSS/SVG for spheres, constellation lines and orbit paths in every fallback state.
+- **Typography.** High-contrast serif display, neutral grotesque body, technical mono. Unchanged from R1 — see §18. The type is the one part of the composition that stays still, which is precisely what makes the moving parts readable.
+
+### 3.6 Motion language, in two sentences
+
+**Everything has mass and nothing snaps.** Interface objects accelerate out of rest and decelerate into place on an expo-out curve; interaction feedback is fast and short; and the camera — the one thing allowed to move continuously — glides on a spline with inertia, always trailing the scrollbar slightly rather than tracking it rigidly, because a camera that snaps to scroll position feels like a scrubber instead of a flight.
 
 ---
 
@@ -130,17 +256,42 @@ The emotional register is **cinematic + scientific + futuristic + elegant**:
 
 The site is a single survey session, ordered so that each section answers the question the previous one raises. The narrative is real: it is just the recruiter's question sequence, dressed.
 
-| Order | Codename | Plain name | Question it answers |
-|-------|----------|-----------|--------------------|
-| 1 | **First Light** | Home | Who is this, and what do they do? |
-| 2 | **Observer's Log** | About | How do they think, and are they any good? |
-| 3 | **The Atlas** | Skills | What can they actually operate? |
-| 4 | **Trajectory** | Experience | Where have they done it, and what changed because of them? |
-| 5 | **Catalogued Worlds** | Projects | Show me the work. |
-| 6 | **Instrument Bay** | What I Build / Lab | Can they build the hard parts, not just assemble? |
-| 7 | **Transmissions** | Writing | Can they explain things? Do they engage with the field? |
-| 8 | **Uplink** | Contact | How do I reach them, and are they available? |
-| — | **Mission Dossier** | Résumé | Give me the PDF for my ATS. |
+| Order | Codename | Plain name | Question it answers | Band |
+|-------|----------|-----------|--------------------|------|
+| 1 | **First Light** | Home | Who is this, and what do they do? | Ion Cyan |
+| 2 | **Observer's Log** | About | How do they think, and are they any good? | Nebula Magenta |
+| 3 | **The Atlas** | Skills | What can they actually operate? | Stellar Blue |
+| 4 | **Trajectory** | Experience | Where have they done it, and what changed because of them? | Solar Ember |
+| 5 | **Catalogued Worlds** | Projects | Show me the work. | Plasma Violet |
+| 6 | **Instrument Bay** | What I Build / Lab | Can they build the hard parts, not just assemble? | Aurora Green |
+| 7 | **Transmissions** | Writing | Can they explain things? Do they engage with the field? | Signal Gold |
+| 8 | **Uplink** | Contact | How do I reach them, and are they available? | Ion Cyan |
+| — | **Mission Dossier** | Résumé | Give me the PDF for my ATS. | — |
+
+### 4.1 The flight path
+
+Scroll progress `0 → 1` maps to a camera path through one continuous scene. **The reading order and the flight path are the same sequence** — this is the claim that justifies the spine's cost.
+
+| Scroll | Section | Where the camera is | What comes into frame |
+|--------|---------|--------------------|-----------------------|
+| 0.00–0.12 | First Light | Intergalactic void, nearly still | Distant galaxy sprites, drifting dust. The name resolves out of the dark |
+| 0.12–0.26 | Observer's Log | Drifting toward a nebula wall | Volumetric magenta clouds fill the frame; parallax deepens sharply |
+| 0.26–0.42 | The Atlas | Inside a star cluster | Surrounding stars resolve into the constellation globe — the section's own instrument |
+| 0.42–0.58 | Trajectory | Following a probe's flight | An ember ion-trail arcs past with burn markers at each achievement |
+| 0.58–0.78 | Catalogued Worlds | Arriving in a planet system | Three planets, sized by significance; the featured one nearest |
+| 0.78–0.88 | Instrument Bay | Docking at an orbital structure | A wireframe station; aurora rim-light |
+| 0.88–0.96 | Transmissions | Beside a relay array | Gold signal beams pulsing outward |
+| 0.96–1.00 | Uplink | Turned around, looking back | The whole system behind you, small — the descent inverted |
+
+**Why this ordering is load-bearing.** The camera decelerates as it arrives (Worlds gets the longest scroll distance, 0.20, because it is the most important content and deserves the most dwell). The final beat looks *back* along the path, which gives the site an ending rather than just a last section — the visitor sees the distance they covered, and the résumé CTA sits at that vantage point.
+
+**Camera rules:**
+
+1. Position is a Catmull-Rom spline through eight keyframes, sampled by eased scroll progress — never a straight lerp between section anchors, which reads as mechanical.
+2. The camera **trails** scroll with ~140ms of inertia (§3.6). It arrives; it does not track.
+3. Look-at target is its own spline, so the camera can turn independently of travel — this is what sells "flight" over "dolly".
+4. FOV is fixed. Animating FOV on scroll induces motion sickness in a meaningful fraction of viewers.
+5. Under `prefers-reduced-motion`, the camera **cuts** to each section's keyframe instead of interpolating (§16.4) — you still get the eight compositions, with zero continuous movement.
 
 **"First light"** is the astronomical term for the first image a new telescope produces — the instrument opening its eye. It is the correct name for a hero section and it earns its place.
 
@@ -202,7 +353,7 @@ Three real visitor types, with the path each must be able to take. Every one of 
 
 ### 6.1 The recruiter (60 seconds, mobile, distracted)
 
-1. Lands. Sees name, role, "4 years", and two CTAs above the fold. **≤1.8s to LCP.**
+1. Lands. Sees name, role, "4 years", and two CTAs above the fold. **≤3.0s to LCP on mobile** — from static HTML, before the scene exists.
 2. Taps **Download Résumé** — or scrolls once and sees the skills list.
 3. Bounces to the PDF or to LinkedIn.
 
@@ -332,16 +483,16 @@ Shared rules:
 
 ## 9. Hero Experience — First Light
 
-**Chosen concept: Option D — a minimal cinematic space scene where typography dominates**, with one restrained element of Option A (the sky resolving into focus as the instrument opens).
+**Chosen concept: typography-led composition over a live volumetric deep field** — Option D's editorial discipline in the foreground, Option A's cinematic depth behind it, made possible because the two are on *different layers* rather than competing for the same one.
 
 ### 9.1 Why this concept, and why not the others
 
 | Concept | Verdict | Reason |
 |---------|---------|--------|
-| **D — typography-led cinematic scene** | **Chosen** | The LCP element is text, so it can paint in <1s with zero JS. Editorial type is the strongest differentiator against neon space portfolios, degrades perfectly on mobile, and is the only option that satisfies both the 60-second recruiter and the peer engineer running Lighthouse. |
-| A — approach a planet from deep space | Partially adopted | A full fly-in needs WebGL or a long canvas animation before the hero is legible, pushing LCP past 2s and gating content behind a spectacle. We keep only its *feeling*: a 700ms focus-resolve of the sky, pure CSS, non-blocking. |
-| B — spacecraft navigating toward a scene | Rejected | Needs an illustrated or 3D craft (asset cost, load cost) and reads as game UI. Adds no information. |
-| C — interactive star/planet system as the navigation layer | Rejected | Makes navigation dependent on JS, hover, and discovery. Violates P4 and the a11y baseline. A recruiter should never have to *play* to find the résumé. |
+| **D + A layered — type in front, live scene behind** | **Chosen** | Gets both: the LCP element is still DOM text that paints from static HTML in <1s, *and* the visitor arrives into something vast and moving. Because the scene is a fixed backdrop rather than a container, it costs nothing on the critical path and can fail without touching the hero. |
+| A alone — a scripted fly-in to a planet | Rejected | A cinematic entry sequence gates content behind a spectacle and pushes LCP past 3s. The camera in R2 starts already in position: **arrival is instant, movement begins on scroll.** |
+| B — spacecraft navigating toward a scene | Rejected | Needs a modelled craft (asset + load cost) and reads as game UI. Adds no information. |
+| C — the 3D scene *is* the navigation | Rejected | Makes navigation depend on JS, WebGL, pointer precision and discovery. Violates P1 and P4. A recruiter must never have to fly somewhere to find the résumé. **This is the single most tempting mistake available in R2 and it is forbidden.** |
 
 ### 9.2 Composition (desktop ≥1280px)
 
@@ -390,13 +541,19 @@ Specific, backed by the actual Trajectory evidence (Next.js migration, headless 
 
 | Time | What happens | Mechanism |
 |------|-------------|-----------|
-| 0ms | HTML arrives with all hero text already in it. Void background, static pre-rendered star layer (CSS `radial-gradient` dots), nebula gradients in place. | Static Astro output, inlined critical CSS |
-| ~0–400ms | Fonts swap in; layout does not shift (`size-adjust` metric overrides on the fallback stack). | Self-hosted woff2 + preload + `font-display: swap` |
-| 120–820ms | **First light reveal:** the whole hero is masked by a vertical aperture wipe from center, and simultaneously the sky goes from `blur(6px) opacity(0)` to `blur(0) opacity(1)`. Type rises 12px into place with a 60ms stagger (eyebrow → name → role → lede → CTAs → socials → stats). | Pure CSS keyframes on load. No JS gate. |
-| ~800ms | LCP recorded (the name). | — |
-| 1000ms+ | `client:idle` hydrates the star-field canvas; it cross-fades over the static layer across 600ms and begins its ambient drift. If it never hydrates, the static layer stays and nothing looks wrong. | React island, canvas 2D |
+| 0ms | HTML arrives with all hero text in it. Void ground painted; the `field-deep` LQIP (32×18, inlined data URI) paints as a blurred deep-field wash. | Static Astro output, inlined critical CSS |
+| ~0–400ms | Fonts swap in; no layout shift. The full-resolution `field-deep.avif` decodes and cross-fades over its LQIP. | Self-hosted woff2 + preload; `fetchpriority="high"` on the one backdrop plate |
+| 120–820ms | **First light reveal:** an aperture wipe from centre; the backdrop resolves from `blur(6px)` to sharp; type rises 12px with a 60ms stagger (eyebrow → name → role → lede → CTAs → socials → stats). | Pure CSS keyframes on load. No JS gate. |
+| ~700–900ms | **LCP recorded — the name.** Still text, still from HTML, still before any JavaScript matters. | — |
+| ~1000ms | Browser goes idle. `ScrollDriver` (2KB) is already live; the scene chunk begins downloading. | `client:idle` |
+| ~1600–2200ms | Scene initialises, warms one frame off-screen, then **cross-fades over the art still across 600ms**. The camera is already at keyframe 0 — nothing flies in, nothing announces itself. The visitor's read is uninterrupted. | R3F, one lazy chunk |
+| never | If the scene fails, is blocked, is skipped for tier/preference, or loses context — the art still remains and the hero is complete. | The art layer never unmounts |
 
-**Critical rule:** nothing in this timeline blocks on JavaScript. There is no preloader, no splash, no "Enter portfolio" gate. The current live site's simulated terminal boot screen is removed — it adds a mandatory interaction and delays content for theatrical effect, which contradicts both P1 and the performance targets.
+**Critical rules, unchanged from R1 and now more important:**
+
+- **Nothing in this timeline blocks on JavaScript.** No preloader, no splash, no "Enter portfolio" gate, no progress bar. A 230KB scene chunk is *exactly* the pressure that makes teams add a loading screen; the answer is the art layer, not a spinner.
+- **The scene must not animate on arrival.** The camera sits at keyframe 0 and waits for scroll. A hero that moves before the visitor acts steals attention from the sentence they are trying to read.
+- **The cross-fade must be imperceptible.** If you can see the moment the scene takes over, the art plate and the scene's opening composition are not matched closely enough — regenerate the plate from a screenshot of the scene's keyframe 0.
 
 ### 9.4 First scroll
 
@@ -417,7 +574,7 @@ The hero does not pin, snap, or scroll-jack. On first scroll:
 
 **`prefers-reduced-motion: reduce`:** no aperture wipe, no blur resolve, no stagger, no parallax, no scroll hint, no canvas hydration at all (the static star layer is final). Content appears immediately at full opacity. A single 200ms fade on the hero group is the only motion retained.
 
-**Mobile (<768px):** `min-height: 88svh` (never `100vh`); portrait above the type at 160px, dropped under 480px; `display-xl` clamps down to 3rem; CTAs become full-width stacked buttons with 12px gap; stat strip becomes a 3-column mono row at 11px; **star-field canvas never loads** (`client:media="(min-width: 768px)"`) — mobile keeps the static CSS star layer and the nebula gradients, which is indistinguishable in a screenshot and free.
+**Mobile (<768px):** `min-height: 88svh` (never `100vh`); portrait above the type at 160px, dropped under 480px; `display-xl` clamps down to 3rem; CTAs become full-width stacked buttons with 12px gap; stat strip becomes a 3-column mono row at 11px. **The scene still loads** (R2, owner's decision) at the low tier — 3,000 particles, DPR 1.0, no bloom — over a half-resolution art plate, with opaque rather than blurred panels (§24.2).
 
 ### 9.7 Technical requirements, a11y, performance
 
@@ -425,7 +582,7 @@ The hero does not pin, snap, or scroll-jack. On first scroll:
 
 **Accessibility.** `<h1>` contains the full accessible name "Hi, I'm Shubham Tiwari — Frontend Engineer" (the visual line break is `<span>`-based, not two headings). Canvas is `aria-hidden="true"` and `role="presentation"`. Corner ticks and rules are CSS pseudo-elements, invisible to AT. Stat strip is a `<dl>`. Contrast per §25.2: name ~16.4:1, lede ~7.3:1, mono eyebrow ~4.9:1 — all to be verified with a checker in Phase 1.
 
-**Performance.** Hero ships **0KB of JS** for its content. LCP target ≤1.2s desktop / ≤1.8s mobile on 4G. The canvas island is ≤6KB gz, hydrates after idle, and never competes with LCP. No layout shift: portrait and stat strip have reserved dimensions. Budget: hero total (HTML+CSS+fonts+portrait) ≤180KB on desktop, ≤120KB on mobile.
+**Performance.** Hero ships **0KB of JS** for its content — the heading, lede, CTAs and stats are all static HTML. LCP target ≤2.2s desktop / ≤3.0s mobile, and the LCP element is the name. The scene chunk hydrates after idle and never competes with it (§9.3). No layout shift: portrait, stat strip and the fixed backdrop all reserve or sit outside flow. Budget: hero-critical bytes (HTML+CSS+fonts+portrait+hero art plate) ≤400KB desktop, ≤300KB mobile.
 
 ---
 
@@ -454,7 +611,7 @@ The most important section on the site. Every decision here favours **evidence o
 
 **Featured: `SHB-1b` Payload CMS.** Selection rule — feature the project with the most demonstrable engineering depth, not the trendiest. Payload CMS spans auth, an admin surface, media handling, analytics, and cache revalidation; that breadth is the most to talk about. Gemini Zentauri is the strong second and gets a standard card.
 
-Featured layout (≥1024px): full-width panel, asymmetric split — 7 columns of **gradient surface plate** (see §10.6: a 16:10 procedural gradient panel with the world's sphere composited into it, in a hairline frame with corner ticks) and 5 columns of record. The record is a **data table**, not prose: designation, status pill, stack chips, year, then the 80-word description, then one button (`OPEN LIVE ↗`). The featured panel is 1.4× the height of a standard card and gets the largest sphere and the most saturated plate.
+Featured layout (≥1024px): full-width panel, asymmetric split — 5 columns of record beside 7 columns of **open space through which the featured planet is visible in the scene** (§10.6). Where the scene is unavailable, those 7 columns carry the planet still (`planet-{slug}-still.avif`) in a hairline frame with corner ticks. The record is a **data table**, not prose: designation, status pill, stack chips, year, then the 80-word description, then one button (`OPEN LIVE ↗`). The featured panel is 1.4× the height of a standard card and gets the largest sphere and the most saturated plate.
 
 All three cards are populated (C4 resolved), so the section is a featured panel plus a 2-up grid.
 
@@ -505,28 +662,38 @@ A 2-column grid ≥1024px, 1 column below. Each card is a single `<a>` wrapping 
 - **View Transitions** now serve a narrower purpose: continuity between the home route and `/instruments`, `/transmissions`, and `/dossier`, with `transition:persist` on the cosmos so the sky never flashes. That persistence — not the removed card→case-study pair — is the real justification (§19.5).
 - **Not allowed:** 3D tilt on cursor move, magnetic cursors, parallax inside cards, flip animations. Each costs jank and buys nothing.
 
-### 10.6 Visual strategy — gradient plates, zero raster (C2)
+### 10.6 Visual strategy — real 3D planets (R2)
 
-**Decision: no project screenshots anywhere.** Screenshots of a CMS admin panel or a portfolio homepage read as clutter at card size — thumbnails of dense UI become grey mush, they date instantly, and three of them in a row fight the site's own visual language. The theme's procedural treatment replaces them entirely.
+Projects are the payoff beat of the flight path (§4.1, scroll 0.58–0.78, the longest dwell on the site). Each project is a **textured 3D planet in the live scene**, and the DOM record sits in a panel beside it.
 
-Each world gets a **gradient surface plate**: a 16:10 panel built from two CSS radial gradients plus the world's procedural sphere composited into it, all seeded deterministically from the project slug so each project has a stable, distinct identity.
+**Still no screenshots** (C2 stands): screenshots of a CMS admin panel become grey mush at card size and date instantly. R2 replaces R1's flat CSS gradient plate with something far better — an actual world.
 
 | Element | Implementation |
 |---------|---------------|
-| Plate ground | `radial-gradient` in `oklab` from a slug-derived hue toward `--color-surface-1`, at 8–14% saturation — muted enough to sit under text |
-| Sphere | The existing `WorldSphere` (§10.2), composited at 40% of plate height, offset off-center |
-| Depth | One blurred plasma bloom behind the sphere; a hairline horizon line at the lower third |
-| Frame | Hairline border + corner ticks, matching every other panel |
-| Hover | Sphere gains an ion rim-light and rotates 3°; the plate's bloom brightens 10% |
-| Featured variant | 1.4× height, larger sphere, one thin elliptical ring, slightly higher saturation |
+| Geometry | `SphereGeometry`, 64 segments desktop / 48 tablet / 32 mobile |
+| Surface | AI-generated equirectangular map, `planet-{slug}.avif` (2048×1024 desktop, 1024×512 mobile), hue-anchored to the Plasma Violet band with per-planet variation |
+| Lighting | One directional key light in the band hue + a rim/limb light, so each planet reads as a lit sphere rather than a textured ball |
+| Atmosphere | A slightly larger back-face sphere with a fresnel shader — the thin bright limb that makes planets look real |
+| Rings | Featured world (`SHB-1b`) only, one thin ring; a ring on all three would flatten the hierarchy |
+| Idle motion | Slow axial rotation, ~0.02 rad/s, different per planet so they never look synchronised |
+| Scale | Featured planet ~1.6× the others and nearest the camera — significance expressed spatially (P2) |
+| Hover / focus | Planet scales 1.04×, limb light brightens, rotation eases toward the camera. Driven from the DOM card, so it works on keyboard focus too |
+| Selection | Focusing a card eases the camera's look-at toward that planet over 560ms — the one place scroll is *not* the only camera input |
 
-**Consequences, all favourable:** the project image budget becomes **zero bytes**; there is nothing to capture, crop, re-export, or keep current (C2 disappears as a task); CLS is structurally impossible since plates are pure CSS with a fixed `aspect-ratio`; and the section stays coherent with the cosmos instead of embedding three rectangles of unrelated UI.
+**The DOM side is unchanged and still complete.** Each project is a `WorldCard` — one `<a>` wrapping designation, name, one-liner, description, stack chips, year, status, live link — exactly as in R1. The planets are a parallel visual expression of records that fully exist in HTML (§25.0).
 
-**Accessibility:** plates are decorative and `aria-hidden`. The project is always identified by its text name and designation, and the hue conveys nothing — it is identity, not information, so no colour-dependence is introduced.
+**Fallbacks, all designed states:**
 
-**The only raster images left on the entire site** are the portrait, the Orbit poster, the 2KB grain tile, and build-generated OG images (§29).
+| Condition | What renders |
+|-----------|-------------|
+| No WebGL / init failure / lowest tier | `planet-{slug}-still.avif` (800×800) inside the card's hairline frame — a pre-rendered still of that exact planet |
+| Mobile | Scene planets at 32 segments, 1024px textures, no atmosphere shader |
+| `prefers-reduced-motion` | Planets render but do not rotate; camera cuts rather than eases on focus |
+| Images blocked | The R1 procedural CSS sphere (radial-gradient limb + terminator, seeded from the slug) — zero bytes, still identifiable |
 
-**Videos:** none. If a demo video is ever added it must be muted, `preload="none"`, poster-backed, and behind a click-to-play — never autoplaying.
+**Accessibility:** planets are `aria-hidden` decoration. Identity is always the text name and designation; planet size encodes significance but is *also* stated by `featured` ordering and the "Featured" label, so nothing is size-only. No planet is focusable — the card is.
+
+**Videos:** none. If a demo video is ever added it must be muted, `preload="none"`, poster-backed, click-to-play — never autoplaying.
 
 ### 10.7 Loading states
 
@@ -579,9 +746,26 @@ Three constellations, each with a codename and a plain label:
 
 **Constellation lines encode real relationships**, not decoration: React→TypeScript, React→Next.js, React→Astro, Next.js→Vercel, Node.js→Express, Express→REST APIs, Payload CMS→MongoDB, Playwright→Accessibility. A visitor tracing a line learns something true about the stack. Lines are 1px, `--hairline`, and never cross constellation boundaries except at one deliberate bridge (Next.js→Vercel) that shows frontend meeting delivery.
 
+### 11.3a The constellation globe (R2)
+
+At scroll 0.26–0.42 the camera is inside a star cluster, and the surrounding stars resolve into a **rotatable 3D constellation globe** — the Atlas's own instrument, rendered in the scene rather than as a flat SVG.
+
+| Aspect | Implementation |
+|--------|---------------|
+| Layout | The 24 skills are placed on a sphere by converting their hand-authored 2D coordinates (§11.2) to spherical coordinates, so the constellations stay in their authored relative arrangement rather than being re-scattered |
+| Stars | Instanced points; radius and emissive intensity from tier (CORE 7 / WORKING 5 / FAMILIAR 3), tinted with the Stellar Blue band |
+| Lines | `LineSegments` between real relationships (§11.2), 1px, 18% alpha, brightening to 40% when either endpoint is active |
+| Labels | **DOM, not 3D.** CORE labels are HTML positioned by projecting the star's world position to screen space each frame. 3D text would be unreadable, unselectable and untranslatable |
+| Rotation | Pointer drag on desktop; slow idle auto-rotation (0.05 rad/s) otherwise. **Touch never rotates it** — a swipe must always scroll the page (P4) |
+| Two-way highlight | Hovering a list row highlights the star and its lines; hovering a star highlights the row. Same `data-skill` mechanism as R1's `AtlasLink`, extended to the globe |
+
+**Fallbacks:** below `md`, or with no WebGL, or on the lowest tier, the globe is replaced by R1's **server-rendered SVG constellation map** — which is already specified, already accessible, and already built in Phase 3. Under `prefers-reduced-motion`, the globe renders but does not auto-rotate.
+
+**The list remains the canonical accessible path** (§11.4): the globe adds zero tab stops, and no skill exists only in 3D.
+
 ### 11.3 Visual composition — map plus list, both always present
 
-This is the section's key decision: **the star map and a plain grouped list coexist on desktop; the list is the source of truth.**
+This is the section's key decision: **the star map and a plain grouped list coexist on desktop; the list is the source of truth.** In R2 the "map" is the 3D globe on capable devices and the SVG map everywhere else — the list side is identical either way.
 
 ```text
 ┌───────────────────────── 7 cols ──────────────┬────── 5 cols ────────┐
@@ -791,9 +975,11 @@ Each instrument is a panel: designation, name, one-line claim, 60–120 word exp
 
 **Exactly one interactive experiment exists on this site.** More than one turns a portfolio into a toy box.
 
-**Chosen: an n-body orbit simulation on Canvas 2D.** ~200 bodies, semi-implicit Euler integration, softened gravity, seeded initial conditions, cursor acting as an optional attractor. It renders as trailing light paths over the void — visually cohesive with the rest of the site because it is literally orbital mechanics.
+**Chosen: an n-body orbit simulation in WebGL, reusing the site's existing three.js chunk.** ~2,000 bodies (an order of magnitude more than R1's Canvas 2D plan), semi-implicit Euler integration, softened gravity, seeded initial conditions, cursor as an optional attractor, rendered as instanced points with trailing paths.
 
-**Why Canvas 2D and not WebGL/R3F:** 200 bodies with trails is comfortably inside Canvas 2D's budget, and the honest answer to "why not WebGL" is that it isn't needed — which is itself the engineering point the section is making (P6). WebGL/R3F remains an explicitly optional Phase 5b item, to be taken **only** if the effect proves impossible in Canvas, and it must then be desktop-only, lazily imported, and under 120KB gz.
+**Why WebGL here in R2, when R1 chose Canvas 2D.** R1's reasoning was that 200 bodies did not need a GPU and the honest engineering answer was to not reach for one. That logic inverted the moment the spine adopted three.js: the library is **already downloaded and parsed** on this route, so a WebGL simulation costs ~14KB of incremental code while a Canvas 2D one would cost a second renderer plus its own frame loop. Reusing what is already there is now the cheaper *and* more capable choice — and 2,000 gravitationally-interacting bodies is a visibly better demonstration than 200.
+
+The self-reported telemetry is what makes this an engineering exhibit rather than a toy: frame time, body count, DPR and the degradation state are all displayed live beside the canvas.
 
 **The experiment displays its own instrumentation** — live FPS, body count, frame time, and DPR — as mono readouts beside the canvas. This is both thematically perfect (an instrument reporting its own telemetry) and a genuine Phase 5 performance demonstration.
 
@@ -892,12 +1078,15 @@ Below Uplink: a hairline-topped footer with `SHUBHAM TIWARI` wordmark, `© 2026 
 
 | Level | Name | What | Where used | Cost ceiling |
 |-------|------|------|-----------|-------------|
-| **L1** | Ambient | Star drift + twinkle, nebula gradient drift | The single persistent background layer only | 1 canvas, ≤4ms/frame, paused when hidden |
+| **L0** | **Flight** *(new in R2)* | The scroll-driven camera path, band cross-fade, and everything inside the scene | The single WebGL scene only | ≤16ms/frame desktop, ≤33ms mobile; paused when hidden |
+| **L1** | Ambient | Nebula drift, star twinkle, relay-beam pulse — all *within* the scene | Inside L0's canvas; no DOM ambient motion at all | Counted inside L0's frame budget |
 | **L2** | Interaction | Hover, focus, active, copy confirmation | Every interactive element | ≤200ms, CSS only |
-| **L3** | Navigation | Section entrances, rail active state, spine draw, scroll-linked parallax | Section boundaries, nav | ≤560ms, once per element |
-| **L4** | Storytelling | Hero first-light reveal, cross-route View Transitions | Hero (once per load), route changes | ≤900ms, ≤2 occurrences per session |
+| **L3** | Navigation | Section entrances, rail active state, spine draw | Section boundaries, nav | ≤560ms, once per element |
+| **L4** | Storytelling | Hero reveal, art→scene cross-fade, cross-route View Transitions | Arrival (once per load), route changes | ≤900ms, ≤2 per session |
 
-**Where each level is allowed.** L1 exists exactly once, site-wide. L2 is everywhere and is the only level allowed to respond to input. L3 fires once per element per page load. L4 is reserved for the two moments that define the experience — arrival, and travelling to a world.
+**L0 is new and it changes the hierarchy's shape.** In R1, ambient motion was a decorative afterthought with a 4ms budget. In R2 the flight *is* the experience, so it gets the largest budget on the site — and in exchange, **all DOM-level ambient motion is banned**. There is no drifting gradient, no pulsing element, no floating card anywhere in the DOM. The scene moves; the interface stays still. That separation is what keeps the composition readable instead of soupy.
+
+**Where each level is allowed.** L0 exists exactly once, site-wide, and only on routes that mount the scene (`/` and `/instruments`). L2 is everywhere and is the only level allowed to respond to input. L3 fires once per element per page load. L4 is reserved for arrival and route changes.
 
 **Explicitly forbidden:** L4-scale motion at L2 frequency (e.g. cinematic transitions on every hover), text scramble/typewriter effects, cursor followers, magnetic buttons, 3D card tilt, scroll-snap on the home route, and any animation that moves an element more than 24px on entrance.
 
@@ -920,45 +1109,69 @@ Below Uplink: a hairline-topped footer with `SHUBHAM TIWARI` wordmark, `© 2026 
 
 ### 16.4 Reduced motion, mobile, and low-power
 
-**`prefers-reduced-motion: reduce`** — implemented as one global rule plus per-component opt-ins, never forgotten per-component:
+**`prefers-reduced-motion: reduce`** — one global rule plus explicit per-level handling:
 
-- L1: **off entirely.** The star-field canvas does not hydrate; the static CSS star layer is final. Nebula gradients are static.
-- L2: retained but reduced to 120ms opacity/color changes. Feedback must survive — removing it harms usability.
-- L3: replaced by a single 200ms opacity fade with no transform and no stagger. Parallax off. Spine renders fully drawn.
-- L4: off. Hero renders final-state immediately; View Transitions disabled.
+- **L0: the camera stops interpolating.** This is the critical one. The scene still mounts and still renders all eight compositions, but the camera **cuts** to a section's keyframe when that section becomes active instead of gliding. You get the imagery with zero continuous movement. Nebula drift, twinkle and beam pulses all stop; the scene becomes, in effect, eight beautiful stills.
+- L1: off (folded into L0 above).
+- L2: retained, reduced to 120ms opacity/colour changes. Feedback must survive — removing it harms usability.
+- L3: a single 200ms opacity fade, no transform, no stagger. Spine renders fully drawn.
+- L4: off. Hero renders final-state immediately; the art→scene cross-fade becomes an instant swap; View Transitions disabled.
+- Band cross-fades become instant switches at section boundaries.
 - Smooth anchor scrolling off (instant jumps).
-- The Orbit experiment does not auto-start; it shows a poster and a `START SIMULATION` button.
+- Orbit does not auto-start: poster plus a `START SIMULATION` button.
 
-**Mobile (<768px)** — motion reduction independent of user preference: no canvas, no parallax, no scroll-linked animation, entrances shortened to 320ms with 40ms stagger. Rationale: scroll-linked and canvas work on low-end Android is the top cause of jank, and the effects are barely perceptible at that size.
+> **Why the scene still mounts under reduced motion.** Removing it entirely would be easier, but `prefers-reduced-motion` means *reduce motion*, not *remove imagery* — and users who set it for vestibular reasons still deserve the designed experience. A static camera has no vestibular cost. On the lowest device tier, however, reduced-motion **does** skip the scene and keep the art layer, because there the win is battery and heat rather than motion.
 
-**Low-power / low-end detection** (desktop and tablet only, applied at island init):
+**Device tier ladder** (evaluated once at scene mount, in `useSceneTier`):
 
 ```text
-if (prefers-reduced-motion) → static, no canvas
-else if (navigator.hardwareConcurrency <= 4 || navigator.deviceMemory <= 4) → 400 stars, 30fps cap, no parallax
-else if (viewport < 768px) → no canvas
-else → 900 stars, 60fps, parallax on
+if (!webglSupported)                          → art layer only, no canvas
+else if (reducedMotion && tier === 'low')     → art layer only, no canvas
+else if (reducedMotion)                       → scene mounts, camera CUTS, no ambient motion
+else if (hardwareConcurrency <= 4
+         || deviceMemory <= 4
+         || saveData)                         → LOW:  3,000 stars, DPR 1.0, no bloom, 30fps cap
+else if (viewport < 768px)                    → LOW:  same as above (mobile default)
+else if (viewport < 1024px)                   → MID:  6,000 stars, DPR 1.5, no bloom
+else                                          → HIGH: 12,000 stars, DPR 1.75, bloom 0.9
 ```
 
-Plus runtime degradation: if rolling mean frame time exceeds 20ms for 2s, halve the star count once; if it exceeds 26ms again, stop the loop and keep the last frame. Degradation is one-way per session — never oscillate.
+`navigator.connection.saveData` is respected: a visitor asking for less data does not get a 230KB scene chunk — they get the art layer.
+
+**Runtime degradation, one-way per session (never oscillate):**
+
+| Trigger | Action |
+|---------|--------|
+| Rolling mean frame time > 20ms for 2s | Halve star count, drop one nebula layer |
+| Still > 20ms for 2s | Disable bloom, cap DPR at 1.0 |
+| Still > 26ms for 2s | Freeze the camera, keep the last frame rendered |
+| `webglcontextlost` | Fade the canvas out, reveal the art layer, do not attempt recovery |
+
+Every degradation step is logged once to the console in development so the tier ladder is debuggable, and never logged in production.
 
 ---
 
 ## 17. Visual System
 
-### 17.1 The background system (the "cosmos")
+### 17.1 The backdrop stack
 
-One system, mounted once in the base layout, fixed, behind everything, on every route.
+One system, mounted once in `BaseLayout`, fixed, behind everything, persisting across routes via `transition:persist`. Four layers:
 
 | Layer | z | Implementation | Cost | Mobile |
 |-------|---|---------------|------|--------|
-| Void | 0 | `background: var(--color-void)` on `<body>` | 0 | Same |
-| Nebula | 1 | 2 large `radial-gradient`s (plasma at 6% alpha top-left, ion at 4% alpha bottom-right), each drifting via a 24–36s `transform: translate3d` loop | ~0 | Static, no drift |
-| Static stars | 2 | Pre-rendered CSS: 3 tiled `radial-gradient` dot layers at 3 sizes/opacities. Always present. | ~0 | **This is the entire star field on mobile** |
-| Live stars | 2 | Canvas 2D island, cross-fades over the static layer on hydration | ≤4ms/frame | Not loaded |
-| Grain | 3 | 128×128 tiling PNG (~2KB) at 3% opacity, `pointer-events: none` | ~2KB | Same |
+| Void | `--z-void` | `background: var(--color-void)` on `<body>` | 0 | Same |
+| **AI art** | `--z-art` | The band's backdrop still (§3.4), `object-fit: cover`, cross-faded between bands on scroll. A 32×18 LQIP data-URI paints instantly. **Always mounted, never removed.** | ≤180KB per plate, AVIF, lazy after the first | Half-res variants |
+| **WebGL scene** | `--z-scene` | The single `<Canvas>` (§19.2a). Opacity 0 → 1 over 600ms once ready. | ≤230KB gz, ≤16ms/frame | Reduced fidelity, still present |
+| Grain | `--z-grain` | 128×128 tiling PNG (~2KB) at 3% opacity, `pointer-events: none` | ~2KB | Same |
 
-The static-star layer is the reason this system degrades perfectly: the live canvas is a *refinement*, never a requirement. If it fails to hydrate, is blocked, or is skipped for preference/viewport reasons, the sky still looks intentional.
+**The art layer is the load-bearing part of this design, not a nicety.** It is why the spine is safe to ship:
+
+- It paints before any JavaScript, so the page is never black while three.js downloads.
+- It is the complete no-WebGL experience — for blocked WebGL, a failed context, `prefers-reduced-motion` on a low tier, or an init error.
+- It survives **context loss**. A suspended mobile tab or a GPU reset kills the canvas; because the art never unmounts, the visitor sees a still instead of a void. Handle `webglcontextlost` by fading the canvas out, not by unmounting anything.
+- The grain sits *above* the canvas deliberately: it unifies rendered pixels and generated art into one image, so the handover between them is imperceptible.
+
+**Bloom is the only post-processing** (§3.2), desktop-only and dynamically imported. Applied to bright emitters — stars, planet limbs, the probe trail — at fixed intensity with band-tinted hue. Never near text.
 
 ### 17.2 Panels, hairlines, corner ticks
 
@@ -1012,26 +1225,39 @@ Earlier chapters of this document use readable shorthand. Canonical mapping:
 ### 18.2 Token set
 
 ```text
-COLOR — void & surfaces
+COLOR — void & surfaces  (unchanged in R2)
 --color-void          #04060D    page ground
 --color-surface-0     #080C16    lowest panel
 --color-surface-1     #0D1322    default panel
 --color-surface-2     #141C2E    raised / hover panel
 
-COLOR — ink
+COLOR — ink  (NEVER band-tinted: reading must not get harder as you travel)
 --color-ink-hi        #EAF0FA    headings, key values      (~16.4:1 on void)
 --color-ink-mid       #9BA8C2    body copy                 (~7.3:1 on surface-0)
 --color-ink-low       #7C89A5    labels, captions          (~4.9:1 on surface-0)
 
-COLOR — accents (one job each)
---color-ion           #7DE2FF    interactive, live, active, focus   (~13:1 on void)
---color-plasma        #A78BFA    narrative & nebula, non-interactive
---color-ember         #FFB454    primary CTA, metrics, "you are here" (~10.9:1 on void)
---color-danger        #FF8080    errors only
+COLOR — the eight spectral bands (§3.3)
+--band-ion            #7DE2FF    First Light, Uplink   O III / starlight   (~13:1)
+--band-magenta        #FF5FA2    Observer's Log        H-alpha             (~7.4:1)
+--band-blue           #8FB8FF    The Atlas             O/B-type stars      (~9.8:1)
+--band-ember          #FFB454    Trajectory            G-type / ion engine (~10.9:1)
+--band-violet         #A78BFA    Catalogued Worlds     reflection nebula   (~7.9:1)
+--band-aurora         #5BE9B9    Instrument Bay        O III aurora        (~11.6:1)
+--band-gold           #FFD76E    Transmissions         sodium line         (~13.1:1)
+--color-danger        #FF8080    errors only — not a band, never travels
 
-COLOR — derived
---color-hairline      color-mix(in oklab, var(--color-ion) 12%, transparent)
---color-hairline-hi   color-mix(in oklab, var(--color-ion) 24%, transparent)
+COLOR — the live band (the mechanism)
+--band                the active band hue. Set on <body> per section and
+                      cross-faded by the scroll controller. EVERY accent in the
+                      DOM resolves through this, so one write re-tints the page.
+--band-rgb            "125 226 255" — same value, space-separated channels, so
+                      the scene can read it as a uniform without re-parsing hex.
+
+COLOR — derived (all band-relative)
+--color-hairline      color-mix(in oklab, var(--band) 12%, transparent)
+--color-hairline-hi   color-mix(in oklab, var(--band) 24%, transparent)
+--color-accent        var(--band)                     links, active, focus
+--color-accent-dim    color-mix(in oklab, var(--band) 60%, var(--color-ink-mid))
 
 FONT
 --font-display  "Instrument Serif", "Iowan Old Style", Georgia, serif
@@ -1074,8 +1300,16 @@ MOTION
 --stagger          60ms
 
 Z-INDEX (plain custom properties, not a Tailwind namespace)
---z-void 0   --z-nebula 1   --z-stars 2   --z-grain 3
+--z-void 0   --z-art 1   --z-scene 2   --z-grain 3
 --z-content 10   --z-rail 40   --z-nav 45   --z-overlay 60   --z-skip 90
+   art   = AI-art still + LQIP  (the no-WebGL fallback, always present)
+   scene = the single WebGL canvas, cross-faded over the art
+
+SCENE (read by the R3F layer, not by CSS)
+--scene-dpr-max       1.75 desktop / 1.0 mobile   device pixel ratio ceiling
+--scene-stars         12000 desktop / 3000 mobile particle count
+--scene-bloom         0.9 desktop / 0 mobile      post-processing intensity
+--scene-camera-lag    140ms                       camera inertia behind scroll
 
 BREAKPOINTS — keep Tailwind v4 defaults; our tiers map onto them:
 xs 30rem/480 (added)   md 48rem/768   lg 64rem/1024   xl 80rem/1280   2xl 96rem/1536
@@ -1103,14 +1337,39 @@ For each technology: why, where, where not, cost, mobile, fallback.
 **Fallback.** None needed.
 **Output mode.** `output: 'static'`. No SSR adapter — nothing on this site needs a server. This keeps hosting trivial and CDN-cacheable.
 
-### 19.2 React 19 — islands only
+### 19.2 React 19 — the interactive layer
 
-**Why.** Already installed; needed for the 6 stateful widgets; the owner's existing component-library work is React, so `/instruments` demos are React.
-**Where.** Exactly the islands listed in §20.2. Nothing else.
-**Where not.** Never for layout, text, lists, cards, navigation markup, or anything that renders identically on every load. A React component that has no state and no effects must be an `.astro` component instead.
-**Cost.** ~11KB gz shared runtime (react + react-dom/client), loaded once, only when at least one island on the route hydrates.
-**Mobile.** Only the rail scroll-spy and copy-email islands hydrate on mobile (~5KB of island code). Home mobile total stays inside the 60KB JS budget.
+**Why.** The owner asked for React to own interactivity and complex components, and R2's centrepiece — a scroll-driven scene graph — is exactly the case where React's declarative model pays for itself: R3F lets the scene be described as components with props instead of imperative `scene.add()` bookkeeping, which is the difference between a maintainable scene and a 600-line `init()`.
+**Where.** The scene graph and every island in §20.2: the scene, planets, the skills globe, the simulation, the nav, and the small controls.
+**Where not.** Still never for static text, headings, prose, records, or lists. Content is `.astro` and lands in the HTML — that is what keeps P1 true. A React component with no state, no effects and no 3D must be an `.astro` component.
+**Cost.** ~11KB gz for react + react-dom/client, shared across all islands on the route.
+**Mobile.** Mobile now hydrates the scene too (owner's decision), at reduced fidelity — see §24.2.
 **Fallback.** Every island's server-rendered HTML is the fallback and must be independently correct.
+
+### 19.2a three.js + React Three Fiber — the spine
+
+**This reverses Revision 1's rejection of WebGL.** R1 argued Canvas 2D could cover the effects and that ~150KB was unjustified. That was correct for R1's brief and wrong for R2's: a *continuous camera path through a volumetric scene with depth-sorted particles, real perspective and post-processed bloom* has no cheaper medium. Canvas 2D cannot do perspective projection of 12,000 depth-sorted points at 60fps, and faking it in CSS transforms collapses the moment the camera rotates.
+
+| | |
+|---|---|
+| **Why** | The spine (§4.1) is the product. No other technology delivers it. |
+| **Where** | Exactly one `<Canvas>`, mounted once in `BaseLayout`, persisting across routes via `transition:persist`. Plus the Orbit simulation on `/instruments`. |
+| **Where NOT** | Never for text, UI, layout, navigation, or anything a visitor must read or click. Never a second canvas (P5). Never a per-section scene. |
+| **Cost** | three.js ~150KB gz + R3F ~40KB gz + a hand-picked drei subset ~20KB gz. This is the single largest line in the budget and is accepted deliberately. |
+| **Mobile** | Loads, at reduced fidelity: 3,000 particles, DPR 1.0, no bloom, half-res textures (§24.2). |
+| **Fallback** | The AI-art still layer beneath it, which is always rendered and never removed. |
+
+**Import discipline — this is how the budget is actually held.** Never `import * from 'three'` and never `import { ... } from '@react-three/drei'` wholesale; both defeat tree-shaking and can double the bundle.
+
+- Import named three.js modules only (`Vector3`, `CatmullRomCurve3`, `Points`, `ShaderMaterial`, …).
+- Cherry-pick drei by deep path (`@react-three/drei/core/Points`), and hold the allowed list to: `Points`, `PointMaterial`, `useTexture`, `Preload`. Anything beyond that needs a Decision log entry.
+- Post-processing (`@react-three/postprocessing`) is desktop-only and dynamically imported, so mobile never downloads the bloom pass.
+- The whole scene is one lazy chunk, imported after first paint. It must never appear in the initial JS.
+- CI asserts the scene chunk's gzipped size (§26.4). A three.js bundle grows silently otherwise.
+
+### 19.2b Scroll driver — CSS-first, JS where it must be
+
+Scroll progress is needed by both the DOM (band tinting, section state) and the scene (camera position). One source of truth: a single `requestAnimationFrame` loop that reads `window.scrollY` **once per frame** (never per listener) and writes both a CSS custom property and a shared ref the scene reads. No scroll library — no Lenis, no GSAP ScrollTrigger, no smooth-scroll hijack (P4, and §19.8 still rejects them).
 
 ### 19.3 TypeScript (strict) — already configured
 
@@ -1139,22 +1398,23 @@ For each technology: why, where, where not, cost, mobile, fallback.
 **Mobile.** Constellation SVG is dropped for the list; the spine SVG is replaced by a CSS border.
 **Fallback.** Inline SVG needs none; `<img>`-referenced SVG would, so all SVG is inlined.
 
-### 19.7 Canvas 2D — the only imperative renderer
+### 19.7 Canvas 2D — no longer used
 
-**Why.** The star field (~900 moving points) and the Orbit experiment (~200 bodies with trails) exceed what SVG/DOM can animate smoothly, and both are pure decoration/experiment, so a non-DOM renderer costs nothing accessibility-wise (their content equivalents are text).
-**Where.** `StarField` (all routes, desktop/tablet), `Orbit` (`/instruments` only, desktop only).
-**Where not.** Never for text, never for layout, never for anything a visitor needs.
-**Cost.** ≤4ms/frame star field, ≤10ms/frame Orbit, both capped and self-degrading.
-**Mobile.** Neither loads.
-**Fallback.** Static CSS star layer; static poster image for Orbit.
+R1 made Canvas 2D the imperative renderer for the star field and the Orbit simulation. **R2 has no Canvas 2D at all:** both moved into WebGL, because three.js is loaded anyway and a second renderer with its own frame loop would be pure duplication (§14.3).
+
+This is worth recording rather than silently dropping, because it is the one place where adopting a *heavier* library made the codebase *simpler* — one renderer, one frame loop, one set of tier and degradation rules, instead of two of each.
+
+**If the spine is ever cut,** Canvas 2D becomes the right answer again for both, and R1's specification for them is recoverable from this document's git history.
 
 ### 19.8 Explicitly rejected dependencies
 
 | Technology | Verdict | Reasoning |
 |-----------|---------|-----------|
-| **Framer Motion / Motion One** | **Do not add** | Every animation in §16.3 is expressible in CSS keyframes, transitions, or scroll-driven animations. A 15–40KB animation runtime to do what `@keyframes` does contradicts P6 and the JS budget. *Sole exception:* the owner's own component-library demos on `/instruments` may pull Framer Motion, since demonstrating that library is the point — and it loads only on that route. |
-| **Three.js / React Three Fiber** | **Deferred, likely never** | ~150KB+ gz for effects Canvas 2D already covers here. Permitted only as optional Phase 5b if Orbit provably cannot be built in Canvas — desktop-only, dynamically imported, ≤120KB gz. |
-| **GSAP + ScrollTrigger** | Rejected | Same reasoning as Framer Motion; scroll-driven CSS covers our two scroll-linked effects. |
+| **Framer Motion / Motion One** | **Do not add** | Every DOM animation in §16.3 is expressible in CSS keyframes, transitions, or scroll-driven animations, and scene animation belongs to R3F's own frame loop. A 15–40KB DOM animation runtime would duplicate both. *Sole exception:* the owner's own component-library demos on `/instruments`, since demonstrating that library is the point — and it loads only on that route. |
+| ~~Three.js / React Three Fiber~~ | **ADOPTED in R2 — see §19.2a** | R1 rejected this. R2's brief makes the scene the product, and no cheaper medium produces a continuous camera path through a volumetric scene. |
+| **GSAP + ScrollTrigger** | Rejected | The §19.2b driver is ~30 lines and one rAF loop. A scroll library would add weight and take ownership of scroll away from the browser (P4). |
+| **Post-processing beyond bloom** | Rejected | Depth-of-field, god rays and chromatic aberration each cost a full-screen pass for effects that read as "shader demo". Bloom only (§17.1). |
+| **Physics engines (rapier, cannon)** | Rejected | The Orbit simulation is ~30 lines of semi-implicit Euler. A physics engine is 100KB+ to avoid writing them. |
 | **Lenis / smooth-scroll libraries** | Rejected | Overriding native scroll violates P4, breaks accessibility expectations, and is a common source of jank and scroll-anchoring bugs. |
 | **A state manager (Zustand/Jotai/Redux)** | Rejected | See §22 — there is no cross-island state. |
 | **An icon library / icon font** | Rejected | ~16 icons ship as one inline SVG sprite. The current site's Material Symbols font is removed. |
@@ -1178,16 +1438,26 @@ Any island not on this list must be justified in the Decision log before being a
 
 | # | Island | Route(s) | Directive | Budget (gz) | Server-rendered fallback |
 |---|--------|----------|-----------|-------------|-------------------------|
-| 1 | `StarField` | all | `client:idle` + `client:media="(min-width: 768px)"` | ≤6KB | Static CSS star layer (permanent) |
-| 2 | `SectionRail` | `/` | `client:idle` | ≤3KB | Plain anchor list, fully functional |
-| 3 | `AtlasLink` | `/` | `client:visible` | ≤3KB | SVG + grouped list, both complete |
-| 4 | `CopyEmail` | `/`, `/dossier` | `client:visible` | ≤1.5KB | `mailto:` link (button hidden until hydrated) |
-| 5 | `MobileNav` | all (<md) | `client:idle` | ≤2KB | Static bottom bar; JS adds hide-on-scroll + sheet |
-| 6 | `Orbit` | `/instruments` | `client:visible` + `client:media="(min-width: 1024px)"` | ≤12KB | Static poster + description |
+| 1 | **`DeepFieldScene`** — the spine: camera rig, starfield, nebula volumes, planets, station, all of it | all | `client:idle` | **≤230KB** (three + R3F + drei subset + scene code, one lazy chunk) | AI-art still layer, always rendered beneath (§17.1) |
+| 2 | `ScrollDriver` — one rAF loop; writes `--scroll` + band, feeds the scene | all | `client:load` | ≤2KB | Bands render server-side per section; no cross-fade without it |
+| 3 | `SectionRail` — scroll-spy + progress + flight-path marker | `/` | `client:idle` | ≤4KB | Plain anchor list, fully functional |
+| 4 | `WorldViewer` — planet focus/inspect interactions, feeds selection into the scene | `/` | `client:visible` | ≤6KB | Static cards with AI-art planet stills |
+| 5 | `SkillsGlobe` — pointer-rotatable constellation globe (in-scene) | `/` | `client:visible` | ≤8KB | Server-rendered SVG map + grouped list |
+| 6 | `AtlasLink` — two-way star↔row highlight | `/` | `client:visible` | ≤3KB | SVG + list, both complete |
+| 7 | `CopyEmail` | `/`, `/dossier` | `client:visible` | ≤1.5KB | `mailto:` link |
+| 8 | `MobileNav` | all (<md) | `client:idle` | ≤2KB | Static bottom bar |
+| 9 | `Orbit` — WebGL n-body simulation with telemetry | `/instruments` | `client:visible` | ≤14KB (reuses the shared three chunk) | Static poster + description |
 
-**Directive rationale.** `client:idle` for anything that improves the page but is not needed at first paint (rail, star field) so it never competes with LCP. `client:visible` for below-the-fold interactivity. `client:media` wherever the feature is desktop-only — this is what keeps mobile at ~5KB of island code. **`client:load` is not used anywhere**; nothing on this site is urgent enough to hydrate before idle.
+**Directive rationale.** `ScrollDriver` is the only `client:load` on the site — it is ~2KB and everything visual downstream reads from it, so deferring it would cause a visible band/camera pop. The scene is `client:idle` so it cannot compete with LCP; it cross-fades in over the art still when ready. Everything below the fold is `client:visible`.
 
-**Hydration-gap rule.** A hydrated island must never appear *after* its own fallback in a way that shifts layout or flashes. `CopyEmail`'s button is the one element that appears on hydration; it therefore occupies reserved space from the server render (visibility, not display) so nothing moves.
+**`client:media` is no longer used to gate the scene.** R1 kept WebGL off mobile entirely; R2 ships it everywhere at reduced fidelity (owner's decision), so fidelity is chosen *at runtime* from the device tier (§16.4) rather than at build time by media query. `client:media` survives only for the desktop-only post-processing import.
+
+**Hydration-gap rules (stricter in R2):**
+
+1. **The scene must never cause layout shift.** The canvas is `position: fixed` and outside flow, so it structurally cannot — do not ever place it in flow "temporarily".
+2. **The art→scene handover is a 600ms opacity cross-fade**, with the art layer staying mounted underneath forever. Never unmount the fallback: a lost WebGL context (tab suspend, GPU reset) must reveal the still, not a black hole.
+3. `WorldViewer` and `SkillsGlobe` enhance already-rendered DOM. Their server output is the real content; hydration adds only interaction.
+4. If `DeepFieldScene` throws during init, it must catch, log once, and leave the art layer visible. An error boundary wraps the canvas and renders `null` on failure — never an error message over the design.
 
 ### 20.3 Content collections
 
@@ -1238,10 +1508,24 @@ src/
 │   └── BaseLayout.astro          <head>, fonts, cosmos, top bar, skip link, footer, slot
 ├── components/
 │   ├── cosmos/
-│   │   ├── Cosmos.astro          composes the 5 background layers (§17.1)
-│   │   ├── StaticStars.astro     CSS star layers (permanent fallback)
-│   │   ├── StarField.tsx         ISLAND — canvas 2D
-│   │   └── Grain.astro
+│   │   ├── Cosmos.astro          composes the 4 backdrop layers (§17.1)
+│   │   ├── ArtBackdrop.astro     AI-art still + inlined LQIP — the permanent fallback
+│   │   ├── Grain.astro
+│   │   └── scene/                ── THE SPINE (§19.2a) ──
+│   │       ├── DeepFieldScene.tsx    ISLAND ROOT — <Canvas>, error boundary, tier select
+│   │       ├── CameraRig.tsx         spline path + look-at + inertia (§4.1)
+│   │       ├── flightPath.ts         the 8 keyframes; single source of truth
+│   │       ├── StarField.tsx         instanced points, depth-sorted, tier-scaled
+│   │       ├── NebulaVolume.tsx      layered billboards, band-tinted shader
+│   │       ├── GalaxySprites.tsx     distant galaxies (First Light beat)
+│   │       ├── ConstellationGlobe.tsx  the Atlas instrument, in-scene
+│   │       ├── ProbeTrail.tsx        Trajectory ion-trail + burn markers
+│   │       ├── PlanetSystem.tsx      three planets from the projects collection
+│   │       ├── Planet.tsx            one textured sphere + limb light + ring
+│   │       ├── Station.tsx           Instrument Bay wireframe structure
+│   │       ├── RelayBeams.tsx        Transmissions signal beams
+│   │       ├── Bloom.tsx             desktop-only, dynamically imported
+│   │       └── useSceneTier.ts       particle count / DPR / bloom from device tier
 │   ├── layout/
 │   │   ├── TopBar.astro          wordmark + Dossier CTA
 │   │   ├── SectionRail.tsx       ISLAND — scroll-spy + progress
@@ -1282,7 +1566,7 @@ src/
 │   │   ├── FeaturedWorld.astro
 │   │   ├── WorldCard.astro       one <a> wrapping the whole record
 │   │   ├── WorldSphere.astro     procedural CSS/SVG sphere, seeded by slug
-│   │   ├── WorldPlate.astro      16:10 gradient surface plate (§10.6)
+│   │   ├── WorldStill.astro      planet still fallback, no-WebGL/mobile (§10.6)
 │   │   └── WorldRecord.astro     the data table (id, status, stack, year)
 │   │   ── no case-study/ group — those routes are not built (§10.3)
 │   ├── instruments/
@@ -1306,8 +1590,11 @@ src/
 │   └── seed.ts                   seeded PRNG (stars, sphere hues) — deterministic
 ├── lib/
 │   ├── observeOnce.ts            shared IntersectionObserver entrance utility
+│   ├── scrollProgress.ts         the ONE rAF loop (§19.2b); publishes --scroll + band
+│   ├── bands.ts                  the 8 spectral bands; hex + rgb triplet per band
 │   ├── prefersReducedMotion.ts
-│   ├── deviceTier.ts             the §16.4 capability ladder
+│   ├── deviceTier.ts             the §16.4 capability ladder (now feeds the scene)
+│   ├── webglSupport.ts           context probe; decides whether to mount the scene at all
 │   ├── analytics.ts              thin typed event wrapper
 │   └── seo.ts                    metadata + JSON-LD builders
 ├── pages/
@@ -1338,7 +1625,7 @@ src/
 | `AtlasLink` | Two-way star↔row highlight via delegated listeners | none (reads `data-skill`) | local: `hoveredSkill` | Island |
 | `WorldCard` | One project record as a single link | `project` | none | Server |
 | `WorldSphere` | Deterministic sphere from slug hash | `slug`, `hue?`, `size` | none | Server |
-| `WorldPlate` | 16:10 gradient plate with composited sphere | `slug`, `featured?` | none | Server |
+| `WorldStill` | Planet still fallback for no-WebGL / mobile / low tier | `slug`, `featured?` | none | Server |
 | `Orbit` | n-body sim + telemetry + degradation + start control | `bodyCount?` | local: sim state, running, fps | Island |
 | `CopyEmail` | Clipboard + confirmation + live region | `email` | local: `copied` | Island |
 
@@ -1350,20 +1637,39 @@ src/
 
 ## 22. State Management
 
-**There is no global state, and no state library.** The full inventory:
+**Still no state library** — but R2 introduces exactly one piece of genuinely shared state, and pretending otherwise would produce the classic mess of three islands each running their own scroll listener.
+
+**Scroll progress is shared; everything else stays local.**
+
+`lib/scrollProgress.ts` owns one rAF loop, reads `window.scrollY` once per frame, and publishes:
+
+- `--scroll` (0→1) and `--band` / `--band-rgb` as CSS custom properties on `<body>` — consumed by the DOM with zero JS involvement;
+- a mutable ref (`{ progress, band, velocity }`) that the scene's `useFrame` reads directly, **never through React state** — setting React state 60×/second would re-render the tree every frame and destroy the frame budget.
+
+That is a module-scoped singleton, not a store library: ~30 lines, one subscriber list, no dependency. Islands import it; they never talk to each other.
 
 | State | Owner | Scope | Persistence |
 |-------|-------|-------|-------------|
-| Active section id | `SectionRail` island | local | none |
-| Scroll progress | `SectionRail` island (or pure CSS where supported) | local | none |
+| **Scroll progress + active band + velocity** | `lib/scrollProgress.ts` singleton | **shared** — read via CSS vars (DOM) and a ref (scene) | none |
+| Camera position / look-at | `CameraRig`, derived from scroll ref inside `useFrame` | local, non-reactive | none |
+| Active section id | `SectionRail` island (IntersectionObserver) | local | none |
+| Selected / focused planet | `WorldViewer` island; passed into the scene as a prop | local | none |
+| Globe rotation | `SkillsGlobe` island, in a ref | local, non-reactive | none |
 | Hovered skill | `AtlasLink` island | local | none |
 | Copied confirmation | `CopyEmail` island | local, 2s | none |
-| Mobile nav sheet open + bar visibility | `MobileNav` island | local | none |
-| Star field runtime (array, rAF handle, frame stats, degraded flag) | `StarField` island | local | none |
-| Orbit sim state + running flag | `Orbit` island | local | none |
-| Reduced-motion preference | CSS media query; `prefersReducedMotion.ts` only where JS must branch | read-only | OS-level |
-| Device tier | `deviceTier.ts`, computed once at island init | read-only | none |
+| Mobile nav sheet + bar visibility | `MobileNav` island | local | none |
+| Scene tier (particles, DPR, bloom) + degraded flag | `useSceneTier`, computed once at mount, one-way downgrade | local | none |
+| Orbit sim state | `Orbit` island, typed arrays in refs | local | none |
+| WebGL availability | `webglSupport.ts`, probed once | read-only | none |
+| Reduced-motion preference | CSS media query; `prefersReducedMotion.ts` where JS must branch | read-only | OS-level |
 | Theme | **none — the site is dark-only** | — | — |
+
+**Frame-loop rules (new in R2, and the difference between 60fps and 20fps):**
+
+1. Nothing that changes per frame may live in React state. Refs only.
+2. One `useFrame` per scene concern, and none of them allocate — pre-allocate every `Vector3`/`Color` at module or mount scope and mutate in place.
+3. Islands never read each other's state. The scroll singleton is the only shared channel.
+4. No `useEffect` that runs on scroll. Scroll reaches components exclusively through the singleton.
 
 **Why dark-only:** the entire concept is a night sky. A light mode would require a second complete visual system (the cosmos, glows, and hairlines have no light-mode analogue) for a use case that does not exist here. `color-scheme: dark` is declared so form controls and scrollbars match. This is a deliberate, recorded decision — not an oversight.
 
@@ -1411,20 +1717,34 @@ Mobile-first authoring: the base stylesheet is the mobile experience, and every 
 
 ### 24.2 Effect matrix
 
+**Mobile keeps the 3D** (owner's decision) at aggressively reduced fidelity. Fidelity is selected at runtime from the device tier, not by media query, so a high-end phone gets more than a low-end laptop.
+
 | Effect | Mobile | Tablet | Desktop |
 |--------|--------|--------|---------|
-| Static star layer + nebula | **Preserved** | Preserved | Preserved |
-| Live star canvas | **Removed** (`client:media`) | Simplified (400 stars, no parallax) | Full (900 stars) |
-| Hero parallax | Removed | Removed | Full |
-| First-light reveal | **Simplified** (fade only, 320ms) | Full | Full |
-| Constellation map | **Replaced** by tier-grouped list | Full width, Core labels only | Full + list |
-| Trajectory spine | **Replaced** by CSS border-left | Straight SVG, static | Curved SVG, scroll-drawn |
-| Project spheres | Preserved (static, 56px) | Preserved | Preserved + hover rim-light |
-| Orbit experiment | **Removed** (poster) | **Removed** (poster) | Full |
+| AI-art backdrop + LQIP | **Preserved** (half-res) | Preserved | Preserved (full-res) |
+| **WebGL scene + camera flight** | **Preserved, reduced** | Reduced | **Full** |
+| ↳ star particles | 3,000 | 6,000 | 12,000 |
+| ↳ device pixel ratio | capped **1.0** | 1.5 | 1.75 |
+| ↳ bloom post-processing | **Removed** (not downloaded) | Removed | Full (0.9) |
+| ↳ nebula volume layers | 3 | 5 | 8 |
+| ↳ planet textures | 1024px | 1024px | 2048px |
+| ↳ planet count in view | 3 (low-poly, 32seg) | 3 (48seg) | 3 (64seg + rings) |
+| Constellation globe | **Replaced** by SVG map + list | In-scene, no rotation | In-scene, pointer-rotatable |
+| Probe trail + burn markers | Simplified (no trail particles) | Full | Full |
+| Relay beams | **Removed** | Full | Full |
+| Trajectory DOM spine | **Replaced** by CSS border-left | Straight SVG, static | Curved SVG, scroll-drawn |
+| Orbit experiment (`/instruments`) | **Removed** (poster) | **Removed** (poster) | Full |
 | Section entrances | Simplified (320ms, 40ms stagger) | Full | Full |
-| View Transitions | Preserved (cheap, native) | Preserved | Preserved |
-| Backdrop blur panels | Simplified (opaque surfaces <768px — blur is expensive on mobile GPUs) | Full | Full |
+| Band cross-fade | Preserved (it is one CSS var) | Preserved | Preserved |
+| Backdrop-blur panels | Simplified (opaque — blur over a live scene is the most expensive thing on a mobile GPU) | Full | Full |
 | Hover states | **Replaced** by `:active` feedback | Full | Full |
+
+**Mobile-specific scene rules:**
+
+1. **Opaque panels, not blurred.** `backdrop-filter` compositing over a live WebGL canvas is the single biggest mobile frame cost. Below `md`, panels are solid `--color-surface-1`.
+2. **Pause when not visible.** The scene's rAF stops on `visibilitychange` and when the canvas leaves the viewport — which on mobile happens whenever the address bar collapses over it.
+3. **Never render during scroll momentum on low tier.** On the lowest tier, the scene renders at 30fps cap and skips frames while `velocity` is high; a blurry-fast camera move is invisible anyway.
+4. **Touch never rotates the globe by accident.** `SkillsGlobe` rotation is desktop-pointer only; on touch, the section falls back to the SVG map so a swipe always scrolls the page (P4).
 
 ### 24.3 Touch and input rules
 
@@ -1440,6 +1760,28 @@ Mobile-first authoring: the base stylesheet is the mobile experience, and every 
 ## 25. Accessibility
 
 **Target: WCAG 2.2 Level AA, with zero axe-core violations on every route.** Accessibility is a Definition-of-Done gate on every phase, not a Phase 6 cleanup task — Phase 6 only verifies and covers the gaps that need real devices.
+
+**This chapter got stricter in Revision 2, not looser.** Performance budgets moved because the owner chose spectacle; accessibility did not move because no one benefits from an inaccessible portfolio. A scroll-driven WebGL site is precisely the architecture that tends to eat its own content, so R2 adds four hard rules on top of everything already here.
+
+### 25.0 The parallel-DOM contract (new in R2)
+
+The scene is decorative in the strict WCAG sense: **it conveys no information that is not already in the DOM as text.** That is a design constraint on the scene, not a claim about it — if the scene ever becomes the only place something is expressed, the content is wrong, not the markup.
+
+| Scene element | The information it decorates | Where that information actually lives |
+|---------------|------------------------------|--------------------------------------|
+| Camera position on the flight path | "how far through the site you are" | `SectionRail` with `aria-current`, plus normal document order |
+| Nebula / band hue | "which section you are in" | The section's own `<h2>` and mono codename label |
+| The three planets | project identity and relative significance | `WorldCard` records: name, designation, description, stack, live link |
+| Constellation globe | skills, tiers, relationships | The tier-grouped `<ul>` — the canonical, sole tab path |
+| Probe trail + burn markers | career milestones | The `<ol>` of positions and achievements |
+| Station, relay beams, galaxies | atmosphere only | Nothing — pure decoration, correctly |
+
+**The four R2 rules:**
+
+1. **`<canvas>` is `aria-hidden="true"` + `role="presentation"`, and contains zero focusable elements.** No object in the scene is ever a tab stop. Every 3D interaction has a DOM control that does the same thing.
+2. **Delete-the-canvas test is a CI gate**, not a manual check: a Playwright run removes the canvas element and asserts the §27.4 content set is still present and the keyboard order is unchanged (§34.3).
+3. **`prefers-reduced-motion` disables continuous camera motion entirely** — the camera cuts between the eight keyframes on section entry rather than interpolating (§16.4). Vestibular safety is not negotiable for a site whose main feature is a moving camera.
+4. **Text legibility must not depend on the camera.** The §17.1 panel legibility contract (≥68% surface opacity + vignette) exists so that body copy never has to compete with whatever is behind it, and it is verified by screenshotting each section at three scroll offsets (§34.2).
 
 ### 25.1 Non-negotiables
 
@@ -1462,11 +1804,25 @@ All values must be verified with a contrast checker during Phase 1 and re-verifi
 | `ink-hi` #EAF0FA | `void` #04060D | ~16.4:1 | Headings, key values | ≥4.5:1 ✓ |
 | `ink-mid` #9BA8C2 | `surface-0` #080C16 | ~7.3:1 | Body copy | ≥4.5:1 ✓ |
 | `ink-low` #7C89A5 | `surface-0` #080C16 | ~4.9:1 | Labels, captions (small text) | ≥4.5:1 ✓ |
-| `ion` #7DE2FF | `void` #04060D | ~13:1 | Links, active, focus ring | ≥4.5:1 text / ≥3:1 UI ✓ |
-| `ember` #FFB454 | `void` #04060D | ~10.9:1 | CTA text, metrics | ≥4.5:1 ✓ |
-| `hairline` (ion 12%) | `surface-1` | <3:1 | **Decorative only** — never the sole indicator of a boundary or state | n/a |
+| `hairline` (band 12%) | `surface-1` | <3:1 | **Decorative only** — never the sole indicator of a boundary or state | n/a |
 
-`ink-low` has the least headroom, so it is capped: never below 12px, never for body copy, never on `surface-2`. If any token shifts, `ink-low` is the first value to re-check.
+**All eight bands, on `void` — every one must clear 4.5:1, because any of them can be the link colour:**
+
+| Band | Hex | Ratio on void | Status |
+|------|-----|--------------|--------|
+| Ion Cyan | #7DE2FF | ~13.0:1 | ✓ |
+| Nebula Magenta | #FF5FA2 | ~7.4:1 | ✓ |
+| Stellar Blue | #8FB8FF | ~9.8:1 | ✓ |
+| Solar Ember | #FFB454 | ~10.9:1 | ✓ |
+| Plasma Violet | #A78BFA | ~7.9:1 | ✓ |
+| Aurora Green | #5BE9B9 | ~11.6:1 | ✓ |
+| Signal Gold | #FFD76E | ~13.1:1 | ✓ |
+
+This is *why* the bands are all light, high-value hues rather than the saturated mid-tones a "space palette" usually reaches for: a deep nebula purple would look right and fail contrast. **Magenta (7.4:1) and Violet (7.9:1) have the least headroom** — they are the first two to re-verify if any token changes, and neither may be used on `surface-2` at label sizes without re-measuring.
+
+`ink-low` has the least headroom of the inks: never below 12px, never for body copy, never on `surface-2`.
+
+**Additional R2 verification:** every band must also be checked against the *rendered scene* behind a panel, not just against the flat token. That is what the §17.1 legibility contract and the three-offset screenshot test (§34.2) are for — a nominal 7.4:1 means nothing if the panel is 40% transparent over a bright nebula.
 
 ### 25.3 Per-feature accessible equivalents
 
@@ -1496,32 +1852,60 @@ Automated: `axe-core` via Playwright on all five route types (`/`, `/instruments
 
 Measured on the deployed production URL. Mobile = Moto G Power class, Slow 4G, via Lighthouse mobile preset.
 
-| Metric | Mobile target | Desktop target |
-|--------|--------------|----------------|
-| Lighthouse Performance | **≥95** (`/`, `/transmissions`, `/dossier`); ≥90 (`/instruments`) | ≥98 |
-| Lighthouse Accessibility | **100** (all routes) | 100 |
-| Lighthouse Best Practices / SEO | ≥95 / 100 | ≥95 / 100 |
-| LCP | **≤1.8s** | ≤1.2s |
-| CLS | **≤0.02** | ≤0.02 |
-| INP | **≤150ms** | ≤100ms |
-| TBT | ≤150ms | ≤100ms |
-| TTFB (static CDN) | ≤200ms | ≤200ms |
+**These targets are lower than Revision 1's and that is the deliberate price of the spine.** They are still targets, not hopes: CI asserts them (§26.4), and missing one means cutting scene scope, never raising the number.
+
+| Metric | Mobile target | Desktop target | R1 was |
+|--------|--------------|----------------|--------|
+| Lighthouse Performance | **≥78** (`/`); ≥85 (`/transmissions`, `/dossier`); ≥72 (`/instruments`) | ≥90 | ≥95 mobile |
+| **Lighthouse Accessibility** | **100 — all routes, unchanged** | **100** | 100 |
+| Lighthouse Best Practices / SEO | ≥95 / 100 | ≥95 / 100 | same |
+| LCP | **≤3.0s** | ≤2.2s | ≤1.8s / ≤1.2s |
+| CLS | **≤0.02 — unchanged** | ≤0.02 | same |
+| INP | **≤200ms** | ≤120ms | ≤150ms / ≤100ms |
+| TBT | ≤600ms | ≤300ms | ≤150ms |
+| TTFB (static CDN) | ≤200ms | ≤200ms | same |
+| **Sustained frame rate** | **≥30fps floor** | **≥58fps** | n/a |
+| **Scene init → first render** | ≤1.2s after idle | ≤600ms after idle | n/a |
+
+**Two targets did not move, and they are the ones that matter most for credibility:**
+
+- **CLS ≤0.02.** The scene is `position: fixed` and outside flow, so it cannot shift layout. If CLS regresses, something was put in flow that should not have been.
+- **LCP is still a text element.** The hero heading paints from static HTML before any JS. If a profiler ever names the canvas or a backdrop image as the LCP element, that is a bug — not a consequence of the ambition.
+
+**Frame rate is a first-class metric now (P9).** A site whose selling point is a 3D scene must not stutter. 58fps desktop and a 30fps floor on mobile are verified under 4× CPU throttle, not on the dev machine.
 
 ### 26.2 Budgets — per route, gzipped
 
 | Resource | `/` mobile | `/` desktop | `/transmissions` | `/dossier` | `/instruments` |
 |----------|-----------|------------|------------------|-----------|---------------|
-| HTML | ≤35KB | ≤35KB | ≤25KB | ≤25KB | ≤40KB |
-| CSS | ≤30KB | ≤30KB | ≤30KB | ≤30KB | ≤32KB |
-| JS (total) | **≤20KB** | **≤60KB** | ≤14KB | ≤16KB | ≤160KB |
+| HTML | ≤40KB | ≤40KB | ≤25KB | ≤25KB | ≤45KB |
+| CSS | ≤34KB | ≤34KB | ≤32KB | ≤32KB | ≤36KB |
+| JS — critical path | **≤16KB** | **≤16KB** | ≤14KB | ≤16KB | ≤16KB |
+| JS — scene chunk (lazy, post-idle) | **≤175KB** | **≤230KB** | not loaded | not loaded | ≤190KB |
+| JS — other islands (lazy) | ≤14KB | ≤24KB | ≤2KB | ≤4KB | ≤18KB |
+| **JS total** | **≤190KB** | **≤340KB** | ≤16KB | ≤20KB | ≤215KB |
 | Fonts | ≤110KB | ≤110KB | ≤110KB | ≤110KB | ≤110KB |
-| Images | **≤60KB** | **≤60KB** | ≤40KB | ≤60KB | ≤400KB |
-| **Total transfer** | **≤260KB** | ≤280KB | ≤200KB | ≤230KB | ≤750KB |
-| Requests | ≤18 | ≤22 | ≤16 | ≤16 | ≤30 |
+| Images (AI art + textures, AVIF) | **≤600KB** | **≤1.6MB** | ≤40KB | ≤60KB | ≤500KB |
+| **Total transfer** | **≤950KB** | **≤2.1MB** | ≤200KB | ≤230KB | ≤850KB |
+| Requests | ≤28 | ≤34 | ≤16 | ≤16 | ≤32 |
 
-**The image budgets dropped sharply from the original plan** because C2 eliminated every project screenshot (§10.6). The portrait is now the only image on the home route, so `/` fits in ~260KB on mobile — well inside the original 320KB. Treat the tightened numbers as the real target; do not spend the reclaimed headroom on new assets.
+**Read the JS rows carefully — the split is the whole strategy.** The critical path stays at **≤16KB on every route**, which is why LCP survives at all: the hero paints from HTML with only `ScrollDriver` (~2KB) hydrated. The 230KB scene is a separate lazy chunk fetched *after* idle, so it competes with nothing. A budget check that only measured "total JS" would tell you this site is slow; it is not, because none of that weight is on the critical path.
 
-Mobile JS is ~20KB because only `SectionRail`, `MobileNav`, and `CopyEmail` hydrate there; the React runtime is the bulk of it. If mobile JS exceeds 20KB, the correct fix is to convert an island to a CSS-only solution, not to raise the budget.
+**Where the desktop scene chunk goes**, and why it cannot be much smaller:
+
+| Piece | gz | Notes |
+|-------|-----|-------|
+| three.js (named imports only) | ~150KB | Irreducible. Wholesale import would be ~250KB+ |
+| @react-three/fiber | ~40KB | The reconciler |
+| drei subset (4 modules, deep-imported) | ~20KB | Wholesale import would be ~120KB |
+| Post-processing (bloom) | ~14KB | **Desktop only**, dynamically imported |
+| Scene code (all of `scene/`) | ~20KB | Our own components and shaders |
+
+Mobile omits the bloom pass and loads at reduced fidelity, landing ~175KB.
+
+**Image budgets** cover the AI-art backdrops and planet textures from §3.4. Mobile receives half-resolution variants (≤600KB total); textures are `srcset`-selected, not downscaled client-side. `/transmissions` and `/dossier` deliberately do **not** mount the scene — they are reading routes, they keep R1-era budgets, and that contrast is intentional.
+
+**If a budget is exceeded, cut scope in this order:** particle count → texture resolution → bloom → a scene beat (drop `RelayBeams` before dropping `PlanetSystem`). Never raise the number, and never move weight onto the critical path.
 
 ### 26.3 Techniques, in order of impact
 
@@ -1603,16 +1987,29 @@ Rules: no scroll-depth percentages, no mouse heatmaps, no session recording, no 
 
 ## 29. Asset Strategy
 
-**Principle: generate, don't download.** The cosmos is procedural, so the entire visual theme costs ~2KB of raster.
+**R2 principle: generate deliberately, then optimise ruthlessly.** R1's asset strategy was "almost zero raster". R2 adds an AI-art pipeline (§3.4) plus planet textures, and the discipline moves from *avoiding* images to *controlling* them: every asset has a prompt contract, a target size, an AVIF budget, a mobile variant, and an LQIP.
+
+**The R2 asset rules:**
+
+1. **AVIF only** for art and textures, with a WebP fallback emitted by `astro:assets`. No PNG or JPEG ships.
+2. **Every backdrop has a 32×18 LQIP inlined as a data URI** — the fallback layer must paint with zero requests.
+3. **Two resolutions per asset**, selected by `srcset`/tier: full for desktop, half for mobile. Never downscale client-side.
+4. **Textures are power-of-two** and equirectangular 2:1 for planets, so three.js can mipmap without resampling.
+5. **One backdrop is `fetchpriority="high"`** (the hero plate). Every other plate is lazy.
+6. **Total raster is budgeted per route** (§26.2: ≤1.6MB desktop, ≤600KB mobile) and asserted in CI.
+7. **Regenerate rather than accept.** If a plate reads as generic AI space art, it fails the §3.4 contract — tighten the prompt, do not ship it.
 
 | Asset | Method | Source | Budget |
 |-------|--------|--------|--------|
-| Star field (live) | **Procedural** — Canvas 2D, seeded PRNG | Code | 0 bytes |
-| Star field (static) | **CSS** — 3 tiled `radial-gradient` layers | Code | 0 bytes |
-| Nebulae | **CSS** — 2 large radial gradients | Code | 0 bytes |
+| Star field (live) | **Procedural** — instanced points, seeded PRNG, in-scene | Code | 0 bytes |
+| Nebula volumes | **Procedural** — layered billboards + band-tinted shader, using `nebula-magenta.avif` as the volume texture | Code + 1 plate | shared with plate |
+| **AI-art backdrops ×6** | **Generated** to the §3.4 contract | AI, per prompt contract | ≤180KB each, ≤940KB total |
+| **Planet textures ×3** | **Generated** equirectangular 2:1 | AI | ≤120KB each |
+| **Planet stills ×3** | **Generated** / rendered from the scene | AI or scene screenshot | ≤60KB each |
+| **LQIP ×6** | 32×18 inline data URI per backdrop | Downsampled from each plate | ~1KB each, inlined |
 | Grain overlay | Raster, 128×128 tiling PNG | Generated once | ~2KB |
-| Project spheres | **CSS/SVG** — radial gradients seeded by slug hash | Code | 0 bytes |
-| Project gradient plates | **CSS** — two radial gradients + composited sphere, seeded by slug (§10.6) | Code | 0 bytes |
+| Project spheres (image-blocked fallback) | **CSS/SVG** — radial gradients seeded by slug hash | Code | 0 bytes |
+| Constellation SVG map (non-WebGL fallback) | **SVG**, server-rendered from the skills collection | Code + data | ~2KB gz |
 | Constellation map | **SVG**, server-rendered from `skills.ts` | Code + data | ~2KB gz |
 | Trajectory spine | **SVG** path / CSS border | Code | <1KB |
 | Icons (~16) | **Inline SVG sprite**, 1.5px stroke, 24px grid | Hand-authored or Lucide paths, inlined | ≤4KB gz |
@@ -1626,7 +2023,9 @@ Rules: no scroll-depth percentages, no mouse heatmaps, no session recording, no 
 
 **Total raster inventory for the whole site: four files** — the portrait, the Orbit poster, the grain tile, and the build-generated OG images. Everything else is CSS, SVG, or Canvas. If a fifth raster asset is ever proposed, it needs a Decision log entry.
 
-**Explicitly forbidden:** stock space photography, full-bleed nebula JPEGs, video backgrounds, Lottie files, icon fonts, and any single image over 250KB.
+**Explicitly forbidden:** stock space photography, video backgrounds, Lottie files, icon fonts, HDR/EXR environment maps (an `.hdr` skybox is typically 2–8MB — the AI plates do this job at 180KB), 4K textures, uncompressed PNG textures, and any single image over 200KB after encode.
+
+**Total raster inventory for R2:** 6 backdrops + 3 planet textures + 3 planet stills + portrait + Orbit poster + grain tile + build-generated OG images. Every one is listed above with a budget. A fourteenth raster asset needs a Decision log entry.
 
 **Font subsetting:** latin + latin-ext only; the mono face is subset further to the glyphs actually used in labels and data (uppercase, digits, `·↗→←↓✓%°`). Verify final sizes in Phase 7 and re-subset if over budget.
 
@@ -1782,16 +2181,20 @@ Six styled-but-empty routes, a complete token system, nine primitives, six valid
 ## Phase 2 — Core Experience
 
 ### Goal
-The arrival experience and the spatial frame: the cosmos background, navigation with scroll-spy, the hero, and the shared section entrance architecture.
+The arrival experience and the spatial frame: the **art backdrop stack**, the **band system and scroll driver**, navigation with scroll-spy, the hero, and the shared section entrance architecture. **No WebGL in this phase.**
 
 ### Why this phase exists
-This is the phase that makes the site feel like the concept. It is also where the performance ceiling gets set — the background system and the hero determine LCP for every route, so they must be right before content volume hides regressions.
+This is the phase that makes the site feel like the concept — and in R2 it is also the phase that builds the *entire fallback experience*. Everything constructed here is what a visitor sees when WebGL is unavailable, and it must be good enough to ship on its own (P7). Building the fallback first, before the scene exists, is the only way to guarantee it is a designed state rather than an afterthought.
+
+It is also where the performance ceiling gets set: the backdrop and hero determine LCP for every route.
 
 ### Prerequisites
-Phase 1 done.
+Phase 1 done, plus the R2 token addendum: the eight `--band-*` values, the live `--band` / `--band-rgb` mechanism, and the `--z-art` / `--z-scene` layers (§18.2). Phase 1 shipped R1's three-accent palette, so this is a small additive change to `global.css` — do it as task 0.
 
 ### Tasks
-1. Build the `cosmos/` layer stack (§17.1): `Cosmos.astro` composing void, nebula gradients, `StaticStars.astro`, and `Grain.astro`. Mount it in `BaseLayout` with `transition:persist`. **CSS only — no canvas in this phase.**
+0. **Token addendum:** add the eight bands, `--band`/`--band-rgb`, the band-derived hairline/accent tokens, and the revised z-index scale to `global.css`. Update `/dev/tokens` to render all eight bands with their measured contrast ratios. Extend the token lint to reject a raw band hex outside `global.css`.
+1. Build the `cosmos/` backdrop stack (§17.1): `Cosmos.astro` composing void, `ArtBackdrop.astro` (band plate + inlined LQIP, cross-faded on band change), and `Grain.astro`. Mount once in `BaseLayout` with `transition:persist`. **CSS and images only — the `<Canvas>` arrives in Phase 4.** Reserve `--z-scene` as an empty layer now so nothing needs re-stacking later.
+2. Build `lib/bands.ts` and `lib/scrollProgress.ts` (§19.2b): one rAF loop, one `scrollY` read per frame, publishing `--scroll`, `--band` and `--band-rgb` on `<body>` plus a mutable ref for later consumers. Ship it as the `ScrollDriver` island (`client:load`, ≤2KB). Verify the band cross-fades smoothly across all eight sections with zero jank and no scroll listeners anywhere else in the codebase.
 2. Build `Hero.astro` per §9.2 with real Phase 0 copy: eyebrow with real coordinates, `h1`, role, lede, both CTAs, social text links, `StatStrip` (counts computed from collections), `HeroPortrait`, `ScrollHint`.
 3. Implement the first-light reveal (§9.3) in pure CSS: aperture wipe + sky blur-resolve + child stagger, all on page load, nothing JS-gated.
 4. Build `lib/observeOnce.ts`: **one** shared `IntersectionObserver` that adds an `is-revealed` class to every `[data-observe]` element at 20% visibility, once, and disconnects per-element. Wire the §8.1 entrance CSS to it.
@@ -1806,48 +2209,49 @@ Phase 1 done.
 `src/components/cosmos/*`, `src/components/hero/*`, `src/components/layout/SectionRail.tsx`, `MobileNav.tsx`, `src/lib/observeOnce.ts`, `src/layouts/BaseLayout.astro`, `src/pages/index.astro`, `src/styles/global.css`.
 
 ### Components
-`Cosmos`, `StaticStars`, `Grain`, `Hero`, `HeroPortrait`, `StatStrip`, `ScrollHint`, `SectionRail` (island), `MobileNav` (island).
+`Cosmos`, `ArtBackdrop`, `Grain`, `Hero`, `HeroPortrait`, `StatStrip`, `ScrollHint`, `ScrollDriver` (island), `SectionRail` (island), `MobileNav` (island).
 
 ### Data
-`profile` collection (name, role, lede, socials, résumé path, coordinates); computed counts for the stat strip. **Counts must be derived from collections, never hardcoded.**
+`profile` collection; computed counts for the stat strip (**derived from collections, never hardcoded**); `lib/bands.ts` as the band source of truth; the six AI-art plates from §3.4 with their LQIPs.
 
 ### State
-`SectionRail`: `activeId`, `progress`. `MobileNav`: `sheetOpen`, `barVisible`. Nothing else, nothing shared.
+Shared: `lib/scrollProgress.ts` (progress, band, velocity). Local: `SectionRail` (`activeId`), `MobileNav` (`sheetOpen`, `barVisible`). Nothing else.
 
 ### Animation
-First-light reveal (700ms + 60ms stagger, CSS, on load). Section entrance via the shared observer (560ms, `--ease-out-expo`, once). Hero parallax (scroll-linked, desktop only). Nebula drift (24–36s linear). Rail active transition (320ms). All L1/L3/L4 motion removed under `prefers-reduced-motion`; entrances shortened on mobile.
+First-light reveal (700ms + 60ms stagger, CSS, on load). Section entrance via the shared observer (560ms, once). Band cross-fade driven by `--band`. Rail active transition (320ms). **No DOM ambient motion** (§16.2 L1 ban) — the art plates are static; only the band tint changes. All L3/L4 motion removed under `prefers-reduced-motion`.
 
 ### Responsive Behavior
-Hero per §9.6 (portrait moves then drops at 480px; `min-height: 88svh` mobile). Rail ≥1024px, labels ≥1280px. Bottom bar <768px. No parallax below 1024px. `svh`/`dvh` only.
+Hero per §9.6. Rail ≥1024px, labels ≥1280px. Bottom bar <768px. Half-resolution art plates below `md`. `svh`/`dvh` only.
 
 ### Accessibility
-`<h1>` accessible name is the full "Hi, I'm Shubham Tiwari — Frontend Engineer". Cosmos layers `aria-hidden`. Nav is `<nav aria-label="Sections">` with real anchors that work with JS off. `aria-current` on active. Skip link lands on `<main>`. Stat strip is a `<dl>`. Scroll hint hidden under reduced motion and on short viewports. Keyboard pass: top bar → rail → hero CTAs → socials in a sane order. `axe-core` clean.
+`<h1>` accessible name is the full "Hi, I'm Shubham Tiwari — Frontend Engineer". Backdrop layers `aria-hidden` with empty `alt`. Nav is `<nav aria-label="Sections">` with real anchors that work with JS off. `aria-current` on active. Skip link lands on `<main>`. Stat strip is a `<dl>`. **Verify every one of the eight bands against §25.2 in situ**, over the actual art plate, not just against the flat token. `axe-core` clean.
 
 ### Performance
-LCP element is the `h1` text. **Mobile JS ≤14KB gz** (rail + mobile nav + React runtime); desktop ≤14KB (star field is Phase 4). Cosmos adds ≤3KB (2KB grain + CSS). LCP ≤1.8s mobile / ≤1.2s desktop measured on a deployed preview. CLS ≤0.02 with the portrait and stat strip reserving space. Lighthouse Performance ≥98 (the site is still nearly empty — defend this number in later phases).
+LCP element is the `h1` text. **Critical-path JS ≤16KB gz** (ScrollDriver + rail + mobile nav + React runtime). Hero art plate `fetchpriority="high"`, ≤180KB; every other plate lazy. LCP ≤2.2s desktop / ≤3.0s mobile on a deployed preview. CLS ≤0.02. Lighthouse ≥90 mobile at this stage — the scene is not here yet, so this is the *high-water mark* to measure Phase 4's cost against. **Record it in `PERF.md`; Phase 4 is judged against this number.**
 
 ### Testing
-Playwright: hero content present with JS disabled; rail anchors navigate with JS disabled; `aria-current` updates on scroll with JS enabled; reduced-motion emulation shows no transforms; mobile viewport shows the bottom bar and no parallax. Lighthouse on the deployed preview. `axe-core` on `/`. Visual check at 320/390/768/1280/1920.
+Playwright: hero content present with JS disabled; rail anchors navigate with JS disabled; `aria-current` updates on scroll; band custom property changes across sections; reduced-motion emulation shows no transforms. Confirm **exactly one** scroll listener exists in the whole bundle. Lighthouse on the deployed preview. `axe-core` on `/`. Visual check at 320/390/768/1280/1920.
 
 ### Acceptance Criteria
 - Hero is fully readable at first paint with JS disabled and with CSS animations disabled.
 - No preloader, no splash, no entry gate anywhere.
-- Exactly **one** `IntersectionObserver` handles all entrance animations.
-- Exactly **one** ambient background system exists, mounted once, persisting across routes.
-- Reduced-motion pass shows a static sky, no wipe, no parallax, no stagger — and looks deliberate.
+- **The full site backdrop works with zero WebGL** — this phase's output *is* the no-WebGL experience, and it must already look intentional.
+- Exactly **one** `IntersectionObserver` for entrances and exactly **one** rAF scroll loop, site-wide.
+- All eight bands verified for contrast over their own art plate.
+- `--z-scene` exists as an empty reserved layer.
 - Rail and bottom bar fully usable by keyboard and with JS off.
 
 ### Definition of Done
-Arrival feels like the concept, the frame is in place for content, and the measured performance baseline is at or above target.
+Arrival feels like the concept; the band system travels correctly across all eight sections; and the complete fallback experience is built and shippable before any WebGL exists.
 
 ### AI Implementation Notes
-Build the reveal with CSS keyframes on load — do **not** add a JS orchestrator. Use `animation-timeline` inside `@supports` and let the unsupported branch be static; do not polyfill. The rail island must be additive only: delete its JS and navigation still works. Keep `observeOnce.ts` generic — every later phase reuses it, and adding a second observer later is a review failure.
+Build the reveal with CSS keyframes — no JS orchestrator. The band mechanism must be **one** custom property written by **one** loop; if you find yourself adding a second scroll listener, stop and reuse the singleton. Resist building any part of the scene here: the point of this phase is that the fallback is a designed artefact, and it cannot be if the scene exists to hide behind.
 
 ### Things NOT to implement yet
-No star-field canvas (Phase 4). No section content — About, Atlas, Trajectory, Worlds, Transmissions, Uplink remain empty shells (Phase 3). No Instrument Bay content or Orbit. No constellation SVG. No trajectory spine. No world plates or spheres. No OG images. No analytics events. And no `/worlds/[slug]` route — not in this phase, not in any phase (§10.3).
+**No `<Canvas>`, no three.js, no R3F** (Phase 4). No section content (Phase 3). No planets, globe, probe trail, station or beams (Phase 4b). No Instrument Bay content or Orbit (Phase 5). No OG images. No analytics events. No `/worlds/[slug]` route — not in this phase, not in any phase (§10.3).
 
 ### Expected output
-A home route with a complete, cinematic hero on a persistent procedural cosmos, working navigation with active-section tracking, eight empty anchor sections, and ≤14KB of JS.
+A home route with a cinematic hero over a band-tinted AI-art backdrop, a working band/scroll system, navigation with active-section tracking, eight empty anchor sections, ≤16KB critical JS, and a recorded Lighthouse high-water mark.
 
 ---
 
@@ -1866,7 +2270,7 @@ Phases 1–2 done. Content pack from Phase 0 (C1–C8 resolved or consciously de
 1. **Observer's Log** (§13): portrait, field-notes `<dl>`, philosophy `<blockquote>`, prose, open questions, tag chips.
 2. **The Atlas** (§11): `ConstellationMap.astro` — server-rendered SVG from `skills.ts` with hand-authored coordinates, tier-based radii, always-visible Core labels, and relationship lines. `SkillList.astro` — tier-grouped list, the source of truth. Both rendered; mobile shows the list only. **No interactivity in this phase.**
 3. **Trajectory** (§12): positions and burn events from the `experience` collection; `MetricBlock` for metrics; spine renders **fully drawn and static** (scroll-draw is Phase 4). Mobile spine is a CSS border.
-4. **Catalogued Worlds** (§10): `FeaturedWorld` for `SHB-1b`, `WorldCard` for `SHB-2b` and `SHB-3b`, `WorldSphere` and `WorldPlate` seeded from slug (§10.6), `WorldRecord` data table. Cards are single anchors linking to the live sites. Hover states are CSS only. **No screenshots, no case-study routes.**
+4. **Catalogued Worlds** (§10): `FeaturedWorld` for `SHB-1b`, `WorldCard` for `SHB-2b` and `SHB-3b`, `WorldStill` for the fallback planet image, `WorldSphere` (seeded CSS sphere, the images-blocked fallback), `WorldRecord` data table. Cards are single anchors linking to the live sites. Hover states are CSS only. **No screenshots, no case-study routes. The 3D planets arrive in Phase 4b** — this phase builds the complete non-3D version of the section.
 5. **Transmissions** (§8.2): hairline row list from the `articles` collection. Implement the build-time dev.to fetch with the committed fallback per §20.4.
 6. **Uplink** (§15): availability status, email row, `CopyEmail.tsx` island (`client:visible`), social links, résumé CTA. Reserve the copy button's space in the server render.
 7. **Instrument Bay teaser** (§14.4): four mono rows + link to `/instruments`. Zero JS.
@@ -1896,7 +2300,7 @@ Per-section responsive specs in §10.8, §11.5, §12.2, §13.3, §8.2. Verify at
 Every §25.3 accessible equivalent implemented. Heading outline correct on all routes (h1 → h2 → h3 → h4, no skips). `<ol>` for chronology, `<dl>` for data pairs, `<time datetime>` on every date. Skill names all present as text. Status as text. Card accessible names are `"{name} — {one-liner}"`. Gradient plates and spheres `aria-hidden`. Copy confirmation via a polite live region. `axe-core` zero violations on all five route types. Full keyboard and VoiceOver pass on `/` and `/dossier`.
 
 ### Performance
-Home: mobile total ≤320KB and JS ≤20KB gz; desktop total ≤500KB. Case study ≤900KB with images. All images AVIF/WebP with explicit dimensions; only one above-fold image per route is eager. Lighthouse Performance ≥95 mobile on `/` and `/worlds/*`. CLS ≤0.02.
+Home at end of Phase 3 (no scene yet): mobile total ≤700KB, critical-path JS ≤16KB gz; desktop total ≤900KB. All images AVIF with explicit dimensions; only the hero art plate is eager. **Lighthouse ≥90 mobile — this is the high-water mark Phase 4 is measured against, and it must be recorded in `PERF.md`.** CLS ≤0.02.
 
 ### Testing
 Playwright: the §27.4 content-in-HTML assertion (JS disabled — `h1`, role, every skill name, every project name, description and live URL, every article title, the email address all present in raw HTML); every external link has `rel="noopener noreferrer"`; all three project cards link to their live sites and none is a dead link; article fallback path works with the network stubbed to fail. `axe-core` all routes. Lighthouse CI. Visual pass at all viewports.
@@ -1919,79 +2323,169 @@ This is the highest-value phase — spend effort on content fidelity, not effect
 No star-field canvas. No constellation hover/highlight interactivity. No scroll-drawn spine. No View Transition `transition:name` pairs on cards (Phase 4). No `/instruments` content beyond the teaser. No Orbit. No OG image generation. No analytics provider. No filtering (§10.4 — deferred indefinitely).
 
 ### Expected output
-A shippable portfolio: eight populated sections on the home route, a writing index, a Dossier route, a 404, ≤20KB of mobile JS, ≤260KB mobile total, Lighthouse ≥95 mobile, and zero axe violations.
+A shippable portfolio: eight populated sections on the home route, a writing index, a Dossier route, a 404, ≤16KB critical-path JS, Lighthouse ≥90 mobile, zero axe violations — and a recorded baseline for Phase 4 to be judged against.
 
 ---
 
-## Phase 4 — Advanced Space Experience
+## Phase 4 — The Spine
 
 ### Goal
-Add the refinement layer that makes the site memorable: the live star field, constellation interactivity, the scroll-drawn spine, and cross-route world transitions.
+Stand up the single persistent WebGL scene and the scroll-driven camera flight path — the star field, the nebula volumes, and the eight-keyframe camera. **Environment only; no set pieces.**
 
 ### Why this phase exists
-Everything here is **enhancement over an already-complete site**. Structuring it this way means visual ambition can never compromise content or ship half-finished — each item can be abandoned individually with no loss.
+This is the centrepiece of Revision 2 and the largest single risk in the project. It is split from its set pieces (Phase 4b) deliberately: the camera path, tier ladder, degradation, frame budget and fallback handover are *infrastructure*, and they must be proven correct against a nearly-empty scene before anyone adds planets to it. Debugging a dropped frame is tractable with a star field and impossible with eight objects in flight.
+
+By this point the site is already complete and shippable (Phase 3) and its no-WebGL backdrop is already designed (Phase 2). That is what makes it safe to attempt this at all.
 
 ### Prerequisites
-Phase 3 done and its performance targets met. **Do not start this phase if Phase 3 is below target** — enhancements built on a failing baseline cannot be measured.
+Phase 3 done and its performance targets met, with numbers recorded in `PERF.md`. **Do not start if Phase 3 is below target** — the scene's cost can only be measured against a known-good baseline. Phase 2's band system and art layer must be working, since the scene reads the band and hands over from the art.
 
 ### Tasks
-1. **`StarField.tsx`** island (`client:idle` + `client:media="(min-width: 768px)"`): seeded PRNG star generation, pre-allocated typed arrays, DPR capped at 1.5, three depth layers, twinkle, slow drift, 600ms cross-fade over the static layer on hydration.
-2. Implement `lib/deviceTier.ts` and wire the §16.4 capability ladder: 900 stars desktop / 400 tablet-and-low-end, 30fps cap on low-end, no hydration under reduced motion.
-3. Implement runtime self-degradation: rolling mean frame time >20ms for 2s → halve star count once; >26ms again → stop the loop and keep the last frame. One-way only.
-4. Pause the rAF loop on `IntersectionObserver` exit and on `visibilitychange`. Verify with a CPU profile that a hidden tab does zero work.
-5. **`AtlasLink.tsx`** island (`client:visible`): one delegated listener over `data-skill` attributes providing two-way star↔row highlight, connected-line brightening, and label reveal for Working/Familiar stars. Stars stay out of the tab order; the list remains the sole tab path.
-6. Constellation line draw-in on first intersection (`stroke-dashoffset`, 900ms, 40ms stagger, once).
-7. **Trajectory spine scroll-draw**: `animation-timeline: view()` on `stroke-dashoffset` inside `@supports`; desktop only; static full line as the unsupported and mobile state.
-8. **View Transitions**: verify `transition:persist` keeps the cosmos alive across `/` → `/instruments` → `/transmissions` → `/dossier` with no flash or re-hydration of the star field. Disable under reduced motion. (No `transition:name` pairs — the card→case-study pair is gone with the case-study routes, §10.5.)
-9. Extend `section_reach` analytics onto the existing shared observer (no new listener).
-10. Re-measure every §26.1 target and record the deltas against the Phase 3 numbers.
+1. Install `three`, `@react-three/fiber`, and the four allowed `drei` modules. Configure the build so the scene resolves to **one lazy chunk** and assert its gzipped size in CI (§26.4) — a three.js bundle grows silently otherwise.
+2. Build `lib/webglSupport.ts` (context probe) and `scene/useSceneTier.ts` implementing the §16.4 ladder: `saveData` and no-WebGL bail to the art layer; low/mid/high set particle count, DPR and bloom.
+3. Build `DeepFieldScene.tsx`: the single `<Canvas>`, `position: fixed` at `--z-scene`, `aria-hidden="true"`, `role="presentation"`, zero focusable children. Wrap it in an error boundary that renders `null` on failure. Mount once in `BaseLayout` with `transition:persist`.
+4. Implement the art→scene handover: warm one frame off-screen, then cross-fade the canvas in over 600ms. **The art layer stays mounted forever.** Handle `webglcontextlost` by fading the canvas out to reveal it.
+5. Build `scene/flightPath.ts`: the eight keyframes from §4.1 as position and look-at `CatmullRomCurve3`s. This file is the single source of truth for the flight and must contain no rendering code.
+6. Build `CameraRig.tsx`: sample both curves by eased scroll progress read from the `scrollProgress` singleton **inside `useFrame`, via a ref, never React state**. Apply ~140ms inertia. Fixed FOV. Under `prefers-reduced-motion`, cut to the active section's keyframe instead of interpolating.
+7. Build `StarField.tsx` (in-scene): instanced points from a seeded PRNG, tier-scaled count (12k/6k/3k), depth-sorted, pre-allocated typed arrays, subtle twinkle via a shader rather than per-frame JS.
+8. Build `NebulaVolume.tsx`: 3–8 layered billboards using `nebula-magenta.avif`, tinted by a `--band-rgb`-derived uniform so the scene's colour tracks the DOM's band exactly.
+9. Build `GalaxySprites.tsx` for the First Light beat — distant, nearly static, the thing that makes the opening read as intergalactic rather than merely dark.
+10. Add `Bloom.tsx`, desktop/high-tier only, **dynamically imported** so mobile never downloads the post-processing pass.
+11. Implement runtime degradation exactly as tabled in §16.4 — one-way per session, never oscillating, logged once in development only.
+12. Pause the frame loop on `visibilitychange` and when the canvas is off-screen. Verify with a CPU profile that a hidden tab does **zero** work.
+13. Re-measure everything against the Phase 3 baseline and record the delta in `PERF.md`.
 
 ### Files / Areas Affected
-`src/components/cosmos/StarField.tsx`, `src/components/atlas/AtlasLink.tsx`, `trajectory/Spine.astro`, `src/lib/deviceTier.ts`, `src/lib/observeOnce.ts`, `src/styles/global.css`.
+`src/components/cosmos/scene/*` (new), `src/components/cosmos/Cosmos.astro`, `src/lib/webglSupport.ts`, `src/lib/deviceTier.ts`, `src/layouts/BaseLayout.astro`, `astro.config.mjs` (chunking), CI budget config.
 
 ### Components
-`StarField` (island), `AtlasLink` (island); modifications to `Spine` only. `WorldCard` and `FeaturedWorld` are untouched in this phase — their hover states are CSS and were finished in Phase 3.
+`DeepFieldScene`, `CameraRig`, `StarField`, `NebulaVolume`, `GalaxySprites`, `Bloom`, `useSceneTier`, `flightPath`.
 
 ### Data
-`src/data/seed.ts` (deterministic PRNG); `skills.ts` connections consumed for line brightening. No new content.
+`flightPath.ts` keyframes; `bands.ts` for scene tint; the nebula volume texture. **No content collection data reaches the scene in this phase** — planets arrive in 4b.
 
 ### State
-`StarField`: star arrays, rAF handle, frame stats, degraded flag, visibility — all local. `AtlasLink`: `hoveredSkill` — local. No shared state, no cross-island communication.
+Scene tier and degraded flag (local, one-way). Camera position (derived per frame from the scroll ref — never state). Nothing shared beyond the existing `scrollProgress` singleton.
 
 ### Animation
-L1 ambient star drift and twinkle. Constellation line draw (once). Spine scroll-draw (desktop). Everything gated per §16.4: mobile gets none of it, reduced motion gets none of it.
+L0 in full: the camera flight, nebula drift, star twinkle. All inside one frame loop, all inside the §26.1 frame budget. No new DOM motion whatsoever.
 
 ### Responsive Behavior
-Star canvas ≥768px only, reduced density 768–1023px. Atlas interactivity ≥768px (the map does not exist below that). Spine scroll-draw ≥1024px. View Transitions everywhere (native and cheap).
+Per §24.2: mobile 3,000 particles / DPR 1.0 / no bloom / 3 nebula layers; tablet 6,000 / 1.5 / no bloom / 5 layers; desktop 12,000 / 1.75 / bloom / 8 layers. **Opaque panels below `md`** — blurred panels over a live canvas is the most expensive thing on a mobile GPU. Skip rendering during high scroll velocity on the lowest tier.
 
 ### Accessibility
-Canvas `aria-hidden` + `role="presentation"`. Star field encodes no information. Atlas tab path unchanged from Phase 3 — verify the island adds **zero** tab stops. Reduced-motion pass: no canvas hydration at all, static lines, static spine, no route transitions. Re-run `axe-core` on all routes; still zero violations.
+The §25.0 parallel-DOM contract in full: canvas `aria-hidden` + `role="presentation"`, zero focusable children, no information expressed only in 3D. **The delete-the-canvas CI gate lands in this phase** (§34.3): remove the canvas element, assert the §27.4 content set is intact and keyboard order is unchanged. Reduced-motion camera cuts verified manually. `axe-core` still zero violations on every route.
 
 ### Performance
-Star field ≤6KB gz, ≤4ms/frame, zero per-frame allocation. `AtlasLink` ≤3KB gz. **Desktop home JS ≤60KB gz; mobile home JS unchanged at ≤20KB** (nothing added there). No regression against Phase 3 on LCP, CLS, INP, or Lighthouse. Hidden tab: 0% CPU.
+Critical-path JS **unchanged from Phase 3** (≤16KB) — the scene must add nothing to it. Scene chunk ≤230KB gz desktop / ≤175KB mobile. Frame time ≤16ms desktop, ≤33ms mobile, verified under 4× CPU throttle. Hidden tab: 0% CPU. Scene init → first render ≤600ms desktop / ≤1.2s mobile after idle. LCP, CLS and INP must not regress against the recorded Phase 3 numbers.
 
 ### Testing
-Playwright: canvas absent at 375px width; canvas present at 1280px; reduced-motion emulation shows no canvas element hydrated; `axe-core` clean. Manual: 60s CPU profile on desktop (ambient ≤4ms/frame), background-tab profile (zero work), low-end throttle (4× CPU) triggers degradation exactly once, hard-refresh produces an identical sky (seeded determinism). Lighthouse CI regression check against recorded Phase 3 numbers.
+Playwright: canvas absent with JS disabled and site fully functional; canvas present and rendering at 1280px; reduced-motion emulation shows no camera interpolation; `saveData` emulation skips the scene entirely; delete-the-canvas gate passes. Manual: 60s frame profile at each tier; 4× CPU throttle triggers degradation exactly once and never oscillates; hidden-tab profile; 5-minute soak with heap snapshots for leaks; forced `webglcontextlost` reveals the art layer cleanly. Lighthouse CI against the Phase 3 baseline.
 
 ### Acceptance Criteria
-- Mobile bundle is **byte-for-byte unchanged** from Phase 3.
-- Killing all JS leaves the site visually intact (static sky, static lines, static spine, working navigation).
-- Star field is deterministic across reloads.
-- Hidden tab does zero rAF work.
-- Degradation fires under throttling and never oscillates.
-- No Lighthouse or Web Vitals regression versus Phase 3.
+- **Delete the canvas element and the site is complete and unchanged** — same content, same reading order, same keyboard path. Enforced in CI.
+- Critical-path JS is byte-for-byte unchanged from Phase 3.
+- The scene chunk is a single lazy chunk within budget, asserted in CI.
+- 58fps+ desktop and a 30fps floor on mobile, under throttle.
+- Hidden tab does zero work; a 5-minute soak shows flat memory.
+- Context loss reveals the art layer with no visual break.
+- Reduced motion produces eight static compositions with zero continuous movement.
+- No Lighthouse or Web Vitals regression beyond the §26.1 R2 targets.
+- Exactly one `<canvas>` on the home route.
 
 ### Definition of Done
-The site is memorable, and every enhancement is provably removable without loss of content or function.
+The flight works, it holds its frame budget on a mid-range phone, and it can be deleted without the portfolio noticing.
 
 ### AI Implementation Notes
-Pre-allocate star arrays once (`Float32Array`) and mutate in place — allocating per frame is the classic cause of GC sawtooth in canvas star fields. Seed the PRNG from a constant, not from `Date.now()`. The cross-fade must go over the static layer, never replace it — if hydration fails mid-way the static sky must still be there. Do not add a scroll listener for the spine; use `animation-timeline: view()` and accept the static fallback. Resist adding a second experiment here — the one experiment belongs in Phase 5 on its own route.
+The three rules that decide whether this phase succeeds:
+
+1. **Never put per-frame values in React state.** Read the scroll ref inside `useFrame`. A single `setState` in a frame loop re-renders the tree 60×/second and will cost more than every optimisation elsewhere combined.
+2. **Allocate nothing per frame.** Pre-allocate every `Vector3`, `Color` and `Quaternion` at module or mount scope and mutate in place. Per-frame allocation is the classic cause of GC sawtooth in R3F scenes.
+3. **Import narrowly.** Named three.js imports; deep-path drei imports; the allowed list is `Points`, `PointMaterial`, `useTexture`, `Preload`. `import * from 'three'` or a wholesale drei import will roughly double the chunk and CI will fail you.
+
+Build and verify the tier ladder *before* making the scene pretty — a beautiful scene that only runs on your machine is a failed phase. Test on a real mid-range Android before declaring done.
 
 ### Things NOT to implement yet
-No WebGL, no Three.js, no R3F. No Orbit simulation (Phase 5). No `/instruments` content. No mouse-follow, cursor-distortion, magnetic, or tilt effects — ever. No additional ambient systems. No OG images or analytics provider (Phase 8).
+No planets, no constellation globe, no probe trail, no station, no relay beams (all Phase 4b). No Orbit simulation (Phase 5). No camera control from anything other than scroll. No post-processing beyond bloom. No scene interactivity of any kind — nothing in the scene responds to pointer input in this phase.
 
 ### Expected output
-A living sky and an interactive star chart on desktop, an unchanged mobile bundle, cinematic world transitions, and no measured performance regression.
+A single persistent WebGL environment behind the whole site: a scroll-driven eight-keyframe camera flight through a band-tinted volumetric star field, holding 58fps desktop and 30fps mobile, deletable without consequence, with the cost measured against Phase 3 and recorded.
+
+---
+
+## Phase 4b — Scene Set Pieces
+
+### Goal
+Populate the flight path with the objects that make each beat mean something: the three project planets, the constellation globe, the probe trail, the station, and the relay beams.
+
+### Why this phase exists
+Phase 4 proved the infrastructure; this phase spends its budget. Separating them means each set piece can be individually cut if it does not fit the frame budget (§26.2's cut order), and none of them can destabilise the camera work they sit on top of. This is also the phase where P2 is enforced hardest: every object here must encode something real, or it does not ship.
+
+### Prerequisites
+Phase 4 done and holding its frame budget on a real mid-range phone. Phase 3's DOM records must exist, since every set piece is a parallel expression of content that already ships in HTML.
+
+### Tasks
+1. **`PlanetSystem.tsx` + `Planet.tsx`** (§10.6): three spheres from the `projects` collection, AI-generated equirectangular textures, key + limb lighting, fresnel atmosphere, ring on the featured world only, desynchronised idle rotation, spatial scale by significance.
+2. **`WorldViewer.tsx`** island: card hover/focus drives planet emphasis, and focusing a card eases the camera's look-at toward that planet over 560ms. Must work from **keyboard focus**, not just pointer hover.
+3. **`ConstellationGlobe.tsx`** (§11.3a): the 24 skills mapped from their authored 2D coordinates onto a sphere, instanced stars sized by tier, relationship lines, **DOM labels projected to screen space** (never 3D text), pointer-drag rotation on desktop only.
+4. Extend `AtlasLink` to bridge globe ↔ list highlighting in both directions, adding zero tab stops.
+5. **`ProbeTrail.tsx`**: the Trajectory ion-trail with a burn marker per achievement, drawn along a curve, ember-tinted.
+6. **`Station.tsx`**: the Instrument Bay structure — wireframe/low-poly, aurora rim-light. Deliberately the cheapest set piece.
+7. **`RelayBeams.tsx`**: Transmissions signal beams. **First on the chopping block** if the frame budget is tight (§26.2).
+8. Generate the three planet textures, three planet stills and remaining art plates to the §3.4 contract; encode to AVIF within budget; wire mobile half-res variants via `srcset`.
+9. Verify every set piece's fallback: planet stills in cards, SVG map for the globe, CSS border spine, static poster — each already specified, each now actually exercised.
+10. Re-measure frame time and bundle at every tier; cut scope per §26.2 rather than raising a budget.
+
+### Files / Areas Affected
+`src/components/cosmos/scene/*`, `src/components/worlds/*`, `src/components/atlas/*`, `src/components/trajectory/*`, `src/assets/images/*` (generated art), `src/content/projects.json` (texture references).
+
+### Components
+`PlanetSystem`, `Planet`, `WorldViewer` (island), `ConstellationGlobe`, `SkillsGlobe` (island wrapper), `ProbeTrail`, `Station`, `RelayBeams`.
+
+### Data
+`projects` (planet textures, order, featured), `skills` (globe positions, tiers, connections), `experience` (burn marker count). All already validated in Phase 1 — no schema changes.
+
+### State
+`WorldViewer`: selected/focused planet (local, passed into the scene as a prop). `SkillsGlobe`: rotation in a ref. Nothing new is shared.
+
+### Animation
+Planet idle rotation, camera look-at easing on card focus, globe rotation and idle spin, trail draw, beam pulses. All inside L0's existing frame budget — the budget does not grow because set pieces were added.
+
+### Responsive Behavior
+Per §24.2: 32-segment planets and 1024px textures on mobile with no atmosphere shader; globe replaced by the SVG map below `md`; relay beams removed on mobile; trail simplified. Touch never rotates the globe (P4).
+
+### Accessibility
+Every set piece is `aria-hidden` decoration with a DOM counterpart per the §25.0 table. Zero new tab stops. Planet size encodes significance but significance is *also* text (`featured` label), so nothing is size-only. Camera easing on focus must not fight the browser's own focus scrolling. Re-run the delete-the-canvas gate — with set pieces present it is a much stronger test than in Phase 4.
+
+### Performance
+Scene chunk ≤230KB gz desktop / ≤175KB mobile — **unchanged from Phase 4**; set pieces come out of the scene-code allowance, not a new budget. Images: ≤1.6MB desktop / ≤600KB mobile total. Frame time still ≤16ms desktop / ≤33ms mobile under throttle, with all set pieces in frame simultaneously (the Worlds beat is the worst case — measure there).
+
+### Testing
+Playwright: planet stills render in cards with WebGL disabled; SVG map renders below `md`; keyboard focus on a card triggers the same emphasis as hover; delete-the-canvas gate passes with set pieces present; no new tab stops (keyboard-order snapshot unchanged from Phase 3). Manual: frame profile during the Worlds beat at each tier; touch swipe over the globe scrolls the page rather than rotating it; 5-minute soak.
+
+### Acceptance Criteria
+- Every set piece has a working, designed fallback that has actually been viewed — not merely specified.
+- Keyboard-order snapshot is identical to Phase 3: the scene added zero tab stops.
+- Frame budget holds with all set pieces in frame, under 4× CPU throttle.
+- Image budgets met at both resolutions.
+- Every object in the scene maps to a row in the §25.0 table. Anything that does not is deleted, not documented.
+- Touch swipe never rotates the globe.
+
+### Definition of Done
+Each beat of the flight path is populated with something that encodes real content, every fallback has been seen with human eyes, and the frame and byte budgets are unchanged from Phase 4.
+
+### AI Implementation Notes
+Enforce P2 ruthlessly here — this is the phase where "wouldn't it be cool if" produces 40KB of shader for something that tells the visitor nothing. Before adding any object, name the DOM content it decorates; if you cannot, do not build it.
+
+Textures dominate the image budget: generate at 2× and downsample, always AVIF, always power-of-two, and check the encoded size before wiring it in. Reuse one `SphereGeometry` across all three planets via instancing or a shared geometry ref rather than three separate allocations.
+
+`RelayBeams` is explicitly expendable. If the Transmissions beat costs frames, cut it and let the band tint plus the art plate carry that section — nobody will know it was planned.
+
+### Things NOT to implement yet
+No Orbit simulation (Phase 5). No `/instruments` scene content. No additional beats beyond the eight in §4.1. No pointer-driven camera control beyond the specified card-focus look-at ease. No second experiment anywhere.
+
+### Expected output
+A populated flight path: three textured planets sized by significance, a rotatable skills globe with DOM labels, an ember probe trail with burn markers, a station, optional relay beams — every one with a verified fallback, no new tab stops, and no budget growth.
 
 ---
 
@@ -2011,7 +2505,7 @@ Phase 3 done (the teaser exists). Phase 4 is *not* required — this phase is in
 2. `CodeExcerpt.astro` using Astro's build-time Shiki. One annotated excerpt for I-02 (Playwright) and up to two for I-01. No client-side highlighter.
 3. `ArchitectureDiagram.astro`: hand-authored inline SVG for I-03 (multi-brand monorepo CMS), colored by tokens, `role="img"` with a real `aria-label`, plus a bulleted text description beside it.
 4. I-01 component-library demos: 3–4 live component instances. If they require Framer Motion, it loads **only on this route** (§19.8) and must stay inside the route JS budget.
-5. **`Orbit.tsx`** (§14.3): Canvas 2D n-body sim, ≤200 bodies, semi-implicit Euler, softened gravity, seeded initial conditions, optional cursor attractor, trailing paths. `client:visible` + `client:media="(min-width: 1024px)"`.
+5. **`Orbit.tsx`** (§14.3): WebGL n-body sim reusing the site's existing three.js chunk — ≤2,000 bodies, semi-implicit Euler, softened gravity, seeded initial conditions, optional cursor attractor, instanced points with trailing paths. `client:visible` + `client:media="(min-width: 1024px)"`.
 6. Orbit telemetry readouts: FPS, body count, frame time, DPR — mono, `aria-live="off"`.
 7. Orbit lifecycle and guards: rAF pause on intersection exit and `visibilitychange`; two-stage auto-degradation (>20ms/2s → halve; >26ms → stop and show poster); hard caps on count, DPR, and canvas size.
 8. `OrbitPoster.astro`: static AVIF poster + description; hosts the `START SIMULATION` button under reduced motion; is the only thing rendered below 1024px.
@@ -2056,7 +2550,7 @@ Playwright: no canvas element at 768px or below; canvas present and running at 1
 A senior engineer reading this route learns something true about how the owner works, and the route stays within budget.
 
 ### AI Implementation Notes
-Exactly **one** experiment. If Orbit becomes hard, simplify the physics — do not reach for WebGL (§19.8; R3F is optional Phase 5b only, and only on proof that Canvas cannot do it). Pre-allocate all body arrays; no per-frame allocation. Keep the poster in sync with the real sim's look, since it is what most visitors see. Author code excerpts as content entries so they can be updated without touching components.
+Exactly **one** experiment. Orbit now shares the spine's three.js chunk (§14.3), so reuse the existing renderer and tier ladder rather than standing up anything new — and if it becomes hard, simplify the physics rather than adding a dependency. Pre-allocate all body arrays; no per-frame allocation. Keep the poster in sync with the real sim's look, since it is what most visitors see. Author code excerpts as content entries so they can be updated without touching components.
 
 ### Things NOT to implement yet
 No second experiment. No WebGL/R3F. No live GitHub API calls (a build-time fetch is acceptable later; a runtime one is not). No playground/sandbox editor. No OG images or analytics provider (Phase 8).
@@ -2179,10 +2673,12 @@ All §26.1 targets met on the deployed preview; all §26.2 budgets met per route
 Lighthouse CI in place and failing on regression. Bundle budget check in place. Manual: 4× CPU + Slow 4G throttled pass on `/`; 60s ambient CPU profile; hidden-tab profile; 5-minute Orbit soak for memory.
 
 ### Acceptance Criteria
-- Lighthouse mobile: Performance ≥95 (`/`, `/worlds/*`), ≥90 (`/instruments`); Accessibility 100 everywhere.
-- LCP ≤1.8s mobile / ≤1.2s desktop; CLS ≤0.02; INP ≤150ms.
-- Mobile home JS ≤20KB gz; desktop home JS ≤60KB gz.
-- Fonts ≤110KB; CSS ≤30KB gz; mobile home total ≤320KB.
+- Lighthouse mobile: Performance ≥78 (`/`), ≥85 (`/transmissions`, `/dossier`), ≥72 (`/instruments`); **Accessibility 100 everywhere**.
+- LCP ≤3.0s mobile / ≤2.2s desktop; CLS ≤0.02; INP ≤200ms mobile.
+- **Critical-path JS ≤16KB gz on every route** — asserted separately from total JS.
+- Scene chunk ≤230KB gz desktop / ≤175KB mobile.
+- Fonts ≤110KB; CSS ≤34KB gz; mobile home total ≤950KB.
+- 58fps desktop / 30fps floor mobile under 4× CPU throttle.
 - CI fails on any budget or Lighthouse regression.
 - Every remaining byte of JS is attributable to a listed island.
 
@@ -2318,31 +2814,38 @@ A verified, polished, production portfolio with green suites, a current README, 
 ## 31. Phase Dependencies
 
 ```text
-Phase 0  Discovery & Creative Direction
+Phase 0  Discovery & Creative Direction              ✅ COMPLETE
    │  (content pack, locked direction)
    ▼
-Phase 1  Foundation — tokens, primitives, collections, routes
+Phase 1  Foundation — tokens, primitives, collections, routes   ✅ COMPLETE
    │
    ▼
-Phase 2  Core Experience — cosmos, nav, hero, scroll architecture
-   │
+Phase 2  Core Experience — art backdrop, bands, scroll driver, nav, hero
+   │        ◄──── THE COMPLETE NO-WEBGL EXPERIENCE IS BUILT HERE
    ▼
 Phase 3  Portfolio Content ◄──── SHIPPABLE MILESTONE
-   │        (site is complete and launchable here)
-   ├──────────────────────────┐
-   ▼                          ▼
-Phase 4  Advanced Space    Phase 5  Engineering Showcase
-   │     (home enhancements)  │      (/instruments route)
-   └──────────┬───────────────┘
-              ▼
+   │        (site is complete and launchable; no 3D exists yet)
+   ├────────────────────────────────┐
+   ▼                                ▼
+Phase 4  The Spine               Phase 5  Engineering Showcase
+   │     canvas, camera, flight     │      (/instruments route)
+   │     path, starfield, nebula    │
+   ▼                                │
+Phase 4b Scene Set Pieces           │
+   │     planets, globe, trail,     │
+   │     station, beams             │
+   └────────────┬───────────────────┘
+                ▼
 Phase 6  Responsive & Accessibility Hardening
-              ▼
+                ▼
 Phase 7  Performance
-              ▼
+                ▼
 Phase 8  SEO & Production
-              ▼
+                ▼
 Phase 9  QA & Polish
 ```
+
+**Revision 2 reshaped this graph in one important way:** the 3D work is now two phases (4 and 4b) sitting *downstream of a shippable site*, and Phase 2 explicitly builds the entire fallback before any WebGL exists. Both changes exist so that the ambitious part can be abandoned, cut down, or deferred at any point without leaving a hole.
 
 ### 31.1 Parallelisable work
 
@@ -2405,8 +2908,8 @@ Not: "the code exists". Not: "it works on my machine". Not: "Lighthouse was 95 l
 | R1 | ~~Content gaps never close~~ — **CLOSED.** All of C1–C8 resolved in Phase 0 | — | — | n/a | n/a |
 | R1b | **No employer names or dates** in Trajectory (the chosen design, C1) reduces credibility for ATS-driven or employer-focused screens | Medium | Medium | Burn events are specific enough to convey scope; `/dossier` and the résumé PDF are ≤1 tap from every route and carry employment specifics (§12.1) | If it proves to cost opportunities, add role dates only (no company) — the schema already accepts them |
 | R2 | **Theme overpowers content** — visitors remember the sky, not the work | Medium | High | P1/P2/P8 as review tie-breakers; one background system only; density-over-spectacle in Worlds and Trajectory | Reduce star count and glow tiers; increase panel opacity; the content layout is independent of the effects |
-| R3 | **Poor mobile performance** on low-end Android | Medium | High | `client:media` gating means the expensive islands are never downloaded on mobile; mobile JS budget ≤20KB; no canvas, parallax, or scroll-linked motion below 768px | Static cosmos only (already the mobile default) — nothing further to remove |
-| R4 | **Scope creep into a WebGL project** | Medium | High | §19.8 rejects Three.js/R3F; exactly one experiment, on its own route, ≤12KB; dependency admission rule requires written justification | Delete the experiment; `/instruments` still stands on code, diagrams, and demos |
+| R3 | ~~Poor mobile performance~~ — **superseded by R18**, which is the R2 form of this risk and rated High | — | — | See §33.1 | See §33.1 |
+| R4 | ~~Scope creep into a WebGL project~~ — **accepted deliberately in R2.** The replacement risks are R17–R21 below | — | — | The spine is the product now | n/a |
 | R5 | **Over-engineering** — abstractions, state libraries, animation frameworks | Medium | Medium | Closed island list (§20.2); no state library (§22); primitives require a third use case; §37-style "avoid overengineering" rule | Delete the abstraction; the plan's components are intentionally shallow |
 | R6 | **Accessibility regressions from visual work** | Medium | High | a11y is a gate in every phase; `axe-core` in CI; the list (not the map) is the Atlas's canonical tab path; every visual has a text equivalent (§25.3) | Remove the offending effect — every effect is individually removable by design |
 | R7 | **`animation-timeline` / `color-mix` / `backdrop-filter` support gaps** | Medium | Low | All three are used inside `@supports` with designed static fallbacks; Phase 9 verifies each fallback by disabling the feature | Static spine, solid surfaces, plain colors — all already designed |
@@ -2416,6 +2919,19 @@ Not: "the code exists". Not: "it works on my machine". Not: "Lighthouse was 95 l
 | R11 | ~~Long initial load from case-study images~~ — **largely eliminated** by C2/C3: the only images left site-wide are the portrait, Orbit poster, grain tile, and OG images | Low | Low | Portrait via `astro:assets` at 480w/720w; §26.2 image budgets cut to ≤60KB per route | Drop the portrait below 480px (already specified in §9.6) |
 | R15 | **Projects section reads as thin** — three cards, no case studies, no screenshots | Medium | Medium | Card copy gets case-study-level effort (Phase 3 notes); the record is data-dense (designation, stack, year, status); Instrument Bay carries the engineering depth that case studies would have | Add case-study routes from §37 once there is real depth to publish |
 | R16 | **`SHB-3b` confuses visitors** — the previous portfolio listed as a project on the current portfolio | Medium | Low | Named "Portfolio v1" so the lineage is explicit (§10); legacy domain kept live and un-redirected (§35) | Drop it and show two projects rather than one confusing three |
+
+### 33.1 Revision 2 risks — the spine
+
+Adopting a WebGL spine trades R1's risk profile for a new one. These five are the real exposure, and every mitigation is already specified somewhere in this document rather than being aspirational.
+
+| # | Risk | Prob. | Impact | Mitigation | Fallback |
+|---|------|-------|--------|-----------|----------|
+| R17 | **The scene eats the content.** The classic failure: the 3D becomes the interface, and the text becomes a caption on it. | **High** | **Critical** — costs the portfolio its actual job | The §25.0 parallel-DOM contract; the canvas is a layer not a container (R2 preamble); **the delete-the-canvas CI gate** (§34.3), which is an automated test rather than a good intention; §9.1 explicitly forbids scene-as-navigation | The site is complete at Phase 3 before the scene exists. Deleting the canvas is a supported operation, not a disaster |
+| R18 | **Mobile performance is unacceptable.** Owner chose 3D on mobile; low-end Android is where this breaks. | **High** | High | Tier ladder caps particles/DPR/bloom (§16.4); opaque panels below `md`; one-way runtime degradation; 30fps floor asserted under 4× throttle; `saveData` skips the scene entirely | Ship the Phase 2 art backdrop on the lowest tier — it is a designed, complete experience, not a degraded one |
+| R19 | **three.js bundle grows silently.** One careless `import * from 'three'` or a wholesale drei import roughly doubles the chunk. | **High** | Medium | Named/deep imports only with a 4-module drei allowlist (§19.2a); **CI asserts the scene chunk's gzipped size** (§26.4); dependency admission rule | Cut scope in the §26.2 order: particles → textures → bloom → a beat |
+| R20 | **Motion sickness.** A scroll-driven camera is a genuine vestibular trigger for a real fraction of visitors. | Medium | High | `prefers-reduced-motion` **cuts** the camera rather than merely slowing it (§16.4); fixed FOV — no FOV animation, which is the worst offender; inertia trails scroll rather than amplifying it; no roll on the camera | Reduced-motion path yields eight static compositions, which is a complete experience |
+| R21 | **AI art reads as generic.** Some engineers recognise and discount it, and generic space art would undercut the craft claim. | Medium | Medium | The §3.4 prompt contract — one dominant band hue, astrophotography realism, no text/flares, generated at 2× and downsampled; art is backdrop only and never captioned as real astronomy; regenerate rather than accept | Swap to real NASA/ESA public-domain plates, which was the rejected option and remains available at the cost of an attribution line |
+| R22 | **WebGL context loss** on mobile tab suspend or GPU reset leaves a black hole where the site was. | Medium | Medium | The art layer never unmounts (§17.1); `webglcontextlost` fades the canvas out rather than attempting recovery; error boundary renders `null` on init failure | The art still is already underneath — the visitor may not notice at all |
 | R12 | **Duplicate content vs dev.to** harming the owner's own rankings | Low | Medium | §27.3: excerpt-only, always link out; canonical rule if mirroring is ever added | Remove excerpts; keep title + date + link |
 | R13 | **Fake-terminal / preloader nostalgia** — reintroducing the old site's boot splash | Low | Medium | Explicitly forbidden in §1, §9.3, and Phase 2's NOT-yet list | n/a — it is simply not built |
 | R14 | **Anchor renaming after launch** breaks shared links | Low | Medium | Anchors frozen at Phase 2 (§23) and treated as a public API | Add redirects for old anchors via a tiny client-side hash map (last resort) |
@@ -2447,6 +2963,24 @@ Playwright screenshot comparison at 320, 390, 768, 1280, 1920 for `/`, `/instrum
 
 `axe-core` via Playwright on all five route types — **zero violations, enforced in CI**. Keyboard-order snapshot test for `/`. Manual per §25.4: VoiceOver (macOS + iOS Safari), NVDA (Windows Firefox), 200% zoom, 400% reflow, forced-colors, `prefers-contrast: more`, reduced-motion, JS-disabled.
 
+**The delete-the-canvas gate (R2, CI-enforced).** The single most important test in this project, because it converts the §25.0 contract from a promise into a check:
+
+```text
+1. Load /, wait for the scene to mount.
+2. Snapshot: the §27.4 content set + the full keyboard tab order.
+3. Remove the <canvas> element from the DOM.
+4. Re-snapshot both.
+5. ASSERT: content set identical, tab order identical, zero axe violations,
+   no layout shift (CLS delta = 0).
+```
+
+It runs on every PR from Phase 4 onward and is far stronger once Phase 4b's set pieces exist. If it ever fails, the correct fix is to move content out of the scene — never to relax the assertion.
+
+**Two further R2 gates:**
+
+- **Tier matrix:** the scene is loaded at each tier (`saveData`, no-WebGL, low, mid, high) and asserted to mount or skip correctly, with the art layer visible whenever the canvas is absent.
+- **Reduced-motion camera:** with `prefers-reduced-motion` emulated, assert the camera's position is *discrete* across a scroll sweep — it must occupy only the eight keyframe positions, never an interpolated value.
+
 ### 34.4 Performance
 
 Lighthouse CI on `/`, `/instruments`, `/transmissions` (mobile + desktop) with §26.1 as failing assertions. Bundle-size budget check against §26.2. Manual: 4× CPU + Slow 4G pass; 60s ambient CPU profile (≤4ms/frame); hidden-tab profile (zero work); 5-minute Orbit soak with heap snapshots; real-user vitals reviewed 48h after launch.
@@ -2463,13 +2997,15 @@ The §27.4 content-in-HTML assertion (JS disabled) in CI. Structured-data valida
 
 1. `pnpm build` clean (zero warnings)
 2. TypeScript clean
-3. Token lint (no hardcoded design values)
+3. Token lint (no hardcoded design values, no raw band hex outside `global.css`)
 4. `axe-core` zero violations, all routes
 5. Lighthouse CI assertions met
-6. Bundle budgets met
+6. Bundle budgets met — **including the scene chunk's gzipped size, asserted separately** (§26.2)
 7. Content-in-HTML test passes
 8. Link check clean
 9. Visual regression reviewed (not auto-approved)
+10. **Delete-the-canvas gate passes** (§34.3) — from Phase 4 onward
+11. **Critical-path JS ≤16KB** — asserted independently of total JS, since the whole performance story depends on the split (§26.2)
 
 ---
 
@@ -2540,7 +3076,7 @@ Deliberately out of scope. Do not build these during Phases 0–9; record any ne
 | Contact form | Only if email volume proves insufficient; needs an endpoint, spam protection, and monitoring (§15.1) |
 | Full article mirroring from dev.to | Only with `rel="canonical"` to dev.to on every mirrored page (§27.3) |
 | Light mode | Only if a real need appears; requires a complete second visual system (§22) |
-| WebGL / R3F experiment | Only on proof that Canvas 2D cannot achieve the effect; desktop-only, ≤120KB gz (§19.8) |
+| A second scene beat or experiment | Only if the first holds its frame budget with room to spare, and only if it encodes real content (P2) |
 | A second experiment in the Instrument Bay | Only if the first is proven to hold engagement without hurting the route's budget |
 | Case-study reading progress / TOC | Only if case studies are revived *and* exceed ~1,500 words |
 | i18n | Only for a concrete audience need; the fluid type scale and token system already accommodate it |
@@ -2594,10 +3130,32 @@ Tick every box before declaring the project complete.
 
 **Animation**
 - [ ] Every animation maps to a §16.2 level and a named purpose
-- [ ] Only `transform`/`opacity` animated (plus the two sanctioned exceptions)
+- [ ] Only `transform`/`opacity` animated in the DOM (plus the two sanctioned exceptions)
 - [ ] Entrances fire once and never replay
-- [ ] Exactly one `IntersectionObserver` drives all entrances
-- [ ] Reduced motion suppresses L1/L3/L4 and looks deliberate
+- [ ] Exactly one `IntersectionObserver` and exactly one rAF scroll loop, site-wide
+- [ ] **No DOM-level ambient motion anywhere** (§16.2 L1 ban)
+- [ ] Reduced motion suppresses L0/L3/L4 and looks deliberate
+
+**The 3D spine (R2)**
+- [ ] **Delete-the-canvas gate passes in CI** — content, tab order and CLS all unchanged
+- [ ] Exactly one `<canvas>` on the home route
+- [ ] Canvas is `aria-hidden` + `role="presentation"` with zero focusable children
+- [ ] Every scene object maps to a row in the §25.0 parallel-DOM table
+- [ ] Critical-path JS unchanged by the scene's existence
+- [ ] Named three.js imports and deep-path drei imports only; allowlist respected
+- [ ] Tier ladder verified at all five tiers (`saveData`, no-WebGL, low, mid, high)
+- [ ] `prefers-reduced-motion` produces discrete camera positions, never interpolated
+- [ ] `webglcontextlost` reveals the art layer with no visual break
+- [ ] Every set piece's fallback has been viewed with human eyes, not just specified
+- [ ] Verified on a real mid-range Android, not only in devtools throttling
+
+**Colour & art (R2)**
+- [ ] All eight bands verified ≥4.5:1 on void **and** in situ over their own art plate
+- [ ] `--color-ink-*` never band-tinted
+- [ ] One dominant band per viewport; cross-fades never cut
+- [ ] Every AI asset meets the §3.4 prompt contract; none reads as generic
+- [ ] Every backdrop ships an inlined LQIP
+- [ ] No asset over 200KB after encode; total raster inventory is the 14 listed in §29
 
 **Responsive**
 - [ ] §24.2 effect matrix verified line by line on real devices
@@ -2616,13 +3174,17 @@ Tick every box before declaring the project complete.
 - [ ] JS-disabled pass complete on every route
 
 **Performance**
-- [ ] Lighthouse mobile ≥95 (`/`, `/worlds/*`), ≥90 (`/instruments`); Accessibility 100
-- [ ] LCP ≤1.8s mobile / ≤1.2s desktop; CLS ≤0.02; INP ≤150ms
-- [ ] Mobile home JS ≤20KB gz; desktop ≤60KB gz
-- [ ] Fonts ≤110KB; CSS ≤30KB gz; mobile home total ≤320KB
+- [ ] Lighthouse mobile ≥78 (`/`), ≥85 (`/transmissions`, `/dossier`), ≥72 (`/instruments`); **Accessibility 100**
+- [ ] LCP ≤3.0s mobile / ≤2.2s desktop; CLS ≤0.02; INP ≤200ms mobile
+- [ ] **Critical-path JS ≤16KB gz on every route**, asserted separately from total
+- [ ] Scene chunk ≤230KB gz desktop / ≤175KB mobile, asserted in CI
+- [ ] Fonts ≤110KB; CSS ≤34KB gz; mobile home total ≤950KB
+- [ ] Images ≤1.6MB desktop / ≤600KB mobile, all AVIF
+- [ ] **58fps desktop / 30fps floor mobile under 4× CPU throttle**
+- [ ] Degradation fires once under load and never oscillates
 - [ ] Hidden tab does zero rAF work; 5-minute soak shows flat memory
 - [ ] CI fails on any budget or Lighthouse regression
-- [ ] Every byte of JS attributable to a listed island
+- [ ] Every byte of JS attributable to a listed island (§20.2)
 
 **SEO**
 - [ ] Unique title, description, canonical, and OG image per route
@@ -2720,4 +3282,23 @@ Append one row per significant decision, deviation, or deferral. This is how a f
 | 2026-09-04 | 1 | Components annotate `Astro.props` explicitly (`}: Props = Astro.props`) | Implicit `Props` inference is not applied under `astro check`, which left prop types as `any` and produced both an error and "Props declared but never used" warnings |
 | 2026-09-04 | 1 | `skills` is a **content collection** (`src/content/skills.json`), not `src/data/skills.ts` | §20.3 (collection) and §21.1 (data module) disagreed. The collection wins: it gets the same build-time Zod validation as every other content type, so a bad coordinate or a typo'd tier fails the build. `src/data/` keeps only the PRNG (`seed.ts`) |
 | 2026-09-04 | 1 | Corner ticks are a Tailwind `@utility ticks` driven by `--tick-color`/`--tick-size` | One utility covers all three §17.2 intensities; verified compiling and rendering. A functional utility (`ticks-*`) was tried first and abandoned as unnecessarily clever |
+
+### Revision 2 — the maximalist turn
+
+Owner directive: *"space/universe images, 3D components, something unique, React for interactivity and complex components, multiple space colours."* Each row below reverses an R1 decision, deliberately.
+
+| Date | Phase | Decision / Deviation | Reason |
+|------|-------|---------------------|--------|
+| 2026-09-04 | R2 | **A single persistent WebGL scene spans the site**, with scroll driving a camera along an eight-keyframe flight path | R1 rejected WebGL as unjustified — correct for R1's brief, wrong for R2's. No cheaper medium produces a continuous camera path through a volumetric scene. The scene is now the product (§4.1, §19.2a) |
+| 2026-09-04 | R2 | **three.js + React Three Fiber adopted**, with a 4-module drei allowlist and deep imports only | Owner asked React to own the complex/interactive parts, and R3F's declarative scene graph is the maintainable way to express one. ~210KB gz, accepted, held by a CI size assertion (§19.2a) |
+| 2026-09-04 | R2 | **The canvas is a layer, never a container.** DOM scrolls over a fixed backdrop | The one rule that makes a 3D spine survivable: content stays selectable/crawlable, LCP stays text, and deleting the canvas is a supported operation. Enforced by a CI gate, not a promise (§25.0, §34.3) |
+| 2026-09-04 | R2 | **Eight spectral bands** replace three fixed accents; hue travels with the visitor and drives both DOM accents and scene lighting | "Multiple space colours" done systematically rather than as a swatch dump. Hues are real emission lines (H-alpha, O III, sodium), which is why colourful reads as expensive here. All eight verified ≥7:1 on void (§3.3, §25.2) |
+| 2026-09-04 | R2 | **AI-generated space art** for backdrops, planet textures and fallbacks — under a written prompt contract | Owner's choice over real NASA/ESA imagery: perfect palette consistency and no attribution burden. Held to a contract because inconsistent generated art is worse than none (§3.4). Honest caveat recorded: some engineers discount AI imagery |
+| 2026-09-04 | R2 | **Mobile keeps the 3D** at reduced fidelity, rather than R1's "no canvas on mobile" | Owner's choice. Costs mobile Lighthouse (~78 vs ≥95) and is the project's second-largest risk (R18); mitigated by the tier ladder, opaque panels, one-way degradation and a `saveData` bail-out (§24.2) |
+| 2026-09-04 | R2 | **Performance budgets raised substantially and explicitly** — desktop JS 60KB → 340KB, mobile 20KB → 190KB, mobile Lighthouse ≥95 → ≥78 | The honest price of the spine. Stated as targets with CI assertions rather than quietly abandoned. **Critical-path JS stays ≤16KB**, which is why LCP survives (§26.1, §26.2) |
+| 2026-09-04 | R2 | **Accessibility targets unchanged; §25 made stricter** — added the parallel-DOM contract and the delete-the-canvas CI gate | Everything else was negotiable; this was not. A WebGL spine is precisely the architecture that eats its own content, so the contract became a test (§25.0) |
+| 2026-09-04 | R2 | **All DOM-level ambient motion banned**; a new motion level L0 owns the scene | The scene moves so the interface can stay still. Two competing sources of ambient motion is what makes maximalist sites feel soupy (§16.2) |
+| 2026-09-04 | R2 | **Canvas 2D removed entirely**; the star field and Orbit both moved into WebGL | three.js is loaded anyway, so a second renderer with its own frame loop was pure duplication. Orbit gains an order of magnitude more bodies (200 → 2,000) for ~14KB. The one case where a heavier library simplified the codebase (§14.3, §19.7) |
+| 2026-09-04 | R2 | **Phase 4 split into Phase 4 (spine) and Phase 4b (set pieces)**; Phase 2 now builds the complete no-WebGL experience first | Infrastructure must be proven against a nearly-empty scene before objects are added, and the fallback must be a designed artefact rather than an afterthought. Phase 3 remains the shippable milestone, before any 3D exists (§31) |
+| 2026-09-04 | R2 | Phases were **not renumbered** despite inserting 4b | ~39 in-document phase cross-references would have needed rewriting, with real risk of corrupting them. The `b` suffix matches the document's existing convention |
 
