@@ -1,0 +1,74 @@
+---
+/**
+ * One instrument — master plan §14.2, §14.5.
+ *
+ * An `<article>` with an `h3`, a designation, a one-line claim, the
+ * explanation, exactly one kind of evidence in the slot, and links out.
+ *
+ * The evidence slot takes one thing on purpose. §14.2 allows "a live demo
+ * or a diagram or a code excerpt (never all three)" — a panel carrying all
+ * three stops making a point and starts listing.
+ */
+import type { CollectionEntry } from 'astro:content';
+import Panel from '../ui/Panel.astro';
+import Chip from '../ui/Chip.astro';
+import ExternalLink from '../ui/ExternalLink.astro';
+
+interface Props {
+	instrument: CollectionEntry<'instruments'>;
+}
+
+const { instrument }: Props = Astro.props;
+const { designation, name, claim, body, evidence, links } = instrument.data;
+
+/** What the reader is about to be shown, named honestly. */
+const evidenceLabel = {
+	live: 'Live',
+	code: 'Code',
+	diagram: 'Diagram',
+	demo: 'Demo',
+}[evidence];
+---
+
+<Panel as="article" variant="standard" class="grid gap-6 p-6 md:p-8" data-observe>
+	<header class="grid gap-3">
+		<div class="flex flex-wrap items-center gap-3">
+			<span
+				class="font-mono text-[0.6875rem] tracking-[0.12em] text-accent uppercase"
+			>
+				{designation}
+			</span>
+			<Chip>{evidenceLabel}</Chip>
+		</div>
+
+		<h3 class="text-display-m">{name}</h3>
+
+		<p class="font-mono text-data tracking-[0.04em] text-ink-low">{claim}</p>
+	</header>
+
+	<p class="max-w-[var(--prose)] text-body text-ink-mid">{body}</p>
+
+	<div class="grid gap-8">
+		<slot />
+	</div>
+
+	{
+		links && links.length > 0 && (
+			<footer class="flex flex-wrap gap-x-6 gap-y-2 border-t border-hairline pt-5">
+				{links.map((link) => (
+					// The wrapper carries the attributes because the one
+					// delegated listener resolves via closest(), so a click
+					// anywhere inside the link reports correctly (§28.1).
+					<span
+						data-analytics="instrument_interact"
+						data-analytics-instrument={instrument.id}
+						data-analytics-action="link"
+						data-analytics-label={link.label}
+					>
+						<ExternalLink href={link.url}>{link.label}</ExternalLink>
+					</span>
+				))}
+			</footer>
+		)
+	}
+</Panel>

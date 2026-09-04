@@ -1,5 +1,69 @@
 # Measured performance
 
+Actual numbers at each phase exit, newest first. Where a measurement
+disproved an estimate in `space-portfolio-master-plan.md`, the correction is
+recorded here and in that document's Decision log — the plan is not edited
+to match reality silently.
+
+## Phase 5 — Engineering Showcase
+
+| Resource | Measured | Budget |
+|----------|---------|--------|
+| Critical-path JS | 2.5KB | ≤16KB |
+| Scene chunk (lazy, closure) | 240.3KB | ≤250KB |
+| CSS | 9.5KB | ≤34KB |
+| HTML (`/`) | 25.9KB | ≤40KB |
+| HTML (`/instruments`) | 23.2KB | ≤60KB |
+| **Orbit island** | **4.8KB** | ≤12KB (§14.3) |
+| `/instruments` route JS | 246.7KB | ≤340KB (§26.2) |
+
+### Orbit, measured
+
+| | |
+|---|---|
+| Physics | **0.104 ms/step** (2,000 particles + 4 masses, node) |
+| Simulation work in-browser | **0.23 ms/frame** rolling mean |
+| Frame interval | 16.5–17.1 ms (vsync-locked) |
+| FPS | 60 |
+| DPR | 1.50 (capped 1.5) |
+| Particles | 2,000 |
+
+The interval and the simulation's own cost are reported separately, because
+conflating them made the panel claim 16.7ms of work when it does about a
+fiftieth of that. `Interval` is what the governor watches; `Sim` is what
+this code actually costs.
+
+**Frame rate went 51 → 60 by suspending the backdrop while Orbit runs.**
+`/instruments` is the only route with two WebGL contexts and they were
+sharing a GPU, which cost ~18ms per frame — enough for Orbit to trip its own
+20ms degrade threshold because of work it does not do.
+
+### A budget that had stopped measuring anything
+
+Once Orbit imported three.js, the bundler hoisted three into a shared chunk
+and `DeepFieldScene.*.js` fell **233KB → 7KB**. The single-file assertion
+kept passing, at 3% of budget, while the 229KB it existed to guard moved
+next door. Budgets now measure the transitive import closure. The corrected
+Phase 4b figure is **240.3KB**, not the 233.0KB recorded at the time.
+
+### Route boundaries, verified rather than asserted
+
+| Width | Orbit JS requested | Canvas in host | Poster requests |
+|-------|-------------------|----------------|-----------------|
+| 1440px | `Orbit.js` + `Sim.js` | yes | 1 |
+| 820px | none | no | 1 |
+| 390px | none | no | 1 |
+
+No page-level horizontal scroll at 1440 / 820 / 390. Code excerpts scroll
+inside their own containers and every `<pre>` carries `tabindex="0"`.
+
+Mobile fetched the poster **twice** before this phase's fix: Astro
+server-renders island markup regardless of the client directive, and Chrome
+fetches an `<img>` inside a `display:none` box.
+
+---
+# Measured performance
+
 Recorded at each phase exit so a regression is attributable to a specific
 phase (master plan §26.4, §32.1). Every number here was measured, not
 estimated — the plan's own estimates are called out where reality disagreed.

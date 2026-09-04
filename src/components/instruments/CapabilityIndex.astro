@@ -1,0 +1,45 @@
+---
+/**
+ * The capability index — master plan §14.1.
+ *
+ * This is what the old site's "UI Showcase" becomes. There, nine icon
+ * chips with a shuffle button were presented *as portfolio pieces* — the
+ * weakest content on the site, because a chip reading "E-commerce" is a
+ * claim with nothing behind it.
+ *
+ * Here the same nine categories are demoted to what they honestly are:
+ * scope. Plain mono chips, no icons, no shuffle, at the bottom of the
+ * route, under a heading that says exactly what they represent and a line
+ * that says explicitly where the evidence is instead. The instruments
+ * above are the portfolio; this is an index.
+ */
+import Chip from '../ui/Chip.astro';
+
+interface Props {
+	categories: string[];
+}
+
+const { categories }: Props = Astro.props;
+---
+
+<section
+	aria-labelledby="capability-index"
+	class="grid gap-4 border-t border-hairline pt-8"
+	data-observe
+>
+	<h2
+		id="capability-index"
+		class="font-mono text-label tracking-[0.14em] text-ink-low uppercase"
+	>
+		Categories of work delivered
+	</h2>
+
+	<p class="max-w-[var(--prose)] text-data text-ink-low">
+		Scope, not exhibits — these are the kinds of build this experience
+		covers. The evidence is the four instruments above.
+	</p>
+
+	<ul class="m-0 flex list-none flex-wrap gap-2 p-0">
+		{categories.map((category) => <li><Chip>{category}</Chip></li>)}
+	</ul>
+</section>

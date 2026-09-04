@@ -46,6 +46,22 @@ const BUDGETS = {
 	sceneChunk: 250 * 1024,
 	css: 34 * 1024,
 	html: 40 * 1024,
+	/**
+	 * /instruments route JS: everything that route can pull, the shared
+	 * scene chunk included. Orbit's own code is asserted separately below
+	 * against §14.3's ≤12KB island budget — the aggregate would hide it
+	 * inside three's ~229KB floor.
+	 *
+	 * §14.5 says 160KB, which is a Revision 1 number and is now impossible
+	 * on ANY route: the persistent backdrop puts three + R3F (~229KB) on
+	 * every page by design. R2 re-budgeted desktop JS to 340KB in §26.2, so
+	 * this route is held to that instead of to a figure the architecture
+	 * ruled out. What §14.5 was really protecting — that the experiment
+	 * costs almost nothing on top — is the orbitIsland assertion.
+	 */
+	instrumentsRouteJs: 340 * 1024,
+	orbitIsland: 12 * 1024,
+	instrumentsHtml: 60 * 1024,
 };
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
@@ -60,19 +76,85 @@ const criticalJs =
 	gzipSync(Buffer.from(inline)).length +
 	srcs.reduce((sum, s) => sum + gz(join(DIST, s)), 0);
 
+/*
+ * Total gzipped JS reachable from a set of entry files, following the
+ * static import graph in the emitted bundles.
+ *
+ * This exists because measuring a single chunk file is not stable. Phase 5
+ * proved it: once Orbit also imported three, the bundler hoisted three into
+ * a SHARED chunk and `DeepFieldScene.*.js` shrank from 233KB to 7KB. The
+ * old single-file assertion went on passing at 3% of budget while the
+ * 229KB it was written to guard simply moved next door. A closure cannot
+ * be dodged that way.
+ */
+function jsClosure(entries) {
+	const seen = new Set();
+	const queue = entries.map((e) => e.replace(/^\//, ''));
+	let total = 0;
+	while (queue.length) {
+		const rel = queue.pop();
+		if (seen.has(rel) || !rel.endsWith('.js')) continue;
+		seen.add(rel);
+		let code;
+		try {
+			code = readFileSync(join(DIST, rel), 'utf8');
+		} catch {
+			continue;
+		}
+		total += gzipSync(Buffer.from(code)).length;
+		for (const m of code.matchAll(
+			/(?:from|import)\s*"(\.\/[^"]+\.js)"|(?:from|import)\s*'(\.\/[^']+\.js)'/g,
+		)) {
+			const spec = (m[1] ?? m[2]).replace('./', '');
+			queue.push(join('_astro', spec));
+		}
+	}
+	return total;
+}
+
 const files = readdirSync(ASTRO);
 const sceneFile = files.find((f) => f.startsWith('DeepFieldScene') && f.endsWith('.js'));
-const sceneChunk = sceneFile ? gz(join(ASTRO, sceneFile)) : 0;
+const sceneChunk = sceneFile ? jsClosure([join('_astro', sceneFile)]) : 0;
 
 const css = files
 	.filter((f) => f.endsWith('.css'))
 	.reduce((sum, f) => sum + gz(join(ASTRO, f)), 0);
+
+/*
+ * ── /instruments (§14.5) ─────────────────────────────────────────────────
+ * The route's own island. Orbit's simulation is a separate lazy chunk from
+ * its wrapper, because the poster path — which is what a reduced-motion
+ * visitor gets, and everyone below 1024px — must never parse the physics.
+ * Both halves count toward the island budget.
+ */
+const orbitFiles = files.filter(
+	(f) => /^(Orbit|Sim)\./.test(f) && f.endsWith('.js'),
+);
+const orbitIsland = orbitFiles.reduce((sum, f) => sum + gz(join(ASTRO, f)), 0);
+
+const instrumentsHtmlPath = join(DIST, 'instruments', 'index.html');
+const instrumentsHtml = readFileSync(instrumentsHtmlPath, 'utf8');
+const instrumentsSrcs = [
+	...instrumentsHtml.matchAll(/<script[^>]*src="([^"]+)"/g),
+].map((m) => m[1]);
+
+const instrumentsRouteJs = jsClosure([
+	...instrumentsSrcs,
+	// The scene and the simulation are both dynamically imported, so they
+	// are not <script src> entries — but the route can pull them, so a
+	// route budget that ignored them would be meaningless.
+	...(sceneFile ? [join('_astro', sceneFile)] : []),
+	...orbitFiles.map((f) => join('_astro', f)),
+]);
 
 const results = [
 	['critical-path JS', criticalJs, BUDGETS.criticalJs],
 	['scene chunk (lazy)', sceneChunk, BUDGETS.sceneChunk],
 	['CSS', css, BUDGETS.css],
 	['HTML (index)', gz(join(DIST, 'index.html')), BUDGETS.html],
+	['HTML (instruments)', gz(instrumentsHtmlPath), BUDGETS.instrumentsHtml],
+	['orbit island', orbitIsland, BUDGETS.orbitIsland],
+	['/instruments route JS', instrumentsRouteJs, BUDGETS.instrumentsRouteJs],
 ];
 
 let failed = false;
@@ -90,6 +172,21 @@ for (const [label, actual, budget] of results) {
 // The scene must never reach the critical path, whatever its size.
 if (srcs.some((s) => s.includes('DeepFieldScene'))) {
 	console.error('\n✗ The scene chunk is referenced by a <script src> — it must be lazy.');
+	failed = true;
+}
+
+/*
+ * §14.3: Orbit lives only on /instruments. A reference from the home route
+ * would mean the experiment had escaped onto the page that has to stay
+ * fast, which is the one boundary the plan states twice.
+ */
+if (srcs.some((s) => /Orbit|\/Sim\./.test(s)) || html.includes('data-orbit-host')) {
+	console.error('\n✗ Orbit is referenced by the home route — it belongs to /instruments only.');
+	failed = true;
+}
+
+if (orbitFiles.length === 0) {
+	console.error('\n✗ No Orbit chunk found in dist/_astro — the island did not build.');
 	failed = true;
 }
 

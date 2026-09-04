@@ -1,0 +1,77 @@
+[
+  {
+    "id": "zentauri-api-surface",
+    "instrument": "component-library",
+    "order": 1,
+    "lang": "ts",
+    "title": "The public API omits its own escape hatch",
+    "source": "@zentauri-ui/zentauri-components@2.12.0 — dist/ui/copy-button/types.d.ts",
+    "sourceNote": "Published type declarations, verifiable with `npm pack @zentauri-ui/zentauri-components`.",
+    "caption": "CopyButton is one of the library's simplest components, which is why it shows the API decision clearly: the base props carry a render seam, and the type the consumer actually receives has it removed.",
+    "code": "export type CopyButtonIconRenderer = (state: {\n  copied: boolean;\n  copyIcon: ReactNode;\n  copiedIcon: ReactNode;\n}) => ReactNode;\n\nexport interface CopyButtonBaseProps\n  extends Omit<ComponentPropsWithRef<'button'>, 'value' | 'onCopy'> {\n  /** Text written to the clipboard when the button is pressed. */\n  value: string;\n  /** Milliseconds the copied state stays active. `0` keeps it until re-copied. */\n  timeout?: number;\n  /** Label shown (and used for `aria-label`) in the idle state. */\n  label?: string;\n  /** Label shown (and used for `aria-label`) after a successful copy. */\n  copiedLabel?: string;\n  /** Overrides how the icon region renders; the animated entry uses this. */\n  renderIcon?: CopyButtonIconRenderer;\n}\n\nexport type CopyButtonProps = Omit<CopyButtonBaseProps, 'renderIcon'>;",
+    "notes": [
+      {
+        "line": 21,
+        "text": "The last line is the whole decision. `renderIcon` exists so the animated build can swap static icons for motion ones — but it is implementation detail, so the exported `CopyButtonProps` subtracts it. A consumer cannot reach the seam, and the seam can change without a breaking release."
+      },
+      {
+        "line": 12,
+        "text": "`timeout` documents its own edge case in the type, rather than leaving `0` to be discovered. Every prop here carries a doc comment, which is what makes the surface usable without reading the source."
+      },
+      {
+        "line": 8,
+        "text": "Extending `ComponentPropsWithRef<'button'>` and omitting only the two props it redefines means `type`, `disabled`, `aria-*` and `ref` all keep working. The component adds behaviour without taking anything away."
+      }
+    ]
+  },
+  {
+    "id": "zentauri-motion-optional",
+    "instrument": "component-library",
+    "order": 2,
+    "lang": "ts",
+    "title": "Motion is a separate entry point, not a prop",
+    "source": "@zentauri-ui/zentauri-components@2.12.0 — dist/ui/copy-button/animated/types.d.ts",
+    "sourceNote": "Published type declarations. The static and animated barrels are separate module paths.",
+    "caption": "The claim \"motion is optional\" is usually a prop that ships the animation library to everyone anyway. Here it is enforced by module boundary: `framer-motion` is imported in the animated subpath and nowhere else.",
+    "code": "// dist/ui/copy-button/animated/types.d.ts\nimport type { Transition } from 'framer-motion';\nimport type { CopyButtonProps } from '../types';\n\nexport type CopyButtonAnimation = 'swap' | 'pop' | 'fade';\n\nexport type CopyButtonAnimatedProps = CopyButtonProps & {\n  animation?: CopyButtonAnimation;\n};\n\n// dist/ui/copy-button/index.d.ts — the static entry\nexport { CopyButton } from './copy-button';\nexport type { CopyButtonProps } from './types';\n\n// dist/ui/copy-button/animated/index.d.ts — opt in, and only then\nexport { CopyButtonAnimated } from './copy-button-animated';\nexport { copyButtonAnimationPresets } from './animations';",
+    "notes": [
+      {
+        "line": 2,
+        "text": "`framer-motion` appears in the animated subpath's types and not in the static one. Import `ui/copy-button` and the animation library is not in your graph at all — the cost follows the import, not the install."
+      },
+      {
+        "line": 7,
+        "text": "The animated props are the static props *plus one*. There is no second API to learn and no divergence to maintain: swapping `CopyButton` for `CopyButtonAnimated` is a one-word change at the call site."
+      },
+      {
+        "line": 5,
+        "text": "Three named presets rather than an open transition object. The consumer picks an intent; the library owns the timing. This is the same reason this site exposes `--ease-*` tokens instead of raw cubic-béziers."
+      }
+    ]
+  },
+  {
+    "id": "delete-the-canvas-gate",
+    "instrument": "playwright-suite",
+    "order": 1,
+    "lang": "js",
+    "title": "A gate that makes one green check mean one specific thing",
+    "source": "this repository — tests/delete-the-canvas.mjs",
+    "sourceNote": "Runs on every `pnpm verify`. The excerpt is the assertion block, lightly trimmed.",
+    "caption": "The suite behind I-02 is not public, so here is the same discipline applied to this site, where you can read the whole file. This site's riskiest claim is that its 3D layer is removable without loss. That claim is a test, not a promise.",
+    "code": "const html = readFileSync('dist/index.html', 'utf8');\n\n// 1. The scene is absent from the served HTML entirely.\ncheck('no <canvas> in served HTML', !/<canvas/i.test(html));\ncheck('no scene container in served HTML', !html.includes('data-scene-tier'));\n\n// 2. The fallback is unconditional, with one art plate per band.\ncheck('art fallback layer present', html.includes('art-plate'));\ncheck('an art plate per band', plates === 8, `found ${plates}`);\n\n// 3. The scene never reaches the critical path.\ncheck('scene not on the critical path', !criticalJs.includes('three'));\ncheck('scene is its own lazy chunk', sceneChunk !== undefined);\n\n// 4. Source-level: nothing in the scene tree can take focus.\nfor (const file of readdirSync(SCENE_DIR)) {\n  const src = readFileSync(join(SCENE_DIR, file), 'utf8');\n  check(\n    `no focusable elements in ${file}`,\n    !/tabIndex|<button|<a\\s|onClick/.test(src),\n  );\n}",
+    "notes": [
+      {
+        "line": 5,
+        "text": "Asserting *absence* turned out to be stronger than the original plan, which only asked for `aria-hidden`. The scene renders null on the server, so a visitor with no JavaScript, no WebGL, or a `saveData` connection never receives the element at all."
+      },
+      {
+        "line": 16,
+        "text": "The source-level sweep is the part that catches the real failure mode. A canvas is easy to keep accessible on day one; the risk is interactivity slowly migrating into it over months. This fails the build the first time a `<button>` appears in the scene tree."
+      },
+      {
+        "line": 12,
+        "text": "Two separate budget facts, asserted separately: the 233KB scene chunk is allowed to be large precisely because this proves it is not on the critical path, which stayed at 2.4KB across three phases."
+      }
+    ]
+  }
+]

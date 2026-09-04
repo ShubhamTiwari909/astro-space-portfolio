@@ -1,0 +1,164 @@
+---
+/**
+ * Annotated code excerpt — master plan §14.2, Phase 5 task 2.
+ *
+ * Highlighted at build time with Shiki. There is no client-side
+ * highlighter, so this component costs zero JavaScript: the shipped output
+ * is `<span>`s with inline `var()` colours.
+ *
+ * Annotations are a numbered list *beside* the code rather than absolutely
+ * positioned callouts. Callouts look better in a screenshot and are far
+ * worse in practice — they need JS to stay anchored, they collide on narrow
+ * screens, and a screen reader meets them detached from the line they
+ * describe. A list keyed to visible line numbers reads correctly in both
+ * media and survives a horizontal scroll.
+ */
+import { codeToHtml } from 'shiki';
+import type { CollectionEntry } from 'astro:content';
+import { CODE_THEME } from '../../lib/codeTheme';
+
+interface Props {
+	excerpt: CollectionEntry<'codeExcerpts'>;
+	/** Heading level, so the excerpt nests correctly under its instrument. */
+	as?: 'h4' | 'h5';
+}
+
+const { excerpt, as: Heading = 'h4' }: Props = Astro.props;
+const { lang, title, source, sourceNote, caption, code, notes } = excerpt.data;
+
+const lineCount = code.split('\n').length;
+
+/*
+ * A note pointing past the end of the excerpt is a silent documentation
+ * bug: the annotation still renders, just describing nothing. Fail the
+ * build instead — the Zod schema can validate the shape of a line number
+ * but not its relationship to the code.
+ */
+for (const note of notes) {
+	if (note.line > lineCount) {
+		throw new Error(
+			`code excerpt "${excerpt.id}" has a note on line ${note.line} but the code is only ${lineCount} lines`,
+		);
+	}
+}
+
+const noted = new Set(notes.map((n) => n.line));
+
+const html = await codeToHtml(code, {
+	lang,
+	theme: CODE_THEME,
+	transformers: [
+		{
+			line(node, line) {
+				if (noted.has(line)) this.addClassToHast(node, 'line-noted');
+			},
+		},
+	],
+});
+
+/** Notes in line order, however they were authored. */
+const ordered = [...notes].sort((a, b) => a.line - b.line);
+---
+
+<figure class="m-0 grid gap-4">
+	<div class="grid gap-1">
+		<Heading class="text-display-s">{title}</Heading>
+		<p class="font-mono text-[0.6875rem] tracking-[0.08em] text-ink-low uppercase">
+			{source}
+		</p>
+	</div>
+
+	<p class="max-w-[var(--prose)] text-body text-ink-mid">{caption}</p>
+
+	{/*
+	  The scroll container is the one element allowed to scroll sideways
+	  (§14.5) — the page itself never does. Shiki puts tabindex="0" on the
+	  <pre>, which makes that scrolling keyboard-reachable.
+	*/}
+	<div
+		class="code-excerpt relative overflow-x-auto rounded-card border border-hairline bg-void/60"
+	>
+		<span
+			class="pointer-events-none absolute top-2 right-3 z-10 font-mono text-[0.625rem] tracking-[0.12em] text-ink-low uppercase"
+			aria-hidden="true">{lang}</span
+		>
+		<Fragment set:html={html} />
+	</div>
+
+	<figcaption class="grid gap-3">
+		{
+			sourceNote && (
+				<p class="text-data text-ink-low">{sourceNote}</p>
+			)
+		}
+		{
+			ordered.length > 0 && (
+				<ol class="m-0 grid list-none gap-3 p-0">
+					{ordered.map((note) => (
+						<li class="grid grid-cols-[3.25rem_1fr] gap-3 text-data text-ink-mid">
+							<span class="font-mono text-ink-low tabular-nums">
+								L{note.line}
+							</span>
+							<span>{note.text}</span>
+						</li>
+					))}
+				</ol>
+			)
+		}
+	</figcaption>
+</figure>
+
+<style>
+	/*
+	 * A stylesheet rather than utilities, and this is the case the project's
+	 * Tailwind-first rule explicitly allows: these selectors target markup
+	 * Shiki generates at build time (`.shiki`, `.line`), which no utility
+	 * class can reach. The line-number gutter is a CSS counter, so the
+	 * numbers the annotations cite are real and never drift.
+	 */
+	.code-excerpt :global(.shiki) {
+		margin: 0;
+		padding: 1.25rem 1rem 1.25rem 0;
+		background-color: transparent !important;
+		font-family: var(--font-mono);
+		font-size: var(--text-data);
+		line-height: 1.7;
+		counter-reset: line;
+	}
+
+	.code-excerpt :global(.shiki .line) {
+		counter-increment: line;
+		display: inline-block;
+		width: 100%;
+		padding-inline: 1rem;
+		border-left: 2px solid transparent;
+	}
+
+	.code-excerpt :global(.shiki .line)::before {
+		content: counter(line);
+		display: inline-block;
+		width: 2.5rem;
+		margin-inline-end: 1.25rem;
+		color: var(--color-ink-low);
+		text-align: right;
+		opacity: 0.55;
+		user-select: none;
+	}
+
+	/* An annotated line is tinted with the live band, so the highlight is
+	   part of the same colour system as everything else on the page. */
+	.code-excerpt :global(.shiki .line-noted) {
+		border-left-color: color-mix(in oklab, var(--band) 55%, transparent);
+		background-color: color-mix(in oklab, var(--band) 7%, transparent);
+	}
+
+	.code-excerpt :global(.shiki .line-noted)::before {
+		color: var(--band);
+		opacity: 1;
+	}
+
+	.code-excerpt :global(.shiki):focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: -2px;
+	}
+</style>

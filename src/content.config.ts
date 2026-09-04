@@ -127,6 +127,61 @@ const instruments = defineCollection({
 	}),
 });
 
+/**
+ * Annotated code excerpts for the Instrument Bay (§14.2).
+ *
+ * Authored as content rather than inlined in components so an excerpt can
+ * be replaced — or a real spec file dropped in — without touching a
+ * component. `source` is required and rendered: an excerpt whose provenance
+ * cannot be stated is not evidence.
+ */
+const codeExcerpts = defineCollection({
+	loader: file('src/content/code-excerpts.json'),
+	schema: z.object({
+		/** Which instrument this belongs to; matches an `instruments` id. */
+		instrument: z.string(),
+		order: z.number().int(),
+		/** Shiki language id. */
+		lang: z.string(),
+		title: z.string(),
+		/** Where the code actually comes from. Always shown. */
+		source: z.string(),
+		sourceNote: z.string().optional(),
+		caption: z.string(),
+		code: z.string(),
+		/** Line-anchored annotations. 1-based, and validated against the code. */
+		notes: z
+			.array(z.object({ line: z.number().int().positive(), text: z.string() }))
+			.default([]),
+	}),
+});
+
+/**
+ * Architecture diagrams (§14.2). Labels and the prose equivalent live here
+ * so the copy can change without editing SVG; the geometry is hand-composed
+ * in the component.
+ */
+const architecture = defineCollection({
+	loader: file('src/content/architecture.json'),
+	schema: z.object({
+		instrument: z.string(),
+		title: z.string(),
+		/** Describes the topology, not the picture (§14.5). */
+		ariaLabel: z.string(),
+		layers: z
+			.array(
+				z.object({
+					label: z.string(),
+					note: z.string(),
+					nodes: z.array(z.string()).min(1).max(3),
+				}),
+			)
+			.length(3),
+		/** The prose equivalent. Carries the outcome, not just the shape. */
+		description: z.array(z.string()).min(1),
+	}),
+});
+
 const profile = defineCollection({
 	loader: file('src/content/profile.json'),
 	schema: z.object({
@@ -162,5 +217,7 @@ export const collections = {
 	skills,
 	articles,
 	instruments,
+	codeExcerpts,
+	architecture,
 	profile,
 };

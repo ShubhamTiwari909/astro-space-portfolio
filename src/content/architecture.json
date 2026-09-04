@@ -1,0 +1,31 @@
+[
+  {
+    "id": "multi-brand-cms",
+    "instrument": "multi-brand-cms",
+    "title": "One repository, three deployables, one content platform",
+    "ariaLabel": "Architecture diagram of a multi-brand CMS. A shared package layer containing a design system, CMS blocks and a data layer feeds three per-brand Next.js applications, which all read from a single Payload CMS backed by one PostgreSQL database.",
+    "layers": [
+      {
+        "label": "Shared packages",
+        "note": "versioned together, no cross-brand forks",
+        "nodes": ["Design system", "CMS blocks", "Data layer"]
+      },
+      {
+        "label": "Brand applications",
+        "note": "Next.js, one deployable each",
+        "nodes": ["Brand A", "Brand B", "Brand C"]
+      },
+      {
+        "label": "Content platform",
+        "note": "one schema, brand-scoped records",
+        "nodes": ["Payload CMS", "PostgreSQL"]
+      }
+    ],
+    "description": [
+      "Every brand is the same application with different configuration. Adding one is a config entry and a theme, not a fork — which is the only reason the shared layer stays shared over time.",
+      "The design system, the CMS block definitions and the data layer are versioned together. A block added once becomes available to every brand in the same release.",
+      "One Payload schema with brand-scoped records, on one PostgreSQL instance. Editors work in a single admin rather than three, and a migration runs once.",
+      "The outcome that mattered was onboarding cost: standing up a new brand became a day's configuration, and the proportion of code that stayed shared is what kept maintenance flat as brands were added."
+    ]
+  }
+]

@@ -1,23 +1,188 @@
 ---
-import { getCollection } from 'astro:content';
+/**
+ * The Instrument Bay — master plan §14, Phase 5.
+ *
+ * Four instruments, each carrying exactly one kind of evidence, then the
+ * capability index. The route is static apart from one island: Orbit, which
+ * exists only at ≥1024px.
+ */
+import { getCollection, getEntry } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Section from '../components/ui/Section.astro';
+import Button from '../components/ui/Button.astro';
+import Chip from '../components/ui/Chip.astro';
+import InstrumentPanel from '../components/instruments/InstrumentPanel.astro';
+import CodeExcerpt from '../components/instruments/CodeExcerpt.astro';
+import ArchitectureDiagram from '../components/instruments/ArchitectureDiagram.astro';
+import CapabilityIndex from '../components/instruments/CapabilityIndex.astro';
+import OrbitPoster from '../components/instruments/OrbitPoster.astro';
+import Orbit from '../components/instruments/Orbit';
+import poster from '../assets/images/orbit-poster.avif';
+import { getImage } from 'astro:assets';
 
-const instruments = await getCollection('instruments');
+const instruments = (await getCollection('instruments')).sort(
+	(a, b) => a.data.order - b.data.order,
+);
+const excerpts = await getCollection('codeExcerpts');
+const diagram = await getEntry('architecture', 'multi-brand-cms');
+if (!diagram) throw new Error('architecture entry "multi-brand-cms" is missing');
+
+/** Excerpts belonging to one instrument, in authored order. */
+function excerptsFor(id: string) {
+	return excerpts
+		.filter((e) => e.data.instrument === id)
+		.sort((a, b) => a.data.order - b.data.order);
+}
+
+/*
+ * The island receives a plain URL rather than an ImageMetadata object,
+ * because props crossing into a client component are serialised to JSON —
+ * so the optimisation has to happen here, at build time.
+ */
+const posterImage = await getImage({
+	src: poster,
+	format: 'avif',
+	quality: 58,
+	width: 1200,
+});
+
+/**
+ * The canvas's accessible equivalent (§14.5).
+ *
+ * Deliberately NOT a restatement of the model — the panel's own copy above
+ * already explains what is being simulated, and repeating it made a sighted
+ * reader read the same paragraph twice. This describes what the picture
+ * *shows*, which is the part someone who cannot see it is missing.
+ */
+const ORBIT_DESCRIPTION =
+	'What forms on screen: a broad disc of particles settles around the four masses at the centre, which show as bright gold points. Colour tracks speed — cool blue out on the wide slow orbits, warming to gold where a particle whips past a mass — and gaps open where orbits fall into resonance, so the disc is banded rather than uniform. Moving the pointer over the canvas adds a fifth, temporary attractor and pulls the nearby bands out of shape.';
+
+/**
+ * §14.1's nine categories, demoted from portfolio pieces to an index.
+ * The list is the old site's own, unchanged — the honesty is in the framing.
+ */
+const CAPABILITIES = [
+	'Dashboards',
+	'Responsive websites',
+	'E-commerce',
+	'Landing pages',
+	'Admin panels',
+	'Portfolios',
+	'CMS websites',
+	'AI websites',
+	'Blogs',
+];
+
+/**
+ * The width at which the experiment exists at all (§14.3). Used for the
+ * prose below so the stated number cannot drift from the actual query;
+ * `client:media` itself needs a literal, because a media query cannot read
+ * a custom property.
+ */
+const ORBIT_MIN_WIDTH = 1024;
+
+/** I-02's coverage layers, read from its own one-line claim. */
+const coverageLayers =
+	instruments
+		.find((i) => i.id === 'playwright-suite')
+		?.data.claim.split(',')
+		.map((s) => s.trim()) ?? [];
 ---
 
 <BaseLayout
 	title="Instrument Bay — Engineering Lab · Shubham Tiwari"
-	description="The instruments behind the products: a component library, a Playwright suite, a multi-brand CMS architecture, and one Canvas simulation."
+	description="The instruments behind the products: a component library, a Playwright suite, a multi-brand CMS architecture, and one WebGL simulation with live telemetry."
 >
 	<Section
 		id="bay"
 		codename="Instrument Bay"
 		readout={`${instruments.length} instruments`}
 		title="Engineering Lab"
-		lede="The tools and systems behind the products, rather than the products themselves."
+		lede="The tools and systems behind the products, rather than the products themselves. Each one carries its own evidence: something live, a diagram, or code you can read."
 	>
-		<p class="rounded-card border border-dashed border-hairline p-8 font-mono text-data text-ink-low">Instrument panels and the Orbit experiment — Phase 5.</p>
+		<div class="grid gap-8">
+			{
+				instruments.map((instrument) => (
+					<InstrumentPanel instrument={instrument}>
+						{/* I-01 — two annotated excerpts from the published types. */}
+						{
+							instrument.id === 'component-library' &&
+								excerptsFor('component-library').map((excerpt) => (
+									<CodeExcerpt excerpt={excerpt} />
+								))
+						}
+
+						{/* I-02 — coverage layers as scope, then one excerpt. */}
+						{
+							instrument.id === 'playwright-suite' && (
+								<>
+									<div class="grid gap-3">
+										<h4
+											class="font-mono text-label tracking-[0.14em] text-ink-low uppercase"
+										>
+											Coverage layers
+										</h4>
+										<ul class="m-0 flex list-none flex-wrap gap-2 p-0">
+											{coverageLayers.map((layer) => (
+												<li>
+													<Chip>{layer}</Chip>
+												</li>
+											))}
+										</ul>
+									</div>
+									{excerptsFor('playwright-suite').map((excerpt) => (
+										<CodeExcerpt excerpt={excerpt} />
+									))}
+								</>
+							)
+						}
+
+						{/* I-03 — the architecture diagram plus its prose equivalent. */}
+						{
+							instrument.id === 'multi-brand-cms' && (
+								<ArchitectureDiagram diagram={diagram} />
+							)
+						}
+
+						{/*
+						  I-04 — the one experiment. The island is the ≥1024px
+						  path; the poster is everything below it, and the two
+						  never both render.
+						*/}
+						{
+							instrument.id === 'orbit' && (
+								<>
+									<div class="hidden lg:block">
+										{/* token-lint-ignore: a media query cannot use a
+										    custom property; ORBIT_MIN_WIDTH mirrors it. */}
+										<Orbit
+											client:media="(min-width: 1024px)"
+											poster={posterImage.src}
+											posterWidth={1200}
+											posterHeight={700}
+											description={ORBIT_DESCRIPTION}
+										/>
+									</div>
+									<div class="lg:hidden">
+										<OrbitPoster
+											description={ORBIT_DESCRIPTION}
+											note={`Shown as a still below ${ORBIT_MIN_WIDTH}px — the simulation is not downloaded on phones or tablets.`}
+										/>
+									</div>
+								</>
+							)
+						}
+					</InstrumentPanel>
+				))
+			}
+
+			<CapabilityIndex categories={CAPABILITIES} />
+
+			<div data-observe>
+				<Button variant="secondary" href="/" icon="home" iconPosition="start">
+					Back to the survey
+				</Button>
+			</div>
+		</div>
 	</Section>
 </BaseLayout>
-

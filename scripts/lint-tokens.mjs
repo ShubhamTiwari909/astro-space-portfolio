@@ -11,8 +11,21 @@
  *  - 1px / 2px  hairlines, borders, outlines
  *  - 0 / 0px / 100% / 1fr and other layout-neutral values
  *  - SVG geometry (viewBox, path d, cx/cy/r, width/height on <svg>)
+ *  - anything inside a comment, including the `{/* ... *\/}` form used in
+ *    .astro and .tsx markup — the plan is quoted at length in comments
  *  - rem values: the spacing scale is rem-based and Tailwind owns the 0.25rem
  *    step, so rem in component CSS is idiomatic rather than a magic value.
+ *
+ * A single line can opt out with a trailing
+ *
+ *   token-lint-ignore: <reason>
+ *
+ * comment. A reason is REQUIRED — the marker alone does nothing — because
+ * the point of this linter is to make raw values deliberate, and a silent
+ * suppression would defeat it as thoroughly as no linter at all. It exists
+ * for values that genuinely cannot be tokens: media queries (custom
+ * properties are not allowed in them at all), IntersectionObserver
+ * margins, and the like. Prefer deriving the value from a constant.
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -28,6 +41,13 @@ const EXEMPT = {
 	// The token reference page demonstrates raw values on purpose.
 	'src/pages/dev/tokens.astro': ['px', 'hex', 'ms'],
 };
+
+/**
+ * A line-level opt-out must state a reason: the marker alone does nothing.
+ * Making raw values deliberate is the entire purpose of this linter, so a
+ * silent suppression would defeat it as thoroughly as no linter at all.
+ */
+const OPT_OUT = /token-lint-ignore:\s*\S/;
 
 /** Strip comments so the plan quotations in them are not linted. */
 function stripComments(line) {
@@ -114,6 +134,13 @@ for (const root of ROOTS) {
 		const exemptions = EXEMPT[rel] ?? [];
 		const lines = readFileSync(filePath, 'utf8').split('\n');
 		let inBlockComment = false;
+		/*
+		 * Set when an opt-out marker is seen, consumed by the next line of
+		 * real code. A marker on a preceding comment line is the readable
+		 * form for the long lines this usually applies to, and it matches
+		 * the `-disable-next-line` convention people already know.
+		 */
+		let pendingOptOut = false;
 
 		lines.forEach((rawLine, index) => {
 			const trimmed = rawLine.trim();
@@ -121,25 +148,47 @@ for (const root of ROOTS) {
 			// Track multi-line comment blocks: the plan is quoted at length in
 			// them, and continuation lines carry no comment marker of their own.
 			if (inBlockComment) {
+				if (OPT_OUT.test(rawLine)) pendingOptOut = true;
 				if (trimmed.includes('*/')) inBlockComment = false;
 				return;
 			}
 			if (
-				(trimmed.startsWith('/*') || trimmed.startsWith('<!--')) &&
+				(trimmed.startsWith('/*') ||
+					trimmed.startsWith('{/*') ||
+					trimmed.startsWith('<!--')) &&
 				!trimmed.includes('*/') &&
 				!trimmed.includes('-->')
 			) {
+				if (OPT_OUT.test(rawLine)) pendingOptOut = true;
 				inBlockComment = true;
 				return;
 			}
 
-			// Skip comment-only lines.
+			// Skip comment-only lines, but let a marker in one carry forward.
 			if (
 				trimmed.startsWith('*') ||
 				trimmed.startsWith('//') ||
 				trimmed.startsWith('/*') ||
+				trimmed.startsWith('{/*') ||
 				trimmed.startsWith('<!--')
 			) {
+				if (OPT_OUT.test(rawLine)) pendingOptOut = true;
+				return;
+			}
+
+			// A blank line ends a pending marker's reach.
+			if (trimmed === '') {
+				pendingOptOut = false;
+				return;
+			}
+
+			/*
+			 * Opt-out applies if the marker is on this line or carried over
+			 * from the comment immediately above it. Checked against the RAW
+			 * line, since the marker lives in a comment about to be stripped.
+			 */
+			if (OPT_OUT.test(rawLine) || pendingOptOut) {
+				pendingOptOut = false;
 				return;
 			}
 

@@ -1,0 +1,159 @@
+---
+/**
+ * I-03's evidence — master plan §14.2, Phase 5 task 3.
+ *
+ * Hand-authored inline SVG: no diagram library, no image request, and it
+ * re-tints with the live band because every stroke and fill is a token.
+ *
+ * Two accessibility decisions, both required by §14.5:
+ *
+ *  - `role="img"` with a real `aria-label` that describes the *topology*,
+ *    not the picture. "Architecture diagram" alone tells a screen-reader
+ *    user nothing they can act on.
+ *  - The bulleted description beside it is not a caption; it is the same
+ *    information in prose, and it is what carries the actual outcome. A
+ *    diagram shows shape, but "adding a brand is configuration, not a
+ *    fork" is a sentence, and it is the part worth reading.
+ *
+ * Geometry is fixed at three layers because the diagram is hand-composed;
+ * the labels come from content so copy can change without touching SVG.
+ */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	diagram: CollectionEntry<'architecture'>;
+}
+
+const { diagram }: Props = Astro.props;
+const { title, ariaLabel, layers, description } = diagram.data;
+
+if (layers.length !== 3) {
+	throw new Error(
+		`ArchitectureDiagram is hand-composed for exactly 3 layers; "${diagram.id}" has ${layers.length}`,
+	);
+}
+
+/* Layout constants. A 720x430 viewBox scales to any width via CSS. */
+const W = 720;
+const NODE_W = 200;
+const NODE_H = 62;
+const GAP = 20;
+const ROW_Y = [46, 186, 326];
+/** Horizontal bus between rows — one line down, rather than n×m edges. */
+const BUS_Y = [ROW_Y[0] + NODE_H + 34, ROW_Y[1] + NODE_H + 34];
+
+/** Centre a row of n nodes in the viewBox. */
+function rowX(count: number, index: number): number {
+	const total = count * NODE_W + (count - 1) * GAP;
+	return (W - total) / 2 + index * (NODE_W + GAP);
+}
+---
+
+<div class="grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:items-start lg:gap-10">
+	<figure class="m-0 grid gap-3">
+		<div class="overflow-x-auto rounded-card border border-hairline bg-void/50 p-4">
+			<svg
+				viewBox={`0 0 ${W} 430`}
+				role="img"
+				aria-label={ariaLabel}
+				class="block h-auto w-full min-w-[34rem]"
+			>
+				{/* Buses first, so node fills cover the line ends. */}
+				{
+					BUS_Y.map((y, row) => {
+						const from = layers[row];
+						const to = layers[row + 1];
+						const fromXs = from.nodes.map(
+							(_, i) => rowX(from.nodes.length, i) + NODE_W / 2,
+						);
+						const toXs = to.nodes.map(
+							(_, i) => rowX(to.nodes.length, i) + NODE_W / 2,
+						);
+						const left = Math.min(...fromXs, ...toXs);
+						const right = Math.max(...fromXs, ...toXs);
+						return (
+							<g stroke="var(--color-hairline-hi)" stroke-width="1">
+								<line x1={left} y1={y} x2={right} y2={y} />
+								{fromXs.map((x) => (
+									<line x1={x} y1={ROW_Y[row] + NODE_H} x2={x} y2={y} />
+								))}
+								{toXs.map((x) => (
+									<line x1={x} y1={y} x2={x} y2={ROW_Y[row + 1]} />
+								))}
+							</g>
+						);
+					})
+				}
+
+				{
+					layers.map((layer, row) => (
+						<g>
+							{/* Layer label, set in the left margin of the row. */}
+							<text
+								x="0"
+								y={ROW_Y[row] - 14}
+								fill="var(--color-ink-low)"
+								font-family="var(--font-mono)"
+								font-size="11"
+								letter-spacing="1.4"
+								style="text-transform:uppercase"
+							>
+								{layer.label}
+								<tspan fill="var(--color-ink-low)" opacity="0.7">
+									{` · ${layer.note}`}
+								</tspan>
+							</text>
+
+							{layer.nodes.map((node, i) => {
+								const x = rowX(layer.nodes.length, i);
+								return (
+									<g>
+										<rect
+											x={x}
+											y={ROW_Y[row]}
+											width={NODE_W}
+											height={NODE_H}
+											rx="6"
+											fill="color-mix(in oklab, var(--band) 8%, var(--color-surface-1))"
+											stroke={
+												row === 2
+													? 'color-mix(in oklab, var(--band) 55%, transparent)'
+													: 'var(--color-hairline-hi)'
+											}
+											stroke-width="1"
+										/>
+										<text
+											x={x + NODE_W / 2}
+											y={ROW_Y[row] + NODE_H / 2 + 5}
+											text-anchor="middle"
+											fill="var(--color-ink-hi)"
+											font-family="var(--font-body)"
+											font-size="15"
+										>
+											{node}
+										</text>
+									</g>
+								);
+							})}
+						</g>
+					))
+				}
+			</svg>
+		</div>
+		<figcaption class="text-data text-ink-low">{title}</figcaption>
+	</figure>
+
+	<ul class="m-0 grid list-none gap-4 p-0">
+		{
+			description.map((line) => (
+				<li class="grid grid-cols-[0.75rem_1fr] gap-3 text-body text-ink-mid">
+					<span
+						class="mt-[0.6em] block h-[1px] w-3 bg-accent/60"
+						aria-hidden="true"
+					/>
+					<span>{line}</span>
+				</li>
+			))
+		}
+	</ul>
+</div>

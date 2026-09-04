@@ -107,6 +107,23 @@
 
 	/* Cross-fade duration for a band change (§3.3: fade, never cut). */
 	--band-fade: 900ms;
+
+	/* ---- syntax highlighting (§14.2) ----
+	   Shiki resolves scopes at build time and emits these inline, so code
+	   colour comes from the same palette as everything else rather than a
+	   second, unrelated theme. Drawn from the band hues, which are all
+	   verified >=7:1 on void. Deliberately NOT keyed to the live --band:
+	   the live band on /instruments is aurora, which would collide with
+	   the string colour and make code re-tint mid-read. */
+	--code-fg: var(--color-ink-hi);
+	--code-comment: var(--color-ink-low);
+	--code-punct: var(--color-ink-mid);
+	--code-keyword: var(--band-magenta);
+	--code-string: var(--band-aurora);
+	--code-number: var(--band-ember);
+	--code-function: var(--band-blue);
+	--code-type: var(--band-ion);
+	--code-prop: var(--band-gold);
 }
 
 /* Non-namespaced tokens: Tailwind has no z-index/duration theme namespace,

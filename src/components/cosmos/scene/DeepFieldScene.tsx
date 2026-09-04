@@ -17,6 +17,10 @@ import StarField from './StarField';
 import type { PlanetDatum } from './planetLayout';
 import Station from './Station';
 import { degrade, useSceneTier, type SceneTier } from './useSceneTier';
+import {
+	isSceneSuspended,
+	subscribeSceneSuspend,
+} from '../../../lib/sceneSuspend';
 
 /**
  * The spine — master plan §19.2a, §17.1.
@@ -168,6 +172,15 @@ export default function DeepFieldScene({ planets, burnEvents }: Props) {
 	const [ready, setReady] = useState(false);
 	const [failed, setFailed] = useState(false);
 
+	/*
+	 * Stood down while a WebGL exhibit is running (currently only Orbit on
+	 * /instruments). The context and the last drawn frame are kept — this
+	 * only stops asking for new ones — so resuming is free and nothing
+	 * flickers.
+	 */
+	const [suspended, setSuspended] = useState(isSceneSuspended);
+	useEffect(() => subscribeSceneSuspend(setSuspended), []);
+
 	// Tier 'none': no WebGL, saveData, or reduced motion on a weak device.
 	// The art layer is the entire experience — a designed outcome (§16.4).
 	const enabled = detected.name !== 'none';
@@ -220,6 +233,7 @@ export default function DeepFieldScene({ planets, burnEvents }: Props) {
 		>
 			<SceneBoundary onError={() => setFailed(true)}>
 				<Canvas
+					frameloop={suspended ? 'never' : 'always'}
 					dpr={Math.min(tier.dpr, typeof window === 'undefined' ? 1 : window.devicePixelRatio)}
 					gl={{
 						antialias: false,
