@@ -24,22 +24,26 @@ Wherever the brief says "Server Component / Client Component", read: **`.astro` 
 
 ---
 
-## Content readiness — resolve before Phase 3
+## Content readiness — RESOLVED
 
-All copy comes from `portfolio-content.md`. That file is complete enough for Phases 0–2 but has **real gaps** that must be filled before the content phase. Do not paper over these with lorem ipsum or invented facts.
+**Authoritative content source: `content-pack.md`.** All copy, data, and assets are final there. `portfolio-content.md` is retained only as the raw extract of the previous site and as the source record for project `SHB-3b`.
 
-| # | Gap | Needed for | Owner action |
-|---|-----|-----------|--------------|
-| C1 | **No employer names, job titles, or dates.** The source has 7 achievements with no company, role, or duration. | §12 Trajectory | Provide company, role, start/end dates per position, and map the 7 achievements onto them. |
-| C2 | **No project screenshots.** The current live site uses CSS gradient placeholders. | §10 Worlds | Capture 3–5 real screenshots per project (desktop + mobile), 16:10, ≥1600px wide. |
-| C3 | **No case-study bodies.** Projects have a description but no problem / solution / role / impact. | §10 Worlds, `/worlds/[slug]` | Write 150–400 words per project against the schema in §20. |
-| C4 | **Project 3 ("Static Websites") is not a project.** It is a category, with no demo link. | §10 Worlds | Either replace with a real named project, or fold it into §14 Instrument Bay as capability evidence. |
-| C5 | **Unverified metric** — "reducing page publishing time by ~80%". | §12 Trajectory | Confirm the number and its basis, or soften the claim. Recruiters probe metrics. |
-| C6 | **Resume PDF** `/Shubham_resume_2026.pdf` referenced but not in this repo. | §15 Dossier | Add the file to `public/`. |
-| C7 | **About copy is generic** ("passionate… turning complex problems into simple, elegant solutions"). | §13 Observer's Log | Rewrite per the anti-generic rules in §13. Needs: engineering philosophy, what you are learning now, what you want to work on next. |
-| C8 | **No availability/timezone/response-time** for contact. | §15 Uplink | Confirm: location (India), timezone (IST/UTC+5:30), typical response time, open to what kind of work. |
+All eight content gaps are closed. Their resolutions changed several design decisions, so this table is load-bearing, not history:
 
-**Rule:** if a content field is unavailable at implementation time, the component must **omit the field entirely** (no empty label, no "coming soon" chip) and the Zod schema must mark it optional. Absent content should be invisible, not broken.
+| # | Gap | Resolution | Consequence for this plan |
+|---|-----|-----------|--------------------------|
+| C1 | No employer names, titles, or dates | **No employer names are used.** One position: `FRONTEND ENGINEER · 4 YEARS` | §12 redesigned around a role-only position; `company` is now **optional** in the schema (§20.3). Experience count is **4 years**, not "3+" |
+| C2 | No project screenshots | **No screenshots at all** — projects use the theme's procedural gradient visual | §10.6 rewritten; the raster image budget for projects drops to **zero** (§26.2, §29) |
+| C3 | No case-study bodies | **Detailed case studies are not wanted** | **`/worlds/[slug]` routes are removed** (§10.3, §23). Cards carry the full record and link straight to the live site |
+| C4 | "Static Websites" is not a project | **Replaced by `SHB-3b` Portfolio v1** — the previous portfolio, https://shubham-portfolio-modern.vercel.app/ | Three real projects again (§10). **Cancels the legacy-domain redirect** in §35 — that URL must stay live |
+| C5 | Unverified "~80% faster" metric | **Verified and strengthened: 14× faster page delivery** — from 2 pages per 14-day sprint to 2 pages per day | §12 uses `14×` with the basis stated in one line beneath it |
+| C6 | Résumé PDF missing | **Added:** `public/Shubham_resume_2026.pdf` (59KB). Portrait added: `public/images/hero_profile.png` (864×1184) | Portrait must **move to `src/assets/images/`** so `astro:assets` can optimise it — files in `public/` ship unprocessed |
+| C7 | About copy generic | **Rewritten in full** — philosophy pull-quote, 159 words of prose, field notes, three open questions | §13.1 rules retained as the standard the final copy already meets |
+| C8 | No availability details | **Location India · Asia/Kolkata (UTC+5:30) · available weekdays · open to frontend / platform roles** | §15 uses these; no response-time claim is made |
+
+**Two owner decisions remain** (defaults apply if unanswered — see `content-pack.md` §"Remaining owner decisions"): whether `Gemini / LLM APIs` counts as a separate skill (making the total **24**, the default, rather than 23), and the production domain plus analytics provider.
+
+**Standing rule:** if a content field is ever unavailable, the component must **omit the field entirely** — no empty label, no "coming soon" chip — and the Zod schema must mark it optional. Absent content is invisible, never broken.
 
 ---
 
@@ -152,28 +156,28 @@ The site is a single survey session, ordered so that each section answers the qu
 ├── #log              About
 ├── #atlas            Skills
 ├── #trajectory       Experience
-├── #worlds           Projects (3 featured, links to case studies)
+├── #worlds           Projects (3 records, links out to live sites)
 ├── #instruments      Instrument Bay teaser (links to /instruments)
 ├── #transmissions    Writing (6 latest, links out to dev.to)
 └── #uplink           Contact
 
-/worlds/[slug]        Project case study (static, one per project)
 /instruments          Engineering lab — components, experiments, architecture
-/transmissions        Full writing index (mirrors dev.to, canonical → dev.to)
+/transmissions        Full writing index (excerpts, canonical → dev.to)
 /dossier              Résumé page + PDF download
 /404                  Lost signal
 ```
 
 **Generated, not authored:** `/rss.xml`, `/sitemap-index.xml`, `/og/*.png` (build-time OG images).
 
-### 5.1 Why hybrid (one-pager + real routes)
+### 5.1 Why one page plus three routes
 
-Chosen over a pure one-pager and over a pure multi-page site.
+Chosen over a pure one-pager and over a multi-page site with per-project detail pages.
 
-- The narrative in §4 only works as continuous descent, so the **primary experience is one scrolling page**.
-- But case studies need **their own URLs** — recruiters share links, and `/worlds/payload-cms` is indexable, previewable in Slack, and linkable from a résumé. Burying them in a modal forfeits all of that.
-- The Lab is the heaviest route (it holds the one WebGL experiment). Giving it its own route keeps that weight **off the home page's budget entirely**.
-- Astro makes static detail pages nearly free (no client JS, no route-level runtime), so the cost of this split is close to zero. Astro's View Transitions preserve cinematic continuity across the navigation.
+- The narrative in §4 only works as continuous descent, so the **primary experience is one scrolling page**, and every project record lives on it in full.
+- **There are no `/worlds/[slug]` case-study routes** (C3). With three compact projects and no detailed write-ups wanted, a per-project route would be a thin page — and this plan's own rule is that a thin page is worse than no page. Project cards therefore carry the complete record and link straight to the live site. Case studies are parked in §37 for if the project set ever grows.
+- `/instruments` is the heaviest route (it holds the one Canvas experiment), so giving it its own route keeps that weight **off the home page's budget entirely**. This is the strongest remaining reason for a multi-route structure.
+- `/transmissions` and `/dossier` exist because both are things people link to directly and index separately.
+- Astro makes these static routes nearly free (no client JS, no route-level runtime). View Transitions with a persistent cosmos keep the navigation between them continuous.
 
 ### 5.2 Per-section IA table
 
@@ -185,7 +189,7 @@ Full specifications are in §8–§15. Summary:
 | Observer's Log | Humanise + philosophy | Judge how they think | Differentiate from generic devs | Observer's field notes | Single column, portrait above text |
 | The Atlas | Skill inventory | Scan capability fast | Show breadth + depth honestly | Constellations, magnitude = depth | Grouped list with bars, no SVG map |
 | Trajectory | Career path | Verify real experience | Prove impact with metrics | Flight path with burn events | Vertical timeline, no orbit curve |
-| Catalogued Worlds | The work | Evaluate projects | Drive to case studies | Catalogued planets | Stacked cards, static spheres |
+| Catalogued Worlds | The work | Evaluate projects | Drive to live demos | Catalogued planets | Stacked cards, static spheres |
 | Instrument Bay | Engineering depth | See under the hood | Prove they build primitives | Instruments the observatory built | Teaser + link, no experiments |
 | Transmissions | Writing | Gauge communication | Show field engagement | Signals broadcast outward | Compact list, no images |
 | Uplink | Contact | Make contact | Convert | Comms array | Sticky mail CTA |
@@ -198,22 +202,22 @@ Three real visitor types, with the path each must be able to take. Every one of 
 
 ### 6.1 The recruiter (60 seconds, mobile, distracted)
 
-1. Lands. Sees name, role, "3+ years", and two CTAs above the fold. **≤1.8s to LCP.**
+1. Lands. Sees name, role, "4 years", and two CTAs above the fold. **≤1.8s to LCP.**
 2. Taps **Download Résumé** — or scrolls once and sees the skills list.
 3. Bounces to the PDF or to LinkedIn.
 
-**Design consequence:** résumé must be reachable from the fixed header on every route and never more than one tap away. The stat "3+ years" is above the fold on a 360×640 viewport.
+**Design consequence:** résumé must be reachable from the fixed header on every route and never more than one tap away. The stat "4 years" is above the fold on a 360×640 viewport.
 
 ### 6.2 The engineering manager (5 minutes, desktop, evaluating)
 
 1. Reads hero, notes the site itself feels fast and precise.
 2. Scans The Atlas for stack overlap.
 3. Reads Trajectory for scope and metrics.
-4. Opens one project case study in a new tab, reads problem → solution → impact.
+4. Reads the project records and opens one live demo in a new tab.
 5. Skims Instrument Bay to see whether the person builds or assembles.
 6. Copies the email from Uplink.
 
-**Design consequence:** this is the primary journey. Case studies and Trajectory metrics get the most editorial effort. Instrument Bay exists specifically for step 5.
+**Design consequence:** this is the primary journey. Because there are no case-study pages (C3), the project *cards* must carry the full record — stack, role, year, status, and a description that says what was actually built — since the card is now the only place that story is told. Trajectory metrics get the most editorial effort. Instrument Bay exists specifically for step 5.
 
 ### 6.3 The peer engineer (curious, will open devtools)
 
@@ -230,7 +234,7 @@ Three real visitor types, with the path each must be able to take. Every one of 
 |-----------|------|
 | Résumé reachable in ≤1 interaction from any route | Manual, all routes |
 | Email reachable in ≤2 interactions from any route | Manual, all routes |
-| Every project has a live-demo or repo link, or is explicitly labelled unavailable | Content lint |
+| Every project has a live-demo link (all three now do) | Content lint |
 | No journey requires hover (touch parity) | Touch device pass |
 | No journey requires JS | JS-disabled pass |
 
@@ -364,7 +368,7 @@ A 12-column grid, content max-width 1200px, hero height `min(100svh, 900px)` wit
 │                                                              │
 │  ○ GITHUB   ○ LINKEDIN   ○ DEV.TO   ○ INSTAGRAM              │  mono, 12px
 │                                                              │
-│  ── 3+ ──────── 23 ──────── 3 ──────────────────────────      │  stat strip, hairline
+│  ── 4 ───────── 24 ──────── 3 ──────────────────────────      │  stat strip, hairline
 │     YEARS       TECHNOLOGIES  SHIPPED WORLDS                 │
 └──────────────────────────────────────────────────────────────┘
                                                           ▌ rail
@@ -374,9 +378,13 @@ Type treatment: `Hi, I'm` at `display-m` in `--text-mid`; `Shubham Tiwari` at `d
 
 Portrait: existing `hero_profile.png`, re-exported to AVIF + WebP at 480/720px, inside a hairline frame with corner ticks and a soft ion inner glow. `aspect-ratio` fixed to prevent CLS. Below 1024px it moves above the type at 160px circular; below 480px it is dropped entirely (the words matter more than the face on a 360px screen).
 
-**Copy.** The source lede — "I create beautiful, functional, and user-friendly web experiences that make a difference. Let's build something amazing together." — is replaced. It is generic, could describe anyone, and wastes the most valuable 12 words on the site. Recommended: *"I build fast, accessible web platforms — and the systems that keep them fast as they grow."* This is specific, matches the actual Trajectory evidence (Next.js migration, headless CMS, Playwright suite), and states a point of view. Final wording is the owner's call, but it must be specific and evidence-backed (C7).
+**Copy — final.** The source lede ("I create beautiful, functional, and user-friendly web experiences that make a difference…") is replaced: it is generic, could describe anyone, and wastes the most valuable 12 words on the site. The final lede is:
 
-**Stat strip.** Three real numbers only: `3+ YEARS`, `24 TECHNOLOGIES` (the Atlas count — must be computed from the data, not hardcoded), `3 SHIPPED WORLDS`. Numbers use mono tabular figures at `display-m`.
+> **I build fast, accessible web platforms — and the systems that keep them fast as they grow.**
+
+Specific, backed by the actual Trajectory evidence (Next.js migration, headless CMS, Playwright suite), and states a point of view. Eyebrow: `FIRST LIGHT · INDIA · UTC+5:30`.
+
+**Stat strip.** Three real numbers only: `4 YEARS`, `24 TECHNOLOGIES`, `3 SHIPPED WORLDS`. The technology and world counts are **computed from the collections at build time, never hardcoded** — so the skill-count decision (23 vs 24, see Content readiness) resolves itself. Numbers use mono tabular figures at `display-m`.
 
 ### 9.3 The first 3 seconds
 
@@ -427,23 +435,28 @@ The most important section on the site. Every decision here favours **evidence o
 
 **Narrative purpose.** The catalog of worlds this observer has found and mapped. Each project is a discovered world with a real data record.
 
-**User objective.** Understand what was built, what the engineer's role was, what was hard, and what changed as a result — then reach a live demo, a repo, or a case study.
+**User objective.** Understand what was built and with what, then reach the live site.
 
-**Content (per world).** Catalog designation (`SHB-1b`), name, one-line summary, 40–80 word description, tech stack (3–6 tags), role, year, status (`LIVE` / `ARCHIVED` / `PRIVATE`), problem, approach, impact, live URL, repo URL, case-study slug, screenshots. From `portfolio-content.md`:
+**Content (per world).** Catalog designation (`SHB-1b`), name, one-line summary, 40–80 word description, tech stack (3–6 tags), year, status, live URL, and a `gradientSeed`. **No screenshots** (C2) and **no case-study fields** (C3) — the card is the complete record. Final data in `content-pack.md`:
 
 | ID | Project | Stack | Status | Link |
 |----|---------|-------|--------|------|
-| `SHB-1b` | **Payload CMS** — blog CMS with auth, admin dashboard, media management, analytics, PageSpeed testing, on-demand revalidation | Next.js, Tailwind, MongoDB, Node | LIVE | blazing-blogs-frontend.vercel.app |
-| `SHB-2b` | **Gemini Zentauri** — AI content and image generation with a social feed interface | Next.js, Tailwind, MongoDB, Node | LIVE | gemini-ai-agent.vercel.app |
-| `SHB-3b` | *"Static Websites"* — **not shippable as a project (C4)** | React, Next.js, Tailwind | — | none |
+| `SHB-1b` | **Payload CMS** *(featured)* — blog CMS with auth, admin dashboard, media management, analytics, PageSpeed testing, on-demand revalidation | Next.js, Tailwind, MongoDB, Node | LIVE · 2025 | blazing-blogs-frontend.vercel.app |
+| `SHB-2b` | **Gemini Zentauri** — AI content and image generation behind a social-feed interface | Next.js, Tailwind, MongoDB, Node, Gemini API | LIVE · 2025 | gemini-ai-agent.vercel.app |
+| `SHB-3b` | **Portfolio v1** — the predecessor to this site: Material-3 token system, live dev.to feed, mobile-first bottom nav | Next.js, React, Tailwind, dev.to API | LIVE · 2026 | shubham-portfolio-modern.vercel.app |
+
+**Two rules attached to `SHB-3b`, both easy to get wrong:**
+
+1. It must be named **"Portfolio v1"**, never "Modern Portfolio". The visitor is looking at the *current* portfolio, so the lineage has to be explicit or the entry reads as a broken duplicate. Framed as v1, a possible confusion becomes visible iteration.
+2. **The legacy domain must stay live and must not be redirected** — see §35, where the original redirect recommendation is cancelled. Redirecting it would break this project's only link.
 
 ### 10.1 Featured world treatment
 
-**Featured: `SHB-1b` Payload CMS.** Selection rule — feature the project with the most demonstrable engineering depth, not the trendiest. Payload CMS spans auth, an admin surface, media handling, analytics, and cache revalidation; that surface area supports a real case study. Gemini Zentauri is the strong second and gets a standard card.
+**Featured: `SHB-1b` Payload CMS.** Selection rule — feature the project with the most demonstrable engineering depth, not the trendiest. Payload CMS spans auth, an admin surface, media handling, analytics, and cache revalidation; that breadth is the most to talk about. Gemini Zentauri is the strong second and gets a standard card.
 
-Featured layout (≥1024px): full-width panel, asymmetric split — 7 columns of screenshot (16:10, hairline frame, corner ticks, subtle ion rim-light) and 5 columns of record. The record is a **data table**, not prose: designation, status pill, stack chips, role, year, then the 80-word summary, then two buttons (`OPEN LIVE ↗`, `READ CASE STUDY →`). The featured panel is 1.4× the height of a standard card and is the only project element allowed a background gradient wash.
+Featured layout (≥1024px): full-width panel, asymmetric split — 7 columns of **gradient surface plate** (see §10.6: a 16:10 procedural gradient panel with the world's sphere composited into it, in a hairline frame with corner ticks) and 5 columns of record. The record is a **data table**, not prose: designation, status pill, stack chips, year, then the 80-word description, then one button (`OPEN LIVE ↗`). The featured panel is 1.4× the height of a standard card and gets the largest sphere and the most saturated plate.
 
-`SHB-3b` is dropped from the section until C4 is resolved. Three cards where one is empty is worse than two strong cards. Its capabilities are represented in §14 instead.
+All three cards are populated (C4 resolved), so the section is a featured panel plus a 2-up grid.
 
 ### 10.2 Standard project cards
 
@@ -463,28 +476,22 @@ A 2-column grid ≥1024px, 1 column below. Each card is a single `<a>` wrapping 
 │                                        │
 │  NEXT.JS  TAILWIND  MONGODB  NODE      │  mono chips, 11px, hairline borders
 │  ─────────────────────────────────────  │
-│  OPEN LIVE ↗              CASE STUDY → │
+│  2025                       OPEN LIVE ↗ │  year left, single action right
 │  ⌏                                  ⌎  │
 └────────────────────────────────────────┘
 ```
 
 **The procedural sphere** is the project's "world": a CSS/SVG sphere built from a radial gradient (limb lighting + terminator), a hue derived deterministically from the slug hash, one thin elliptical ring on the featured world only, and a soft ion rim-light on hover. Zero image weight, infinitely scalable, and consistent with the metaphor. It is `aria-hidden`. **It is never the only identifier** — the name and designation are always text.
 
-### 10.3 Case-study pages (`/worlds/[slug]`)
+### 10.3 No case-study pages — decided
 
-Static, one per project, generated from a content collection. Fixed structure so all case studies are comparable:
+**`/worlds/[slug]` routes are not built** (C3). The owner does not want detailed write-ups, and with three compact projects a per-project route would be a thin page — which this plan already forbids in Phase 3's implementation notes ("a thin page is worse than no page"). Building them anyway would produce three routes each carrying a heading, a gradient, and forty words.
 
-1. **Header** — designation, name, one-liner, status, year, stack, live/repo links.
-2. **Hero screenshot** — 16:10, AVIF, priority-loaded (it is the LCP element on this route).
-3. **Problem** — 80–150 words. What was broken or missing, and for whom.
-4. **Approach** — 150–300 words. The engineering decisions and the trade-offs rejected. This is the section engineering managers actually read.
-5. **Architecture** — one diagram (inline SVG, hand-authored, theme-aware) plus 3–6 bullets. No Mermaid runtime.
-6. **Impact** — 2–4 metrics as large mono numbers with a plain caption. Honest: if there is no metric, write what improved qualitatively rather than inventing a number.
-7. **Stack rationale** — a table: technology → why chosen → what it cost.
-8. **Gallery** — 2–4 screenshots, lazy, in a hairline grid. No lightbox in v1 (a lightbox is a JS island for marginal value; images open in a new tab).
-9. **Next / Prev world** — keeps the visitor in the catalog.
+**Therefore the card is the whole record.** Everything a visitor learns about a project must fit on it: designation, name, one-liner, 40–80 word description, full stack, year, status, and the live link. This raises the bar on card copy — see §6.2, where the engineering-manager journey now depends on the card rather than a case study.
 
-Route chrome: the right rail is replaced by `← SURVEY` (returns to `/#worlds`) plus an in-page section rail for the 9 blocks above on ≥1280px.
+**What this removes from the plan:** the `/worlds/[slug]` route (§23), the `case-study/` component group (§21.1), the case-study image budget (§26.2), case-study structured data (§27.2), and the card→case-study View Transition pair (§10.5).
+
+**If this reverses later** (more projects, or a desire for depth), §37 carries the case-study route as a future enhancement, and the 9-block structure that was specified here is recoverable from this document's git history. Do not pre-build for it.
 
 ### 10.4 Filtering — deliberately deferred
 
@@ -494,28 +501,44 @@ Route chrome: the right rail is replaced by `← SURVEY` (returns to `/#worlds`)
 
 - **Hover/focus (cards):** panel background `--surface-1` → `--surface-2`, hairline brightens 12% → 24%, sphere gains an ion rim-light and rotates 3° via `transform`, whole card lifts 2px. 200ms `--ease-ui`, `transform` and `opacity` only.
 - **Entrance:** per §8.1 — featured panel first, then cards on a 60ms stagger.
-- **Card → case study transition:** Astro View Transitions with `transition:name` shared between the card's sphere/title and the case-study header, so the world visually travels between routes. This is the single best justification for View Transitions in this project: it makes the multi-page architecture feel like one continuous space. Falls back to a plain navigation where unsupported, and is disabled under reduced motion.
+- **Card → live site:** an external navigation, so there is no transition to design. The `↗` affordance and the new-tab behaviour carry it.
+- **View Transitions** now serve a narrower purpose: continuity between the home route and `/instruments`, `/transmissions`, and `/dossier`, with `transition:persist` on the cosmos so the sky never flashes. That persistence — not the removed card→case-study pair — is the real justification (§19.5).
 - **Not allowed:** 3D tilt on cursor move, magnetic cursors, parallax inside cards, flip animations. Each costs jank and buys nothing.
 
-### 10.6 Image and media strategy
+### 10.6 Visual strategy — gradient plates, zero raster (C2)
 
-- Formats: AVIF primary, WebP fallback, via Astro's `<Image />` / `astro:assets` at build time. No raw PNG/JPEG shipped.
-- Sizes: card `640w`; case-study hero `1280w` + `1920w`; gallery `960w`. `sizes` set per breakpoint.
-- Every image has explicit `width`/`height` (CLS 0) and meaningful `alt` describing the screen's content, not "screenshot of project".
-- Budget: ≤120KB per card image, ≤200KB for a case-study hero, ≤700KB total per case-study route.
-- Videos: none in v1. If a demo video is added later it must be a muted, `preload="none"`, poster-backed `<video>` behind a click-to-play — never autoplaying.
+**Decision: no project screenshots anywhere.** Screenshots of a CMS admin panel or a portfolio homepage read as clutter at card size — thumbnails of dense UI become grey mush, they date instantly, and three of them in a row fight the site's own visual language. The theme's procedural treatment replaces them entirely.
+
+Each world gets a **gradient surface plate**: a 16:10 panel built from two CSS radial gradients plus the world's procedural sphere composited into it, all seeded deterministically from the project slug so each project has a stable, distinct identity.
+
+| Element | Implementation |
+|---------|---------------|
+| Plate ground | `radial-gradient` in `oklab` from a slug-derived hue toward `--color-surface-1`, at 8–14% saturation — muted enough to sit under text |
+| Sphere | The existing `WorldSphere` (§10.2), composited at 40% of plate height, offset off-center |
+| Depth | One blurred plasma bloom behind the sphere; a hairline horizon line at the lower third |
+| Frame | Hairline border + corner ticks, matching every other panel |
+| Hover | Sphere gains an ion rim-light and rotates 3°; the plate's bloom brightens 10% |
+| Featured variant | 1.4× height, larger sphere, one thin elliptical ring, slightly higher saturation |
+
+**Consequences, all favourable:** the project image budget becomes **zero bytes**; there is nothing to capture, crop, re-export, or keep current (C2 disappears as a task); CLS is structurally impossible since plates are pure CSS with a fixed `aspect-ratio`; and the section stays coherent with the cosmos instead of embedding three rectangles of unrelated UI.
+
+**Accessibility:** plates are decorative and `aria-hidden`. The project is always identified by its text name and designation, and the hue conveys nothing — it is identity, not information, so no colour-dependence is introduced.
+
+**The only raster images left on the entire site** are the portrait, the Orbit poster, the 2KB grain tile, and build-generated OG images (§29).
+
+**Videos:** none. If a demo video is ever added it must be muted, `preload="none"`, poster-backed, and behind a click-to-play — never autoplaying.
 
 ### 10.7 Loading states
 
-The route is static HTML, so there is nothing to "load" for content — **no skeletons, no spinners**. Images reserve their box with a `--surface-2` fill and fade in over 200ms on decode. That is the entire loading design.
+Every route is static HTML and the project visuals are CSS, so there is nothing to load — **no skeletons, no spinners, no image fade-ins in this section at all**. The only image that needs decode handling anywhere is the portrait (§13.3).
 
 ### 10.8 Responsive, accessibility, performance
 
 **Responsive.** ≥1280px: featured 7/5 split + 2-col grid. 1024–1279px: featured stacks image over record, grid stays 2-col. 768–1023px: 1-col, sphere shrinks to 72px. <768px: 1-col, sphere inline at 56px beside the designation, stack chips wrap to 2 lines max then truncate with a `+2` chip, buttons full-width stacked.
 
-**Accessibility.** Cards are `<article>` inside a `<ul>`; the anchor's accessible name is `"{name} — {one-liner}"`. Status is text (`LIVE`), never a color-only dot. Stack chips are a `<ul>` with a visually-hidden "Built with" label. `↗` icons are `aria-hidden` with a visually-hidden "(opens in a new tab)". Case-study headings form a correct h1→h2 outline. Spheres are decorative and hidden from AT.
+**Accessibility.** Cards are `<article>` inside a `<ul>`; the anchor's accessible name is `"{name} — {one-liner}"`. Status is text (`LIVE`), never a color-only dot. Stack chips are a `<ul>` with a visually-hidden "Built with" label. `↗` icons are `aria-hidden` with a visually-hidden "(opens in a new tab)". Spheres and gradient plates are decorative and hidden from AT.
 
-**Performance.** Zero JS in the section (all hover is CSS; View Transitions are browser-native). Card images lazy except the featured one when it is above the fold at ≥1280px. Section budget: ≤260KB desktop, ≤140KB mobile.
+**Performance.** Zero JS and **zero image bytes** in the section — hover is CSS, plates are gradients, spheres are gradients. Section budget: ≤12KB of HTML+CSS on every tier. This is now one of the cheapest sections on the site, which is a direct consequence of C2.
 
 ---
 
@@ -527,20 +550,20 @@ The route is static HTML, so there is nothing to "load" for content — **no ske
 
 ### 11.1 Fixing the data model first
 
-The source data is 23 skills with self-assigned percentages. **Percentages are the "React ⭐⭐⭐⭐⭐" problem in a different costume** — nobody believes "TypeScript 88%", and the 7-point gap between 95% and 88% communicates nothing. Replace them with three honest, named tiers, and keep the underlying number only as a sort key.
+The source data was 23 skills with self-assigned percentages. **Percentages are the "React ⭐⭐⭐⭐⭐" problem in a different costume** — nobody believes "TypeScript 88%", and the 7-point gap between 95% and 88% communicates nothing. They are replaced by three honest, named tiers, with the original number retained **only as `sortScore`** and never displayed.
 
 | Tier | Label shown | Source % | Visual magnitude | Count |
 |------|------------|----------|-----------------|-------|
 | 1 | **CORE** — daily, can debug deeply, would defend design decisions | ≥88 | r=7, strong glow, label always visible | 10 |
-| 2 | **WORKING** — shipped production work, comfortable without hand-holding | 78–87 | r=5, soft glow, label on hover/focus + in list | 11 |
+| 2 | **WORKING** — shipped production work, comfortable without hand-holding | 78–87 | r=5, soft glow, label on hover/focus + in list | 12 |
 | 3 | **FAMILIAR** — used, functional, would need a ramp-up | <78 | r=3, no glow, label in list only | 2 |
 
-Resulting assignment: **Core** — HTML, CSS, JavaScript, React, Git (95), Tailwind (92), Node.js, AI-assisted development, Tooling & linting (90), TypeScript (88). **Working** — Next.js, Payload CMS, REST APIs, Figma (85), Astro, Express, Vercel, Playwright, Performance, Accessibility, SEO (80). **Familiar** — MongoDB (75), Docker (60).
+**Total: 24 entries.** Final assignment is in `content-pack.md`; summary: **Core** — HTML, CSS, JavaScript, React, Git, Tailwind CSS, Node.js, AI-assisted development, ESLint / Prettier, TypeScript. **Working** — Next.js, Payload CMS, REST APIs, Figma, Gemini / LLM APIs, Astro, Express, Vercel, Playwright, Performance optimisation, Accessibility, SEO. **Familiar** — MongoDB, Docker.
 
-Two content corrections while implementing:
+The count is **24, not the source's 23**, because two content corrections were applied:
 
-- **"AI — 90%"** is not a technology. Rename to **"AI-assisted development"** and, better, make it specific to the evidence: LLM API integration (the Gemini Zentauri project) belongs in the Substrate constellation as *"Gemini / LLM APIs"*.
-- **"Linting & Formatting — 90%"** is a practice, not a tool. Rename to **"ESLint / Prettier"** so it sits honestly beside Git and Vercel.
+- **"AI — 90%"** is not a technology. It became **"AI-assisted development"** (Operations), and the concrete evidence behind it — LLM API integration from Gemini Zentauri — was split out as **"Gemini / LLM APIs"** (Substrate). That split is what adds the 24th entry. Owner decision D1 may fold it back to 23; either way **the displayed count is computed from the collection at build time**, so no code changes.
+- **"Linting & Formatting — 90%"** is a practice, not a tool. It became **"ESLint / Prettier"** so it sits honestly beside Git and Vercel.
 
 ### 11.2 Constellations
 
@@ -562,12 +585,12 @@ This is the section's key decision: **the star map and a plain grouped list coex
 
 ```text
 ┌───────────────────────── 7 cols ──────────────┬────── 5 cols ────────┐
-│  THE ATLAS · 23 ENTRIES · 3 CONSTELLATIONS    │  ○ CORE (10)         │
+│  THE ATLAS · 24 ENTRIES · 3 CONSTELLATIONS    │  ○ CORE (10)         │
 │                                               │    JavaScript        │
 │      ·  ✦ React                               │    React             │
 │    ✦ TypeScript    ✦ Next.js                  │    TypeScript   …    │
 │         ·      ✦ Tailwind                     │                      │
-│   ─── INTERFACE ───                           │  ○ WORKING (11)      │
+│   ─── INTERFACE ───                           │  ○ WORKING (12)      │
 │                                               │    Next.js           │
 │         ✦ Node.js   · Express                 │    Astro        …    │
 │   ─── SUBSTRATE ───                           │                      │
@@ -579,7 +602,7 @@ This is the section's key decision: **the star map and a plain grouped list coex
 
 The map gives shape and memorability; the list gives scannability and is what a recruiter's eye actually uses. Hovering or focusing a star highlights its list row and vice versa — a two-way link that makes the map *useful* rather than ornamental. The list is grouped by tier (not by constellation) because "how deep" is the question a reader has; each row shows its constellation as a small mono suffix.
 
-Section eyebrow: `THE ATLAS · 23 ENTRIES · 3 CONSTELLATIONS` — counts computed from data at build time.
+Section eyebrow: `THE ATLAS · 24 ENTRIES · 3 CONSTELLATIONS` — counts computed from data at build time.
 
 ### 11.4 Readable without interaction — the accessibility core
 
@@ -587,7 +610,7 @@ The brief requires that skill visualisation work with no interaction. Guarantees
 
 1. **Every skill name exists as real text in the DOM at all times** in the grouped list. The SVG map is supplementary.
 2. **Core-tier star labels are always rendered** in the map — no hover needed for the 10 most important entries.
-3. The SVG is `role="img"` with an `aria-label` summarising it ("Star chart of 23 technologies in 3 groups"), and its interactive stars are excluded from the tab order (`focusable="false"`, `aria-hidden="true"`) because **the list provides the accessible path**. Duplicating 23 tab stops would be hostile; one canonical interactive path is correct.
+3. The SVG is `role="img"` with an `aria-label` summarising it ("Star chart of 24 technologies in 3 groups"), and its interactive stars are excluded from the tab order (`focusable="false"`, `aria-hidden="true"`) because **the list provides the accessible path**. Duplicating 24 tab stops would be hostile; one canonical interactive path is correct.
 4. Tier is conveyed by **text label, not by size or glow alone** — `CORE`, `WORKING`, `FAMILIAR` are written words in the list headers.
 5. With CSS disabled, the output is three headed lists of technologies. With JS disabled, everything above still holds.
 6. **Mobile drops the SVG map entirely** and renders only the grouped list with a slim tier bar — no loss of information, no canvas cost.
@@ -610,41 +633,49 @@ The brief requires that skill visualisation work with no interaction. Guarantees
 
 **Narrative purpose.** The flight path so far: a continuous trajectory with **burn events** — the moments where deliberate effort changed the vehicle's course. Each achievement is a burn.
 
-**User objective.** Verify that the experience is real, scoped, and consequential; find dates, employers, and measurable outcomes quickly.
+**User objective.** Verify that the experience is real, scoped, and consequential; find the measurable outcomes quickly.
 
-### 12.1 Data model and the C1 problem
+### 12.1 Data model — role-only, by decision (C1)
 
-The source content lists **7 achievements with no employer, title, or dates**. That gap is disqualifying for a recruiter — an experience section without dates reads as concealment. It must be filled (C1).
-
-Design the component for the correct shape from the start, so filling C1 requires no rework:
+**No employer names are used** (C1). The section presents one position identified by role and duration: `FRONTEND ENGINEER · 4 YEARS`. This is a deliberate choice, not a gap, and the design leans into it rather than apologising for it — the seven burn events carry all the weight, and they are specific enough (Next.js migration, headless CMS, monorepo, Playwright suite, migrations, JSP) that scope is legible without a logo.
 
 ```text
 Position
-├── company, role, employmentType
-├── startDate, endDate | "present"
-├── location, mode (remote/hybrid/onsite)
-├── summary (1 sentence)
-├── technologies[]
-└── achievements[]   ← the 7 existing entries map in here
+├── role            "Frontend Engineer"        required
+├── durationLabel   "4 years"                  required
+├── company?        omitted entirely           optional — see below
+├── startDate?      endDate?                   optional
+├── summary?        technologies[]?            optional
+└── achievements[]  the 7 burn events          required
     ├── title
     ├── description
-    ├── metric?  { value, unit, label }   e.g. { 80, "%", "faster publishing" }
+    ├── metric?  { value, unit, label }   e.g. { 14, "×", "faster page delivery" }
     └── technologies[]
 ```
 
-Mapping of the existing 7 achievements: *Next.js platform modernization*, *Headless CMS & delivery* (metric: ~80% faster publishing — verify, C5), *Multi-brand CMS setup*, *Playwright automation suite*, *Cross-team collaboration*, *Database schema & migrations*, *Legacy JSP maintenance*. These describe one coherent role and should sit under a single position until C1 says otherwise.
+`company`, `startDate`, and `endDate` are **optional** in the schema (§20.3), and the plan's standing rule applies: an absent field renders nothing at all — no empty label, no "Company Name" placeholder, no date range with a dash and no dates.
 
-**Interim rendering rule:** if `company` is absent, render the position header as the role plus date range only, and never emit an empty label or a placeholder like "Company Name". If dates are absent too, render the spine with achievements only and suppress the header entirely — degraded but never broken.
+**One honest caveat to carry:** a recruiter scanning for employers and dates will not find them, and some ATS-driven screens weight that. The mitigation is that `/dossier` and `Shubham_resume_2026.pdf` are one tap away from every route (§6.1), and the PDF is where employment specifics belong. Do not "solve" this by inventing a company field.
 
-### 12.2 Visual composition
+### 12.2 The 14× metric (C5) — verified
+
+Burn event 02 (*Headless CMS & delivery*) carries the section's only metric. The previous "~80% faster publishing" claim was an **understatement**; the verified basis is:
+
+- **Before the CMS:** 2 pages per 14-day sprint ≈ 1 page per 7 days
+- **After the CMS:** 2 pages per day ≈ 1 page per 0.5 days
+- → **14× throughput**, equivalently a ~93% reduction in time-to-publish per page
+
+Render it as `14×` in ember at `display-l`, captioned `FASTER PAGE DELIVERY`, with the basis stated in one mono line directly beneath: `FROM 2 PAGES PER 14-DAY SPRINT TO 2 PAGES PER DAY`. A big number with its basis attached survives scrutiny; a big number alone invites it. No other burn event gets a metric — a single well-supported number is more credible than seven soft ones.
+
+### 12.3 Visual composition
 
 **Desktop (≥1024px):** a single vertical **spine** at the left of the content column — a 2px line with a subtle ion gradient — carrying a marker per burn event. Each event is a panel to the right of the spine at a consistent offset. The spine is gently curved (an SVG path with a ~40px horizontal drift over the section's height) so it reads as an arc rather than a ruler; markers sit exactly on the path.
 
-Per event: mono index (`BURN 01`), title in `display-m` serif, 1–2 line description, a metric block when present (mono `80%` at `display-l` in ember, with a plain caption beneath), and technology chips. Position headers interrupt the spine with a wider node, the company and role in `display-m`, and a mono date range.
+Per event: mono index (`BURN 01`), title in `display-m` serif, 1–2 line description, the metric block on event 02 only (§12.2), and technology chips. The single position header sits at the top of the spine on a wider node: `FRONTEND ENGINEER` in `display-m` with `4 YEARS` in mono beside it. No company line, no date range (§12.1).
 
 **Mobile (<768px):** the spine becomes a **straight 1px vertical line inset 16px**, markers become 8px dots, panels become full-width with no offset. No curve, no SVG path — a border-left on a flex column. Identical information, a tenth of the cost.
 
-### 12.3 Motion, and how it works without heavy JS
+### 12.4 Motion, and how it works without heavy JS
 
 The only motion is the spine drawing itself as the section scrolls into view, plus the standard §8.1 entrance for each event panel.
 
@@ -656,11 +687,11 @@ Implementation, in preference order:
 
 **Mobile explicitly gets no scroll-linked animation** — the spine is fully drawn from the start. Rationale: scroll-linked work on low-end Android is the most common source of dropped frames in portfolios like this, and the effect is nearly invisible on a 6-inch screen. Under reduced motion, the spine is static everywhere and panels appear instantly.
 
-### 12.4 Technical, accessibility, performance
+### 12.5 Technical, accessibility, performance
 
 **Technical.** `Trajectory.astro` (static) + one shared entrance utility. SVG path is authored in a `viewBox` and scales; markers are positioned with `offset-path` where supported, otherwise absolute percentages computed at build time from the data length.
 
-**Accessibility.** `<ol>` of positions, each containing an `<ol>` of achievements — the DOM order *is* the chronology, so screen readers get the timeline for free. `<time datetime>` on every date. Metrics are `<p><strong>80%</strong> faster publishing</p>`, so the number is never orphaned from its meaning. The spine SVG is `aria-hidden`. Headings: position = `h3`, achievement title = `h4`.
+**Accessibility.** `<ol>` of positions, each containing an `<ol>` of achievements — the DOM order *is* the chronology, so screen readers get the sequence for free. The metric is marked up as `<p><strong>14×</strong> faster page delivery</p>` so the number is never orphaned from its meaning, with the basis line as a following sentence inside the same block. The spine SVG is `aria-hidden`. Headings: position = `h3`, achievement title = `h4`.
 
 **Performance.** Zero JS beyond the shared observer (~1KB, amortised). SVG ≤3KB. Section budget ≤20KB. No images.
 
@@ -674,7 +705,7 @@ Implementation, in preference order:
 
 ### 13.1 Content model and the anti-generic rules
 
-The source copy fails on specificity: *"I'm a passionate Frontend Engineer… I love turning complex problems into simple, elegant solutions"* and *"When I'm not coding, you can find me exploring new technologies"* could be pasted into ten thousand portfolios. It must be rewritten (C7).
+The source copy failed on specificity: *"I'm a passionate Frontend Engineer… I love turning complex problems into simple, elegant solutions"* and *"When I'm not coding, you can find me exploring new technologies"* could be pasted into ten thousand portfolios. **It has been rewritten in full (C7) — the final copy is in §13.2 below and in `content-pack.md`.** The rules are retained because they are the standard that copy meets and the test any future edit must pass.
 
 **Hard rules for this section's copy:**
 
@@ -684,11 +715,31 @@ The source copy fails on specificity: *"I'm a passionate Frontend Engineer… I 
 4. Include what is being learned **right now** and what they want to work on **next**. Recruiters read this as trajectory, and it dates the page honestly.
 5. Maximum 180 words of prose. The section earns interest through density, not length.
 
-**Content model:** `philosophy` (one pull-quote sentence), `prose` (2 short paragraphs, ≤180 words total), `fieldNotes` (5–7 label/value pairs), `openQuestions` (2–4 items — what they want to work on next), `portrait`, `interests` (3–5 short items).
+**Content model:** `philosophy` (one pull-quote sentence), `prose` (2 short paragraphs, ≤180 words total), `fieldNotes` (5–8 label/value pairs), `openQuestions` (2–4 items — what they want to work on next), `portrait`.
 
-Field notes are real data, from the source content plus C8: `LOCATION India`, `TIMEZONE IST · UTC+5:30`, `EXPERIENCE 3+ years`, `FOCUS Frontend platforms, performance, accessibility`, `CURRENTLY Astro, design systems`, `WRITES AT dev.to/shubhamtiwari909`, `OPEN TO Frontend / platform roles`.
+### 13.2 Final copy (C7) — implement verbatim
 
-### 13.2 Visual composition
+**Philosophy pull-quote:**
+
+> Most frontend problems are really delivery problems — the interesting work is making the fast path the easy path for everyone who touches the codebase.
+
+**Prose (159 words, two paragraphs):**
+
+> I've spent four years on frontend platforms — the kind where the hard part isn't the component, it's that a lot of people need to ship pages without breaking the build. Most of my work has been migrations and plumbing: moving legacy applications onto Next.js, standing up a headless CMS that took page publishing from two pages a sprint to two a day, and wiring a Playwright suite covering E2E, API, accessibility, and visual regression so releases stopped being a negotiation.
+>
+> I care more about the second year of a codebase than the first week of it. In practice that means I'd rather add a lint rule than a conventions document, and I'll usually argue for the boring, typed, testable version of a feature. Outside of work I build small things to learn from — an AI content app on Gemini, a blog CMS on Payload — and I write up what breaks at dev.to.
+
+**Open questions:**
+
+> → How far can a design system go before it starts constraining product velocity?
+> → What does genuinely accessible rich-text editing look like?
+> → Where does AI-assisted development actually pay off in a large codebase — and where does it just add review load?
+
+**Field notes (C8):** `LOCATION India` · `TIMEZONE Asia/Kolkata · UTC+5:30` · `EXPERIENCE 4 years` · `FOCUS Frontend platforms, performance, accessibility` · `CURRENTLY Astro, design systems` · `AVAILABILITY Weekdays` · `WRITES AT dev.to/shubhamtiwari909` · `OPEN TO Frontend / platform roles`
+
+**Why this copy works, so future edits do not undo it:** the prose carries four verifiable specifics (four years, Next.js migration, 2 pages/sprint → 2/day, the Playwright coverage list); the second paragraph states an opinion a reasonable engineer could argue with ("a lint rule over a conventions document", "the boring typed version"), which is what makes a person legible rather than generically competent; the open questions are genuinely open, which both dates the page honestly and hands an interviewer three obvious first questions.
+
+### 13.3 Visual composition
 
 Two columns ≥1024px (5/7). Left: portrait in a hairline frame with corner ticks, and beneath it the **field notes** as a mono `<dl>` — label in `--text-low`, value in `--text-hi`, hairline between rows. It looks like an instrument's metadata panel and gives the section its scientific register.
 
@@ -696,13 +747,13 @@ Right: the **philosophy pull-quote** in Instrument Serif italic at `display-m` w
 
 The `OPEN QUESTIONS` block is the section's distinctive move: it converts the usual "I'm always learning" cliché into a specific, dated, forward-looking list — and it gives an interviewer an obvious opening question, which is exactly what a candidate wants.
 
-### 13.3 Interaction, motion, technical, responsive, a11y, performance
+### 13.4 Interaction, motion, technical, responsive, a11y, performance
 
 **Interaction.** Almost none, deliberately — this is a reading section. Only the dev.to field-note value and the open-question items are links; standard hairline-underline hover.
 
 **Motion.** §8.1 entrance only. The pull-quote's ion rule draws downward over 560ms as a single accent. Nothing else moves. No text-scramble, no typewriter effect (both delay reading and break screen readers).
 
-**Technical.** Fully static `.astro`. Portrait via `astro:assets` → AVIF/WebP at 480w and 720w. Zero JS.
+**Technical.** Fully static `.astro`. Portrait via `astro:assets` → AVIF/WebP at 480w and 720w. **The portrait must live in `src/assets/images/`, not `public/`** — it currently sits at `public/images/hero_profile.png` (864×1184, 249KB) where Astro serves it unprocessed. Moving it is a Phase 1 task and cuts it to well under 60KB. Zero JS.
 
 **Responsive.** ≥1024px 5/7 split. 768–1023px: portrait 200px left-floated with field notes below the prose. <768px: portrait 140px circular centered, then philosophy, prose, field notes as a 2-column mono grid, then open questions.
 
@@ -784,17 +835,17 @@ The home route carries only a compact **Instrument Bay** teaser: eyebrow, `h2`, 
 
 ### 15.2 Content and composition
 
-Content: availability status line, email (`shubhmtiwri00@gmail.com`), copy-to-clipboard control, timezone and typical response time (C8), `LOCATION India`, three professional links (GitHub, LinkedIn, dev.to), and a final résumé CTA.
+Content (C8 resolved): availability status line, email (`shubhmtiwri00@gmail.com`), copy-to-clipboard control, location and timezone, three professional links (GitHub, LinkedIn, dev.to), and a final résumé CTA. **No response-time claim is made** — the owner did not commit to one, and an unmet "replies within 24h" is worse than silence.
 
 Composition: a centered panel, max-width 720px, with the strongest corner-tick treatment on the site — this is the last thing seen and should feel like the most solid object on the page.
 
 ```text
-        UPLINK · IST UTC+5:30 · TYPICAL REPLY < 24H
+     UPLINK · ASIA/KOLKATA UTC+5:30 · WEEKDAYS
 
               Let's build something
                     together.
 
-        ● OPEN TO FRONTEND / PLATFORM ROLES
+   ● OPEN TO FRONTEND / PLATFORM ROLES · WEEKDAYS
 
         ┌────────────────────────────────────────┐
         │  shubhmtiwri00@gmail.com        COPY   │
@@ -1076,7 +1127,7 @@ For each technology: why, where, where not, cost, mobile, fallback.
 ### 19.5 CSS platform features — the primary animation engine
 
 - **Scroll-driven animations** (`animation-timeline: scroll() / view()`) for the spine draw and hero parallax. Off the main thread, zero JS. Guarded in `@supports (animation-timeline: view())`; the unsupported path is the designed static state.
-- **View Transitions** (Astro's `<ClientRouter />`) for card → case-study continuity, with `transition:name` on the shared sphere and title. ~4KB. Disabled under reduced motion.
+- **View Transitions** (Astro's `<ClientRouter />`) with `transition:persist` on the cosmos, so the sky survives navigation between the four real routes. ~4KB. Disabled under reduced motion.
 - **`color-mix()`, `oklab`** for all alpha derivations, so accents stay perceptually consistent.
 - **`@supports`, `prefers-reduced-motion`, `prefers-reduced-transparency`, `prefers-contrast`** as first-class branches, not afterthoughts.
 
@@ -1144,14 +1195,16 @@ Any island not on this list must be justified in the Decision log before being a
 
 | Collection | Type | Required | Optional |
 |-----------|------|----------|----------|
-| `projects` | data | `id` (`SHB-1b`), `slug`, `name`, `oneLiner`, `description`, `stack[]`, `status`, `year`, `featured` | `role`, `liveUrl`, `repoUrl`, `problem`, `approach`, `architecture`, `impact[]`, `stackRationale[]`, `screenshots[]`, `sphereHue` |
-| `experience` | data | `company`\*, `role`, `startDate`, `achievements[]` | `endDate`, `location`, `mode`, `summary`, `technologies[]`; per achievement: `metric{value,unit,label}` |
+| `projects` | data | `id` (`SHB-1b`), `slug`, `name`, `oneLiner`, `description`, `stack[]`, `status`, `year`, `liveUrl`, `featured` | `repoUrl`, `gradientSeed` (defaults to a hash of `slug`) |
+| `experience` | data | `role`, `durationLabel`, `achievements[]` | `company`\*, `startDate`, `endDate`, `location`, `mode`, `summary`, `technologies[]`; per achievement: `metric{value,unit,label}` |
 | `skills` | data | `name`, `tier`, `constellation`, `x`, `y`, `sortScore` | `connections[]`, `url` |
 | `articles` | data | `title`, `url`, `publishedAt`, `source` | `excerpt`, `readingMinutes`, `coverImage`, `tags[]` |
 | `instruments` | data | `id` (`I-01`), `name`, `claim`, `body` | `demo`, `diagram`, `codeExcerpt`, `links[]` |
-| `profile` | data (single) | `name`, `role`, `location`, `timezone`, `email`, `socials[]`, `yearsExperience` | `philosophy`, `prose[]`, `fieldNotes[]`, `openQuestions[]`, `availability`, `resumePdf` |
+| `profile` | data (single) | `name`, `role`, `location`, `timezone`, `email`, `socials[]`, `yearsExperience`, `availability` | `philosophy`, `prose[]`, `fieldNotes[]`, `openQuestions[]`, `resumePdf` |
 
-\* `company` is required by the schema deliberately, to force C1 to be resolved rather than silently skipped. If it genuinely cannot be disclosed, the value must be an explicit string such as `"Confidential (agency client work)"` — a conscious choice, not an omission.
+\* `company` is **optional by decision** (C1) — no employer names are used. `liveUrl` moved to required because all three projects now have one, so a project without a link should fail the build rather than render a dead card. The `problem`/`approach`/`impact`/`screenshots` fields are gone entirely (C2, C3): unused schema fields invite an agent to fill them.
+
+`projects.status` is a union of `LIVE | ARCHIVED | PRIVATE`; `experience.achievements[].metric` is present on exactly one entry (§12.2). `skills.tier` is a union of `CORE | WORKING | FAMILIAR` and `constellation` of `INTERFACE | SUBSTRATE | OPERATIONS`, so a typo fails the build instead of silently dropping a star.
 
 ### 20.4 Articles data — dev.to at build time
 
@@ -1229,14 +1282,9 @@ src/
 │   │   ├── FeaturedWorld.astro
 │   │   ├── WorldCard.astro       one <a> wrapping the whole record
 │   │   ├── WorldSphere.astro     procedural CSS/SVG sphere, seeded by slug
-│   │   ├── WorldRecord.astro     the data table (id, status, stack, role, year)
-│   │   └── case-study/
-│   │       ├── CaseStudyHeader.astro
-│   │       ├── CaseStudySection.astro
-│   │       ├── ImpactMetrics.astro
-│   │       ├── StackRationale.astro
-│   │       ├── Gallery.astro
-│   │       └── WorldPager.astro  prev/next world
+│   │   ├── WorldPlate.astro      16:10 gradient surface plate (§10.6)
+│   │   └── WorldRecord.astro     the data table (id, status, stack, year)
+│   │   ── no case-study/ group — those routes are not built (§10.3)
 │   ├── instruments/
 │   │   ├── InstrumentTeaser.astro    home route, zero JS
 │   │   ├── InstrumentPanel.astro
@@ -1264,7 +1312,6 @@ src/
 │   └── seo.ts                    metadata + JSON-LD builders
 ├── pages/
 │   ├── index.astro
-│   ├── worlds/[slug].astro
 │   ├── instruments.astro
 │   ├── transmissions.astro
 │   ├── dossier.astro
@@ -1276,7 +1323,7 @@ src/
     ├── fonts/                    self-hosted woff2 subsets
     ├── icons/sprite.svg
     ├── grain.png                 ~2KB tile
-    └── images/                   portrait, screenshots (processed by astro:assets)
+    └── images/                   portrait + Orbit poster (processed by astro:assets)
 ```
 
 ### 21.2 Responsibilities, props, and boundaries
@@ -1291,6 +1338,7 @@ src/
 | `AtlasLink` | Two-way star↔row highlight via delegated listeners | none (reads `data-skill`) | local: `hoveredSkill` | Island |
 | `WorldCard` | One project record as a single link | `project` | none | Server |
 | `WorldSphere` | Deterministic sphere from slug hash | `slug`, `hue?`, `size` | none | Server |
+| `WorldPlate` | 16:10 gradient plate with composited sphere | `slug`, `featured?` | none | Server |
 | `Orbit` | n-body sim + telemetry + degradation + start control | `bodyCount?` | local: sim state, running, fps | Island |
 | `CopyEmail` | Clipboard + confirmation + live region | `email` | local: `copied` | Island |
 
@@ -1329,21 +1377,22 @@ Astro file-based routing, `output: 'static'`, `trailingSlash: 'never'`, `site: '
 
 | Route | File | Generation | Notes |
 |-------|------|-----------|-------|
-| `/` | `pages/index.astro` | static | The survey; 8 anchor sections |
-| `/worlds/[slug]` | `pages/worlds/[slug].astro` | `getStaticPaths()` from `projects` | Only projects with a case study; others link out directly |
+| `/` | `pages/index.astro` | static | The survey; 8 anchor sections. Project records live here in full |
 | `/instruments` | `pages/instruments.astro` | static | Heaviest route; holds Orbit |
 | `/transmissions` | `pages/transmissions.astro` | static | Full article index |
 | `/dossier` | `pages/dossier.astro` | static | HTML résumé + PDF link |
 | `/404` | `pages/404.astro` | static | Lost signal |
 | `/rss.xml` | `pages/rss.xml.ts` | build | Articles feed |
 | `/sitemap-index.xml` | `@astrojs/sitemap` | build | — |
-| `/og/*.png` | `pages/og/[...route].ts` | build | One image per route + per project |
+| `/og/*.png` | `pages/og/[...route].ts` | build | One image per route (no per-project images — there are no project routes) |
 
-**Redirects:** `/projects → /worlds`, `/project/:slug → /worlds/:slug`, `/blog → /transmissions`, `/resume → /dossier`, `/lab → /instruments`. Rationale: the codenames are the site's own vocabulary, but visitors and old links will use the conventional words. Configured in `astro.config.mjs` `redirects` (emitted as static redirect pages) and/or at the host.
+**No `/worlds/[slug]` routes** (§10.3, C3).
+
+**Redirects:** `/projects → /#worlds`, `/blog → /transmissions`, `/resume → /dossier`, `/lab → /instruments`. Rationale: the codenames are the site's own vocabulary, but visitors and old links will use the conventional words. Configured in `astro.config.mjs` `redirects` (emitted as static redirect pages) and/or at the host.
 
 **Anchors are part of the API.** `#first-light`, `#log`, `#atlas`, `#trajectory`, `#worlds`, `#instruments`, `#transmissions`, `#uplink` are stable and linkable. Do not rename them once published.
 
-**View Transitions:** `<ClientRouter />` in `BaseLayout`, with `transition:name` pairs on world sphere and title between `WorldCard` and `CaseStudyHeader`. `transition:persist` on the `Cosmos` layer so the sky does not flash between routes — this is what makes the multi-page architecture feel continuous. Disabled entirely under `prefers-reduced-motion`.
+**View Transitions:** `<ClientRouter />` in `BaseLayout`, with `transition:persist` on the `Cosmos` layer so the sky does not flash when moving between `/`, `/instruments`, `/transmissions`, and `/dossier`. That persistence is the whole justification now that the card→case-study pair is gone (§10.5) — and it is enough on its own, since a flashing background would break the illusion of one continuous space. Disabled entirely under `prefers-reduced-motion`.
 
 ---
 
@@ -1437,7 +1486,7 @@ All values must be verified with a contrast checker during Phase 1 and re-verifi
 
 ### 25.4 Testing
 
-Automated: `axe-core` via Playwright on all 6 route types, plus `@axe-core/cli` in CI — zero violations required. Manual: full keyboard pass per route; VoiceOver (macOS Safari) and NVDA (Windows Firefox) pass on `/` and one case study; 200% zoom; 320px reflow; forced-colors mode; reduced-motion pass; JS-disabled pass.
+Automated: `axe-core` via Playwright on all five route types (`/`, `/instruments`, `/transmissions`, `/dossier`, `/404`), plus `@axe-core/cli` in CI — zero violations required. Manual: full keyboard pass per route; VoiceOver (macOS Safari) and NVDA (Windows Firefox) pass on `/` and `/instruments`; 200% zoom; 320px reflow; forced-colors mode; reduced-motion pass; JS-disabled pass.
 
 ---
 
@@ -1449,7 +1498,7 @@ Measured on the deployed production URL. Mobile = Moto G Power class, Slow 4G, v
 
 | Metric | Mobile target | Desktop target |
 |--------|--------------|----------------|
-| Lighthouse Performance | **≥95** (`/` and `/worlds/*`); ≥90 (`/instruments`) | ≥98 |
+| Lighthouse Performance | **≥95** (`/`, `/transmissions`, `/dossier`); ≥90 (`/instruments`) | ≥98 |
 | Lighthouse Accessibility | **100** (all routes) | 100 |
 | Lighthouse Best Practices / SEO | ≥95 / 100 | ≥95 / 100 |
 | LCP | **≤1.8s** | ≤1.2s |
@@ -1460,15 +1509,17 @@ Measured on the deployed production URL. Mobile = Moto G Power class, Slow 4G, v
 
 ### 26.2 Budgets — per route, gzipped
 
-| Resource | `/` mobile | `/` desktop | `/worlds/*` | `/instruments` |
-|----------|-----------|------------|-------------|---------------|
-| HTML | ≤35KB | ≤35KB | ≤30KB | ≤40KB |
-| CSS | ≤30KB | ≤30KB | ≤30KB | ≤32KB |
-| JS (total) | **≤20KB** | **≤60KB** | ≤14KB | ≤160KB |
-| Fonts | ≤110KB | ≤110KB | ≤110KB | ≤110KB |
-| Images | ≤120KB | ≤260KB | ≤700KB | ≤400KB |
-| **Total transfer** | **≤320KB** | ≤500KB | ≤900KB | ≤750KB |
-| Requests | ≤22 | ≤28 | ≤30 | ≤30 |
+| Resource | `/` mobile | `/` desktop | `/transmissions` | `/dossier` | `/instruments` |
+|----------|-----------|------------|------------------|-----------|---------------|
+| HTML | ≤35KB | ≤35KB | ≤25KB | ≤25KB | ≤40KB |
+| CSS | ≤30KB | ≤30KB | ≤30KB | ≤30KB | ≤32KB |
+| JS (total) | **≤20KB** | **≤60KB** | ≤14KB | ≤16KB | ≤160KB |
+| Fonts | ≤110KB | ≤110KB | ≤110KB | ≤110KB | ≤110KB |
+| Images | **≤60KB** | **≤60KB** | ≤40KB | ≤60KB | ≤400KB |
+| **Total transfer** | **≤260KB** | ≤280KB | ≤200KB | ≤230KB | ≤750KB |
+| Requests | ≤18 | ≤22 | ≤16 | ≤16 | ≤30 |
+
+**The image budgets dropped sharply from the original plan** because C2 eliminated every project screenshot (§10.6). The portrait is now the only image on the home route, so `/` fits in ~260KB on mobile — well inside the original 320KB. Treat the tightened numbers as the real target; do not spend the reclaimed headroom on new assets.
 
 Mobile JS is ~20KB because only `SectionRail`, `MobileNav`, and `CopyEmail` hydrate there; the React runtime is the bulk of it. If mobile JS exceeds 20KB, the correct fix is to convert an island to a CSS-only solution, not to raise the budget.
 
@@ -1489,7 +1540,7 @@ Mobile JS is ~20KB because only `SectionRail`, `MobileNav`, and `CopyEmail` hydr
 
 ### 26.4 Monitoring and CI enforcement
 
-- **Lighthouse CI** on every PR against `/`, `/worlds/payload-cms`, `/instruments`; the targets in §26.1 are assertions, and a regression **fails the build**.
+- **Lighthouse CI** on every PR against `/`, `/instruments`, `/transmissions`; the targets in §26.1 are assertions, and a regression **fails the build**.
 - **Bundle budget check** in CI against §26.2.
 - **Real-user vitals** via the analytics provider's Web Vitals collection (§28), reviewed after launch.
 - A `PERF.md` (or the Decision log) records each measured value at each phase exit, so regressions are attributable to a specific phase.
@@ -1513,10 +1564,10 @@ The immersive design must not cost discoverability. Because everything is static
 
 | Route | Types |
 |-------|-------|
-| `/` | `Person` (name, jobTitle, address, email, sameAs[GitHub, LinkedIn, dev.to, Instagram], knowsAbout[skills]) + `WebSite` |
-| `/worlds/[slug]` | `CreativeWork` (or `SoftwareApplication` where it is a running app) + `BreadcrumbList` |
+| `/` | `Person` (name, jobTitle, address, email, sameAs[GitHub, LinkedIn, dev.to, Instagram], knowsAbout[skills]) + `WebSite` + an `ItemList` of the three projects as `SoftwareApplication`/`CreativeWork` with their live URLs — since the projects have no routes of their own, their structured data lives on the home page |
 | `/transmissions` | `ItemList` of `BlogPosting`, each with `url` pointing at dev.to |
 | `/dossier` | `Person` + `ProfilePage` |
+| `/instruments` | `WebPage` (no per-instrument entities — they are not separate works) |
 
 ### 27.3 Duplicate-content rule for articles
 
@@ -1524,7 +1575,7 @@ Articles live on dev.to. The site shows **title, date, and a ≤160-character ex
 
 ### 27.4 Content-in-HTML guarantee
 
-An SEO smoke test (Playwright, `javaScriptEnabled: false`) asserts that the following exist in raw HTML on `/`: the `h1` with the full name, the role string, all 23 skill names, every project name and description, every article title, and the email address. If any of that ever moves inside canvas or a client-only island, this test fails.
+An SEO smoke test (Playwright, `javaScriptEnabled: false`) asserts that the following exist in raw HTML on `/`: the `h1` with the full name, the role string, every skill name (assert against the collection length, not a hardcoded count), every project name, description, and live URL, every article title, and the email address. If any of that ever moves inside canvas or a client-only island, this test fails. The project assertions matter more than before: with no case-study routes, the home page is the *only* place that content exists.
 
 ---
 
@@ -1532,13 +1583,12 @@ An SEO smoke test (Playwright, `javaScriptEnabled: false`) asserts that the foll
 
 **Provider: Vercel Analytics** if deploying on Vercel, otherwise **Plausible**. Both are cookieless and collect no PII, so **no consent banner is required** — which matters, because a cookie banner would be the first thing a visitor sees and would wreck the arrival experience.
 
-### 28.1 Event set — closed list of 8
+### 28.1 Event set — closed list of 7
 
 | Event | Trigger | Properties |
 |-------|---------|-----------|
 | `dossier_download` | Résumé PDF click (any location) | `location: hero \| topbar \| uplink \| dossier` |
-| `world_open` | Case-study navigation | `slug` |
-| `world_link_click` | Live demo or repo click | `slug`, `kind: live \| repo` |
+| `world_link_click` | Project live-site click | `slug` |
 | `uplink_copy_email` | Copy button success | — |
 | `uplink_social_click` | Social link click | `network` |
 | `transmission_click` | Article click | `slug` |
@@ -1562,16 +1612,19 @@ Rules: no scroll-depth percentages, no mouse heatmaps, no session recording, no 
 | Nebulae | **CSS** — 2 large radial gradients | Code | 0 bytes |
 | Grain overlay | Raster, 128×128 tiling PNG | Generated once | ~2KB |
 | Project spheres | **CSS/SVG** — radial gradients seeded by slug hash | Code | 0 bytes |
+| Project gradient plates | **CSS** — two radial gradients + composited sphere, seeded by slug (§10.6) | Code | 0 bytes |
 | Constellation map | **SVG**, server-rendered from `skills.ts` | Code + data | ~2KB gz |
 | Trajectory spine | **SVG** path / CSS border | Code | <1KB |
 | Icons (~16) | **Inline SVG sprite**, 1.5px stroke, 24px grid | Hand-authored or Lucide paths, inlined | ≤4KB gz |
-| Portrait | Raster, AVIF + WebP at 480w/720w | Existing `hero_profile.png` — re-export | ≤60KB |
-| Project screenshots | Raster, AVIF + WebP, 640/1280/1920w | **Must be captured (C2)** | ≤120KB card, ≤200KB hero |
-| Architecture diagrams | **Inline SVG**, hand-authored, token-colored | Authored per case study | ≤8KB each |
+| Portrait | Raster, AVIF + WebP at 480w/720w | `public/images/hero_profile.png` (864×1184, 249KB) — **move to `src/assets/images/`** and re-export | ≤60KB |
+| Project screenshots | **None — eliminated (C2)** | n/a | 0 bytes |
+| Architecture diagram | **Inline SVG**, hand-authored, token-colored | One, for instrument I-03 | ≤8KB |
 | Orbit poster | Raster, AVIF, 1200×700 | Screenshot of the running sim | ≤80KB |
 | OG images | **Generated at build** (Satori) | Code + content | ≤80KB each, not on critical path |
 | Fonts | Self-hosted woff2, latin subset | Google Fonts source files | ≤110KB total |
-| Résumé PDF | External file | **Must be added (C6)** | ≤400KB, not on critical path |
+| Résumé PDF | External file | **Added:** `public/Shubham_resume_2026.pdf` (59KB) | Well inside budget, not on critical path |
+
+**Total raster inventory for the whole site: four files** — the portrait, the Orbit poster, the grain tile, and the build-generated OG images. Everything else is CSS, SVG, or Canvas. If a fifth raster asset is ever proposed, it needs a Decision log entry.
 
 **Explicitly forbidden:** stock space photography, full-bleed nebula JPEGs, video backgrounds, Lottie files, icon fonts, and any single image over 250KB.
 
@@ -1595,71 +1648,60 @@ Astro 7.3.1, React 19.2, `@tailwindcss/vite` 4.3.3 + `tailwindcss` 4.3.3, `@astr
 
 ---
 
-## Phase 0 — Discovery & Creative Direction
+## Phase 0 — Discovery & Creative Direction ✅ COMPLETE
 
 ### Goal
 Lock the creative direction and remove every content blocker, so that no later phase has to invent facts or design decisions.
 
 ### Why this phase exists
-Most portfolio builds stall in the content phase, discover they lack employer names and screenshots, and fill the gap with placeholders that ship. This phase makes the gaps explicit and closes them before any component depends on them.
+Most portfolio builds stall in the content phase, discover they lack employer names and screenshots, and fill the gap with placeholders that ship. This phase made those gaps explicit and closed them before any component depended on them.
 
-### Prerequisites
-This document.
+### Status — done
+- **Creative direction locked:** DEEP FIELD, eight codenames, plain labels (§4).
+- **All eight content gaps resolved** — see §"Content readiness — RESOLVED". Three of them changed the architecture: no case-study routes (C3), no raster project imagery (C2), and a role-only experience section (C1).
+- **Final copy written** for the hero lede, About philosophy, prose, open questions, and field notes (§13.2).
+- **Assets in place:** `public/Shubham_resume_2026.pdf` (59KB), `public/images/hero_profile.png` (864×1184).
+- **Authoritative content source:** `content-pack.md`.
 
-### Tasks
-1. Confirm the DEEP FIELD concept, the eight section codenames (§4), and the plain labels. Any renaming happens **now**, not later — anchors become a public API in Phase 2.
-2. Resolve the content gaps **C1–C8** in §"Content readiness". Produce final copy for hero lede, About prose, philosophy pull-quote, and open questions.
-3. Verify font licensing for Instrument Serif, Inter, and JetBrains Mono for web use, self-hosted (all three are OFL/free; confirm and record).
-4. Validate the §18 palette with a contrast checker; adjust `ink-low` first if any value falls below its requirement.
-5. Capture project screenshots (C2) and write case-study bodies (C3).
-6. Decide `SHB-3b`: replace with a real project or move its capabilities into §14 (C4).
-7. Add `Shubham_resume_2026.pdf` to `public/` (C6).
-8. Choose the production domain and the analytics provider (§28).
+### Remaining Phase 0 items (do not block Phase 1)
+1. Verify and record font licensing for Instrument Serif, Inter, and JetBrains Mono, self-hosted (all three are OFL — confirm and note it).
+2. Validate the §18 palette with a contrast checker and record measured values in the §25.2 table; adjust `ink-low` first if anything falls short.
+3. Decide D1: keep `Gemini / LLM APIs` as a separate skill (24 total, the default) or fold it back (23). **Low stakes — the counts are computed at build time either way.**
+4. Decide D2/D3: production domain and analytics provider.
 
 ### Files / Areas Affected
-`portfolio-content.md` (updated with resolved gaps), `public/Shubham_resume_2026.pdf`, `src/assets/images/*`, this document's Decision log.
+`content-pack.md` (created), `public/*` (assets added), this document (updated throughout), the Decision log.
 
-### Components
-None.
+### Components / Data / State / Animation
+None — this phase produced content and decisions, not code.
 
-### Data
-Final copy and assets for every collection defined in §20.3.
-
-### State
-None.
-
-### Animation
-None.
-
-### Responsive Behavior
-Screenshots captured at both desktop (1600×1000) and mobile (390×844) framing.
+### Responsive Behavior / Performance
+n/a — no assets requiring responsive treatment were produced, since screenshots were eliminated (C2).
 
 ### Accessibility
-Palette contrast verified. Every screenshot has written `alt` text authored alongside it.
-
-### Performance
-Source screenshots ≥1600px wide but ≤2MB each before processing.
+Palette contrast to be verified with a checker (item 2 above) before Phase 1 exits.
 
 ### Testing
-Manual review: is every field in every §20.3 schema either filled or consciously marked optional?
+Manual review, complete: every required field in every §20.3 schema is fillable from `content-pack.md` without invention.
 
 ### Acceptance Criteria
-- C1–C8 each either resolved or explicitly deferred with a recorded reason.
-- Final hero lede and About copy pass the §13.1 anti-generic rules.
-- Contrast table (§25.2) verified with measured values recorded.
-- Résumé PDF present in `public/`.
+- [x] C1–C8 resolved, with each consequence traced into the plan.
+- [x] Hero lede and About copy pass the §13.1 anti-generic rules.
+- [x] Résumé PDF and portrait present in `public/`.
+- [ ] Contrast table verified with measured values *(carry into Phase 1)*.
+- [ ] Font licensing recorded *(carry into Phase 1)*.
 
 ### Definition of Done
-A content pack exists that can fill every required schema field without invention, and no open creative question remains.
+A content pack exists that fills every required schema field without invention, and no open creative question remains. **Met** — the four remaining items are confirmations and two low-stakes preferences, none of which block foundation work.
 
 ### AI Implementation Notes
-This phase is mostly **not** the coding agent's work — it needs the owner's facts. If asked to proceed with unresolved gaps, do not invent employers, dates, metrics, or screenshots. Instead, mark the affected schema fields optional, omit them from the UI, and list them in the Decision log as outstanding.
+This phase needed the owner's facts, and it has them. **Do not re-open resolved decisions** — in particular, do not add case-study routes, do not add project screenshots, and do not add a company field. If a later phase seems to need one of those, re-read §10.3, §10.6, and §12.1 before acting.
 
 ### Things NOT to implement yet
-No code at all. No tokens in CSS. No components. No package installs.
+No code. No tokens in CSS. No components. No package installs.
 
 ### Expected output
-Updated content source + assets + a filled-in contrast table + a Decision log with 8 resolved or deferred entries.
+`content-pack.md` + assets in `public/` + an updated plan + a Decision log recording every resolution. **Delivered.**
 
 ---
 
@@ -1681,12 +1723,13 @@ Phase 0 acceptance criteria met (or gaps consciously deferred).
 4. Build `BaseLayout.astro`: `<head>` (meta, canonical, OG placeholders, favicon, theme-color), skip link, `<TopBar>`, `<main id="main">` slot, `<Footer>`. No cosmos yet.
 5. Build the `ui/` primitives: `Section`, `Panel`, `Button`, `Chip`, `StatusDot`, `DataList`, `MetricBlock`, `Icon`, `ExternalLink` — with all six visual states from §17.4.
 6. Create the icon sprite with the ~16 icons actually needed.
-7. Define content collections and Zod schemas per §20.3 in `src/content/config.ts`. Seed every collection with the real Phase 0 content.
-8. Create `src/data/skills.ts` with hand-authored coordinates, tiers, constellations, and connections for all 23 skills (§11.1–11.2), and `src/data/seed.ts` with the seeded PRNG.
-9. Create route files as styled placeholders: `/`, `/worlds/[slug]`, `/instruments`, `/transmissions`, `/dossier`, `/404`. Each renders `BaseLayout` + a `Section` with its real title.
-10. Configure `astro.config.mjs`: `site`, `output: 'static'`, `trailingSlash: 'never'`, `@astrojs/sitemap`, the §23 redirects.
-11. Add a **token lint guard**: a CI grep that fails on hex colors, `ms`/`s` duration literals, and `px` spacing values inside `src/components/**` (allowing `1px` hairlines, `viewBox` numbers, and the data files).
-12. Build a `/dev/tokens` page (excluded from the sitemap and from production output) rendering every token and every primitive state. This is the visual regression baseline for later phases.
+7. Define content collections and Zod schemas per §20.3 in `src/content/config.ts`. Seed every collection from `content-pack.md`.
+8. Create `src/data/skills.ts` with hand-authored coordinates, tiers, constellations, and connections for every skill (§11.1–11.2 and `content-pack.md`), and `src/data/seed.ts` with the seeded PRNG used by both the star field and the world plates.
+9. **Move `public/images/hero_profile.png` to `src/assets/images/`** so `astro:assets` optimises it. Leave `Shubham_resume_2026.pdf` in `public/` — it is served as-is by design.
+10. Create route files as styled placeholders: `/`, `/instruments`, `/transmissions`, `/dossier`, `/404`. Each renders `BaseLayout` + a `Section` with its real title. **No `/worlds/[slug]`** (§10.3).
+11. Configure `astro.config.mjs`: `site`, `output: 'static'`, `trailingSlash: 'never'`, `@astrojs/sitemap`, the §23 redirects.
+12. Add a **token lint guard**: a CI grep that fails on hex colors, `ms`/`s` duration literals, and `px` spacing values inside `src/components/**` (allowing `1px` hairlines, `viewBox` numbers, and the data files).
+13. Build a `/dev/tokens` page (excluded from the sitemap and from production output) rendering every token and every primitive state. This is the visual regression baseline for later phases.
 
 ### Files / Areas Affected
 `src/styles/global.css`, `src/layouts/`, `src/components/ui/`, `src/components/layout/`, `src/content/`, `src/data/`, `src/pages/*`, `src/assets/fonts/`, `src/assets/icons/sprite.svg`, `astro.config.mjs`, CI config.
@@ -1713,7 +1756,7 @@ Skip link works. Focus rings visible on every primitive. `Button` renders `<a>` 
 Placeholder home route: HTML ≤20KB, CSS ≤25KB gz, **JS 0KB**, fonts ≤110KB. Lighthouse Performance ≥99 and Accessibility 100 (trivially achievable with no content — this is the baseline to defend later).
 
 ### Testing
-Build succeeds. Token lint passes. `/dev/tokens` renders every state. Playwright smoke test: all 6 routes return 200 and contain their `h1`/`h2`. `axe-core` zero violations. JS-disabled pass.
+Build succeeds. Token lint passes. `/dev/tokens` renders every state. Playwright smoke test: all five routes return 200 and contain their `h1`/`h2`. `axe-core` zero violations. JS-disabled pass.
 
 ### Acceptance Criteria
 - Zero hex/duration/spacing literals in `src/components/**`.
@@ -1801,7 +1844,7 @@ Arrival feels like the concept, the frame is in place for content, and the measu
 Build the reveal with CSS keyframes on load — do **not** add a JS orchestrator. Use `animation-timeline` inside `@supports` and let the unsupported branch be static; do not polyfill. The rail island must be additive only: delete its JS and navigation still works. Keep `observeOnce.ts` generic — every later phase reuses it, and adding a second observer later is a review failure.
 
 ### Things NOT to implement yet
-No star-field canvas (Phase 4). No section content — About, Atlas, Trajectory, Worlds, Transmissions, Uplink remain empty shells (Phase 3). No case-study pages. No Instrument Bay content or Orbit. No constellation SVG. No trajectory spine. No OG images. No analytics events.
+No star-field canvas (Phase 4). No section content — About, Atlas, Trajectory, Worlds, Transmissions, Uplink remain empty shells (Phase 3). No Instrument Bay content or Orbit. No constellation SVG. No trajectory spine. No world plates or spheres. No OG images. No analytics events. And no `/worlds/[slug]` route — not in this phase, not in any phase (§10.3).
 
 ### Expected output
 A home route with a complete, cinematic hero on a persistent procedural cosmos, working navigation with active-section tracking, eight empty anchor sections, and ≤14KB of JS.
@@ -1811,7 +1854,7 @@ A home route with a complete, cinematic hero on a persistent procedural cosmos, 
 ## Phase 3 — Portfolio Content
 
 ### Goal
-Fill every section with real content: Observer's Log, The Atlas, Trajectory, Catalogued Worlds (plus case-study routes), Transmissions, Uplink, and the Dossier route.
+Fill every section with real content: Observer's Log, The Atlas, Trajectory, Catalogued Worlds, Transmissions, Uplink, and the Dossier route.
 
 ### Why this phase exists
 This is the phase that makes the site useful. Everything before it was frame; everything after it is enhancement. **At the end of this phase the portfolio must be shippable** — if Phases 4–5 never happened, this would still be a strong portfolio.
@@ -1823,20 +1866,19 @@ Phases 1–2 done. Content pack from Phase 0 (C1–C8 resolved or consciously de
 1. **Observer's Log** (§13): portrait, field-notes `<dl>`, philosophy `<blockquote>`, prose, open questions, tag chips.
 2. **The Atlas** (§11): `ConstellationMap.astro` — server-rendered SVG from `skills.ts` with hand-authored coordinates, tier-based radii, always-visible Core labels, and relationship lines. `SkillList.astro` — tier-grouped list, the source of truth. Both rendered; mobile shows the list only. **No interactivity in this phase.**
 3. **Trajectory** (§12): positions and burn events from the `experience` collection; `MetricBlock` for metrics; spine renders **fully drawn and static** (scroll-draw is Phase 4). Mobile spine is a CSS border.
-4. **Catalogued Worlds** (§10): `FeaturedWorld` for `SHB-1b`, `WorldCard` for the rest, `WorldSphere` seeded from slug, `WorldRecord` data table. Cards are single anchors. Hover states are CSS only.
-5. **Case studies**: `/worlds/[slug]` via `getStaticPaths()`, using the fixed 9-block structure. Hand-author one architecture SVG per case study. `WorldPager` for prev/next. Route chrome swaps the rail for `← SURVEY`.
-6. **Transmissions** (§8.2): hairline row list from the `articles` collection. Implement the build-time dev.to fetch with the committed fallback per §20.4.
-7. **Uplink** (§15): availability status, email row, `CopyEmail.tsx` island (`client:visible`), social links, résumé CTA. Reserve the copy button's space in the server render.
-8. **Instrument Bay teaser** (§14.4): four mono rows + link to `/instruments`. Zero JS.
-9. **Dossier** (§8.3): HTML résumé from the `profile` collection + PDF download + print stylesheet.
-10. **404** (§8.3): lost-signal page with three real links.
-11. Wire the `world_open`, `world_link_click`, `dossier_download`, `uplink_copy_email`, `transmission_click`, and `uplink_social_click` call sites through `lib/analytics.ts` as **no-ops** (the provider is connected in Phase 8).
+4. **Catalogued Worlds** (§10): `FeaturedWorld` for `SHB-1b`, `WorldCard` for `SHB-2b` and `SHB-3b`, `WorldSphere` and `WorldPlate` seeded from slug (§10.6), `WorldRecord` data table. Cards are single anchors linking to the live sites. Hover states are CSS only. **No screenshots, no case-study routes.**
+5. **Transmissions** (§8.2): hairline row list from the `articles` collection. Implement the build-time dev.to fetch with the committed fallback per §20.4.
+6. **Uplink** (§15): availability status, email row, `CopyEmail.tsx` island (`client:visible`), social links, résumé CTA. Reserve the copy button's space in the server render.
+7. **Instrument Bay teaser** (§14.4): four mono rows + link to `/instruments`. Zero JS.
+8. **Dossier** (§8.3): HTML résumé from the `profile` collection + PDF download + print stylesheet.
+9. **404** (§8.3): lost-signal page with three real links.
+10. Wire the `world_link_click`, `dossier_download`, `uplink_copy_email`, `transmission_click`, and `uplink_social_click` call sites through `lib/analytics.ts` as **no-ops** (the provider is connected in Phase 8). The `world_open` event is dropped — with no case-study routes there is no internal project navigation to track.
 
 ### Files / Areas Affected
-`src/components/about/*`, `atlas/*`, `trajectory/*`, `worlds/**`, `transmissions/*`, `uplink/*`, `instruments/InstrumentTeaser.astro`, `src/pages/index.astro`, `worlds/[slug].astro`, `transmissions.astro`, `dossier.astro`, `404.astro`, `src/content/**`, `src/lib/analytics.ts`.
+`src/components/about/*`, `atlas/*`, `trajectory/*`, `worlds/*`, `transmissions/*`, `uplink/*`, `instruments/InstrumentTeaser.astro`, `src/pages/index.astro`, `transmissions.astro`, `dossier.astro`, `404.astro`, `src/content/**`, `src/lib/analytics.ts`.
 
 ### Components
-All `about/`, `atlas/`, `trajectory/`, `worlds/` (incl. `case-study/`), `transmissions/`, `uplink/` components, plus `InstrumentTeaser` and `CapabilityIndex`.
+All `about/`, `atlas/`, `trajectory/`, `worlds/`, `transmissions/`, `uplink/` components, plus `InstrumentTeaser` and `CapabilityIndex`.
 
 ### Data
 All six collections fully populated. Article fetch with fallback working. Counts and designations computed at build. **If `company` is unavailable, use the explicit disclosed-alternative string from §20.3 — never an empty label.**
@@ -1851,13 +1893,13 @@ Section entrances via the shared observer only. CSS hover/focus on cards and row
 Per-section responsive specs in §10.8, §11.5, §12.2, §13.3, §8.2. Verify at 320/360/390/768/1024/1280/1920. Atlas map is absent below 768px. Case-study galleries reflow to one column. Code and tables scroll inside their own containers.
 
 ### Accessibility
-Every §25.3 accessible equivalent implemented. Heading outline correct on all routes (h1 → h2 → h3 → h4, no skips). `<ol>` for chronology, `<dl>` for data pairs, `<time datetime>` on every date. Skill names all present as text. Status as text. Card accessible names are `"{name} — {one-liner}"`. Copy confirmation via a polite live region. `axe-core` zero violations on all six route types. Full keyboard and VoiceOver pass on `/` and one case study.
+Every §25.3 accessible equivalent implemented. Heading outline correct on all routes (h1 → h2 → h3 → h4, no skips). `<ol>` for chronology, `<dl>` for data pairs, `<time datetime>` on every date. Skill names all present as text. Status as text. Card accessible names are `"{name} — {one-liner}"`. Gradient plates and spheres `aria-hidden`. Copy confirmation via a polite live region. `axe-core` zero violations on all five route types. Full keyboard and VoiceOver pass on `/` and `/dossier`.
 
 ### Performance
 Home: mobile total ≤320KB and JS ≤20KB gz; desktop total ≤500KB. Case study ≤900KB with images. All images AVIF/WebP with explicit dimensions; only one above-fold image per route is eager. Lighthouse Performance ≥95 mobile on `/` and `/worlds/*`. CLS ≤0.02.
 
 ### Testing
-Playwright: the §27.4 content-in-HTML assertion (JS disabled — `h1`, role, all 23 skill names, every project name, every article title, the email address all present in raw HTML); every external link has `rel="noopener noreferrer"`; case-study routes generate for every project with a case study; article fallback path works with the network stubbed to fail. `axe-core` all routes. Lighthouse CI. Visual pass at all viewports.
+Playwright: the §27.4 content-in-HTML assertion (JS disabled — `h1`, role, every skill name, every project name, description and live URL, every article title, the email address all present in raw HTML); every external link has `rel="noopener noreferrer"`; all three project cards link to their live sites and none is a dead link; article fallback path works with the network stubbed to fail. `axe-core` all routes. Lighthouse CI. Visual pass at all viewports.
 
 ### Acceptance Criteria
 - Every section renders real content; **no lorem ipsum, no placeholder images, no "coming soon" chips**.
@@ -1871,13 +1913,13 @@ Playwright: the §27.4 content-in-HTML assertion (JS disabled — `h1`, role, al
 A complete, accurate, accessible, fast portfolio that stands on its own without any Phase 4+ enhancement.
 
 ### AI Implementation Notes
-This is the highest-value phase — spend effort on content fidelity, not effects. Keep the Atlas SVG server-rendered from data so Phase 4 only adds a listener. Do not build the sphere as an image; it is gradients seeded by a slug hash (`src/data/seed.ts`). If a case-study body is missing, omit the case-study route for that project and link the card straight to the live demo rather than generating a thin page. Register analytics call sites now so Phase 8 is configuration only.
+This is the highest-value phase — spend effort on content fidelity, not effects. Keep the Atlas SVG server-rendered from data so Phase 4 only adds a listener. Build the sphere and plate as gradients seeded by a slug hash (`src/data/seed.ts`) — **never as images, and never request screenshots** (§10.6). Because there are no case-study routes, the project card is the only place the work is described: give card copy the effort a case study would have received. Register analytics call sites now so Phase 8 is configuration only.
 
 ### Things NOT to implement yet
 No star-field canvas. No constellation hover/highlight interactivity. No scroll-drawn spine. No View Transition `transition:name` pairs on cards (Phase 4). No `/instruments` content beyond the teaser. No Orbit. No OG image generation. No analytics provider. No filtering (§10.4 — deferred indefinitely).
 
 ### Expected output
-A shippable portfolio: eight populated sections, 2–3 case-study routes, a writing index, a Dossier route, a 404, ≤20KB of mobile JS, Lighthouse ≥95 mobile, and zero axe violations.
+A shippable portfolio: eight populated sections on the home route, a writing index, a Dossier route, a 404, ≤20KB of mobile JS, ≤260KB mobile total, Lighthouse ≥95 mobile, and zero axe violations.
 
 ---
 
@@ -1900,15 +1942,15 @@ Phase 3 done and its performance targets met. **Do not start this phase if Phase
 5. **`AtlasLink.tsx`** island (`client:visible`): one delegated listener over `data-skill` attributes providing two-way star↔row highlight, connected-line brightening, and label reveal for Working/Familiar stars. Stars stay out of the tab order; the list remains the sole tab path.
 6. Constellation line draw-in on first intersection (`stroke-dashoffset`, 900ms, 40ms stagger, once).
 7. **Trajectory spine scroll-draw**: `animation-timeline: view()` on `stroke-dashoffset` inside `@supports`; desktop only; static full line as the unsupported and mobile state.
-8. **View Transition pairs**: `transition:name` on the world sphere and title shared between `WorldCard`/`FeaturedWorld` and `CaseStudyHeader`. Verify the cosmos persists and does not flash. Disable under reduced motion.
+8. **View Transitions**: verify `transition:persist` keeps the cosmos alive across `/` → `/instruments` → `/transmissions` → `/dossier` with no flash or re-hydration of the star field. Disable under reduced motion. (No `transition:name` pairs — the card→case-study pair is gone with the case-study routes, §10.5.)
 9. Extend `section_reach` analytics onto the existing shared observer (no new listener).
 10. Re-measure every §26.1 target and record the deltas against the Phase 3 numbers.
 
 ### Files / Areas Affected
-`src/components/cosmos/StarField.tsx`, `src/components/atlas/AtlasLink.tsx`, `trajectory/Spine.astro`, `worlds/WorldCard.astro`, `worlds/case-study/CaseStudyHeader.astro`, `src/lib/deviceTier.ts`, `src/lib/observeOnce.ts`, `src/styles/global.css`.
+`src/components/cosmos/StarField.tsx`, `src/components/atlas/AtlasLink.tsx`, `trajectory/Spine.astro`, `src/lib/deviceTier.ts`, `src/lib/observeOnce.ts`, `src/styles/global.css`.
 
 ### Components
-`StarField` (island), `AtlasLink` (island); modifications to `Spine`, `WorldCard`, `FeaturedWorld`, `CaseStudyHeader`.
+`StarField` (island), `AtlasLink` (island); modifications to `Spine` only. `WorldCard` and `FeaturedWorld` are untouched in this phase — their hover states are CSS and were finished in Phase 3.
 
 ### Data
 `src/data/seed.ts` (deterministic PRNG); `skills.ts` connections consumed for line brightening. No new content.
@@ -1917,7 +1959,7 @@ Phase 3 done and its performance targets met. **Do not start this phase if Phase
 `StarField`: star arrays, rAF handle, frame stats, degraded flag, visibility — all local. `AtlasLink`: `hoveredSkill` — local. No shared state, no cross-island communication.
 
 ### Animation
-L1 ambient star drift and twinkle. Constellation line draw (once). Spine scroll-draw (desktop). Card→case-study View Transition (320ms). Everything gated per §16.4: mobile gets none of it, reduced motion gets none of it.
+L1 ambient star drift and twinkle. Constellation line draw (once). Spine scroll-draw (desktop). Everything gated per §16.4: mobile gets none of it, reduced motion gets none of it.
 
 ### Responsive Behavior
 Star canvas ≥768px only, reduced density 768–1023px. Atlas interactivity ≥768px (the map does not exist below that). Spine scroll-draw ≥1024px. View Transitions everywhere (native and cheap).
@@ -2038,8 +2080,8 @@ Phases 1–5 done (Phase 5 may still be in flight if `/instruments` is excluded 
 ### Tasks
 1. Device matrix pass: iPhone SE (320/375), iPhone 15 (390), Pixel (412), iPad (768/1024), 1280, 1440, 1920. Real hardware or BrowserStack for at least iOS Safari and Android Chrome.
 2. Fix every horizontal-overflow, clipped-text, and tap-target issue found. Verify no page scrolls sideways at 320px.
-3. Full keyboard pass on all six route types: order, visibility, no traps, skip link, anchor `scroll-margin`, rail and bottom bar operability.
-4. Screen-reader pass: VoiceOver + Safari (macOS and iOS) and NVDA + Firefox on `/`, one case study, and `/instruments`. Verify heading outlines, list semantics, `<dl>` pairs, dates, link names, live regions, and that no decorative layer is announced.
+3. Full keyboard pass on all five route types: order, visibility, no traps, skip link, anchor `scroll-margin`, rail and bottom bar operability.
+4. Screen-reader pass: VoiceOver + Safari (macOS and iOS) and NVDA + Firefox on `/`, `/instruments`, and `/dossier`. Verify heading outlines, list semantics, `<dl>` pairs, dates, link names, live regions, and that no decorative layer (cosmos, spheres, plates, spine) is announced.
 5. 200% zoom and 400% reflow pass; `prefers-contrast: more` and forced-colors pass.
 6. Reduced-motion pass on every route: confirm each of the four motion levels is correctly suppressed and the result looks intentional.
 7. JS-disabled pass on every route: content, navigation, and all links functional.
@@ -2069,7 +2111,7 @@ No regression. Mobile budgets (§26.2) still met after fixes. Watch for fixes th
 The full §34 matrix, executed and recorded. Automated suites added to CI so regressions are caught later.
 
 ### Acceptance Criteria
-- Zero `axe-core` violations on all six route types, enforced in CI.
+- Zero `axe-core` violations on all five route types, enforced in CI.
 - Zero horizontal scroll at 320px on every route.
 - All targets ≥44×44px with ≥8px separation.
 - Complete keyboard operability with a visible focus indicator throughout.
@@ -2169,11 +2211,11 @@ Phases 1–7 done. Production domain chosen (Phase 0).
 ### Tasks
 1. Per-route metadata via `lib/seo.ts`: titles (≤60 chars), unique descriptions (140–160 chars), canonicals, OG/Twitter tags, `og:image:alt`.
 2. Build-time OG image generation (`pages/og/[...route].ts`, Satori) — one per route plus one per project, in the site's visual language.
-3. JSON-LD per §27.2: `Person` + `WebSite` on `/`, `CreativeWork`/`SoftwareApplication` + `BreadcrumbList` on case studies, `ItemList` of `BlogPosting` on `/transmissions`, `ProfilePage` on `/dossier`. Validate with Google's Rich Results Test.
+3. JSON-LD per §27.2: `Person` + `WebSite` + an `ItemList` of the three projects on `/`, `ItemList` of `BlogPosting` on `/transmissions`, `Person` + `ProfilePage` on `/dossier`, `WebPage` on `/instruments`. Validate with Google's Rich Results Test.
 4. `@astrojs/sitemap`, `robots.txt`, `/rss.xml`. Exclude `/dev/tokens` from both the sitemap and production output.
 5. Enforce the §27.3 canonical rule for articles: excerpt-only, links out to dev.to.
 6. Add the §27.4 content-in-HTML SEO smoke test to CI.
-7. Connect the analytics provider (§28) and switch the eight call sites from no-op to live. Verify each fires exactly once per intended action and that no PII is sent.
+7. Connect the analytics provider (§28) and switch the seven call sites from no-op to live. Verify each fires exactly once per intended action and that no PII is sent.
 8. Verify error states: 404 renders correctly for any unknown path; all redirects (§23) work; no broken internal or external links (link-check in CI).
 9. Deploy per §35: production build, host configuration, cache headers, domain, HTTPS, redirect from any preview/legacy domain.
 10. Post-deploy verification: Lighthouse on the production URL, social-preview check (paste links into Slack/LinkedIn/X), search-console submission, and a real-user vitals check after ~48 hours.
@@ -2201,7 +2243,7 @@ Rich Results Test passes for every structured-data type. Content-in-HTML test pa
 - Structured data validates with zero errors.
 - Sitemap and robots correct; `/dev/tokens` absent from production.
 - Article pages do not compete with dev.to (excerpt-only, links out).
-- All eight analytics events fire exactly once per action, with no PII and no consent banner required.
+- All seven analytics events fire exactly once per action, with no PII and no consent banner required.
 - Production Lighthouse still meets Phase 7 targets **after** analytics is live.
 - 404 and all redirects work on the production host.
 
@@ -2235,7 +2277,7 @@ Phase 8 deployed.
 5. Copy proofread: spelling, capitalisation of technology names (`Next.js`, `Node.js`, `Tailwind CSS`, `TypeScript`, `Playwright`, `PostgreSQL`), date formats, and the §13.1 banned-words check.
 6. Content accuracy audit against reality: every link resolves, every metric is defensible, every stack list matches the actual project, the year is current, and the "currently learning" copy is not stale.
 7. Console hygiene: zero errors and zero warnings on every route in every browser.
-8. Empty/edge-state review: what a case study with no metrics looks like; what Transmissions looks like if the fetch falls back; what the Atlas looks like if a skill lacks connections.
+8. Empty/edge-state review: what Transmissions looks like if the article fetch falls back; what the Atlas looks like if a skill has no connections; what Trajectory looks like with `company` and dates absent (the normal case, §12.1); what a `WorldCard` looks like with the longest stack list wrapping.
 9. Re-run the full §34 matrix one final time on production.
 10. Write the Decision log's final entries and update `README.md` with the architecture summary, the phase status, and how to run/deploy.
 
@@ -2360,7 +2402,8 @@ Not: "the code exists". Not: "it works on my machine". Not: "Lighthouse was 95 l
 
 | # | Risk | Prob. | Impact | Mitigation | Fallback |
 |---|------|-------|--------|-----------|----------|
-| R1 | **Content gaps never close** (C1–C8), especially employer names and screenshots | **High** | **High** — an experience section without dates reads as concealment | Phase 0 gates the content phase; `company` is a *required* schema field so the build fails rather than shipping a gap | Ship Phase 3 with the explicit disclosed-alternative string and screenshots replaced by procedural spheres; add real data post-launch |
+| R1 | ~~Content gaps never close~~ — **CLOSED.** All of C1–C8 resolved in Phase 0 | — | — | n/a | n/a |
+| R1b | **No employer names or dates** in Trajectory (the chosen design, C1) reduces credibility for ATS-driven or employer-focused screens | Medium | Medium | Burn events are specific enough to convey scope; `/dossier` and the résumé PDF are ≤1 tap from every route and carry employment specifics (§12.1) | If it proves to cost opportunities, add role dates only (no company) — the schema already accepts them |
 | R2 | **Theme overpowers content** — visitors remember the sky, not the work | Medium | High | P1/P2/P8 as review tie-breakers; one background system only; density-over-spectacle in Worlds and Trajectory | Reduce star count and glow tiers; increase panel opacity; the content layout is independent of the effects |
 | R3 | **Poor mobile performance** on low-end Android | Medium | High | `client:media` gating means the expensive islands are never downloaded on mobile; mobile JS budget ≤20KB; no canvas, parallax, or scroll-linked motion below 768px | Static cosmos only (already the mobile default) — nothing further to remove |
 | R4 | **Scope creep into a WebGL project** | Medium | High | §19.8 rejects Three.js/R3F; exactly one experiment, on its own route, ≤12KB; dependency admission rule requires written justification | Delete the experiment; `/instruments` still stands on code, diagrams, and demos |
@@ -2370,7 +2413,9 @@ Not: "the code exists". Not: "it works on my machine". Not: "Lighthouse was 95 l
 | R8 | **Canvas memory leak or GC sawtooth** | Low | Medium | Pre-allocated typed arrays, no per-frame allocation, pause on hidden/off-screen, 5-minute soak test with heap snapshots | One-way runtime degradation stops the loop and keeps the last frame |
 | R9 | **Font weight blows the budget** (3 families) | Medium | Medium | Latin-only subsets, mono subset to used glyphs, only 2 faces preloaded, ≤110KB total verified in Phase 7 | Drop Instrument Serif and use the body face at display sizes with tighter tracking |
 | R10 | **dev.to API changes or fails at build** | Low | Low | Build-time fetch with a committed fallback file that is refreshed on every successful build; failure warns, never breaks | The committed fallback (six posts) ships |
-| R11 | **Long initial load from images** on case studies | Medium | Medium | AVIF/WebP via `astro:assets`, one eager image per route, per-image budgets, `sizes` correctness audited in Phase 7 | Reduce gallery to 2 images; defer all but the hero |
+| R11 | ~~Long initial load from case-study images~~ — **largely eliminated** by C2/C3: the only images left site-wide are the portrait, Orbit poster, grain tile, and OG images | Low | Low | Portrait via `astro:assets` at 480w/720w; §26.2 image budgets cut to ≤60KB per route | Drop the portrait below 480px (already specified in §9.6) |
+| R15 | **Projects section reads as thin** — three cards, no case studies, no screenshots | Medium | Medium | Card copy gets case-study-level effort (Phase 3 notes); the record is data-dense (designation, stack, year, status); Instrument Bay carries the engineering depth that case studies would have | Add case-study routes from §37 once there is real depth to publish |
+| R16 | **`SHB-3b` confuses visitors** — the previous portfolio listed as a project on the current portfolio | Medium | Low | Named "Portfolio v1" so the lineage is explicit (§10); legacy domain kept live and un-redirected (§35) | Drop it and show two projects rather than one confusing three |
 | R12 | **Duplicate content vs dev.to** harming the owner's own rankings | Low | Medium | §27.3: excerpt-only, always link out; canonical rule if mirroring is ever added | Remove excerpts; keep title + date + link |
 | R13 | **Fake-terminal / preloader nostalgia** — reintroducing the old site's boot splash | Low | Medium | Explicitly forbidden in §1, §9.3, and Phase 2's NOT-yet list | n/a — it is simply not built |
 | R14 | **Anchor renaming after launch** breaks shared links | Low | Medium | Anchors frozen at Phase 2 (§23) and treated as a public API | Add redirects for old anchors via a tiny client-side hash map (last resort) |
@@ -2383,10 +2428,10 @@ Not: "the code exists". Not: "it works on my machine". Not: "Lighthouse was 95 l
 
 | Area | Coverage | Tool |
 |------|----------|------|
-| Routes | All six route types return 200 and render their heading | Playwright |
+| Routes | All five route types return 200 and render their heading | Playwright |
 | Navigation | Rail and bottom bar anchors scroll to the right sections, with and without JS | Playwright |
 | Links | Every internal and external link resolves; external links have `rel="noopener noreferrer"` | Playwright + link-check in CI |
-| Case studies | One route generated per project with a case study; prev/next paging correct | Playwright |
+| Projects | All three cards link to a live, reachable site — including `shubham-portfolio-modern.vercel.app`, which must **not** be redirected (§35) | Playwright + link-check in CI |
 | Résumé | PDF downloads on desktop and on iOS Safari (manual for iOS) | Playwright + manual |
 | Copy email | Clipboard success path, failure path, and confirmation announcement | Playwright |
 | Article fallback | Build succeeds and renders six posts with the network stubbed to fail | Build test |
@@ -2396,15 +2441,15 @@ Not: "the code exists". Not: "it works on my machine". Not: "Lighthouse was 95 l
 
 ### 34.2 Visual
 
-Playwright screenshot comparison at 320, 390, 768, 1280, 1920 for `/`, one case study, and `/instruments`. Baselines updated deliberately, never automatically. `/dev/tokens` is the primitive-level baseline. Manual optical pass at 1440 and 390 in Phase 9.
+Playwright screenshot comparison at 320, 390, 768, 1280, 1920 for `/`, `/instruments`, and `/dossier`. Baselines updated deliberately, never automatically. `/dev/tokens` is the primitive-level baseline. Manual optical pass at 1440 and 390 in Phase 9.
 
 ### 34.3 Accessibility
 
-`axe-core` via Playwright on all six route types — **zero violations, enforced in CI**. Keyboard-order snapshot test for `/`. Manual per §25.4: VoiceOver (macOS + iOS Safari), NVDA (Windows Firefox), 200% zoom, 400% reflow, forced-colors, `prefers-contrast: more`, reduced-motion, JS-disabled.
+`axe-core` via Playwright on all five route types — **zero violations, enforced in CI**. Keyboard-order snapshot test for `/`. Manual per §25.4: VoiceOver (macOS + iOS Safari), NVDA (Windows Firefox), 200% zoom, 400% reflow, forced-colors, `prefers-contrast: more`, reduced-motion, JS-disabled.
 
 ### 34.4 Performance
 
-Lighthouse CI on `/`, `/worlds/payload-cms`, `/instruments` (mobile + desktop) with §26.1 as failing assertions. Bundle-size budget check against §26.2. Manual: 4× CPU + Slow 4G pass; 60s ambient CPU profile (≤4ms/frame); hidden-tab profile (zero work); 5-minute Orbit soak with heap snapshots; real-user vitals reviewed 48h after launch.
+Lighthouse CI on `/`, `/instruments`, `/transmissions` (mobile + desktop) with §26.1 as failing assertions. Bundle-size budget check against §26.2. Manual: 4× CPU + Slow 4G pass; 60s ambient CPU profile (≤4ms/frame); hidden-tab profile (zero work); 5-minute Orbit soak with heap snapshots; real-user vitals reviewed 48h after launch.
 
 ### 34.5 Browser compatibility
 
@@ -2440,7 +2485,7 @@ The §27.4 content-in-HTML assertion (JS disabled) in CI. Structured-data valida
 | Production branch | `main`; every merge deploys |
 | Cache headers | Hashed assets `max-age=31536000, immutable`; HTML `max-age=0, must-revalidate`; `/Shubham_resume_2026.pdf` `max-age=3600` |
 | Domain | Custom domain with HTTPS and HSTS; `www` → apex redirect (or the reverse, chosen once) |
-| Legacy site | Redirect the old `shubham-portfolio-modern.vercel.app` to the new domain to consolidate link equity |
+| Legacy site | **Do NOT redirect** `shubham-portfolio-modern.vercel.app`. It must stay deployed and reachable: it is now project `SHB-3b` "Portfolio v1" (§10), and redirecting it would break that card's only link. This cancels the original recommendation to consolidate link equity — the exhibit is worth more than the link equity, and the two are mutually exclusive |
 | Freshness | A weekly scheduled rebuild keeps dev.to articles current (§20.4); no runtime fetching |
 | Rollback | Host's instant rollback to the previous deployment; every deploy is immutable |
 | Secrets | None required. The dev.to endpoint is public; the analytics key is a public client key. **Nothing sensitive belongs in this repo.** |
@@ -2489,18 +2534,20 @@ Deliberately out of scope. Do not build these during Phases 0–9; record any ne
 
 | Idea | Condition for revisiting |
 |------|-------------------------|
+| **Case-study routes** (`/worlds/[slug]`) | Removed in Phase 0 (C3). Revisit only when there is real depth to publish — a problem/approach/impact story worth 300+ words. The original 9-block structure is in this document's git history (§10.3). Never ship a thin one |
+| **Project screenshots** | Removed (C2) in favour of gradient plates. Revisit only if a project's UI is itself the selling point, and then only with real device-framed captures, not raw crops |
 | Project filtering / tag pages | At ≥6 projects (§10.4), implemented as static filtered routes |
 | Contact form | Only if email volume proves insufficient; needs an endpoint, spam protection, and monitoring (§15.1) |
 | Full article mirroring from dev.to | Only with `rel="canonical"` to dev.to on every mirrored page (§27.3) |
 | Light mode | Only if a real need appears; requires a complete second visual system (§22) |
 | WebGL / R3F experiment | Only on proof that Canvas 2D cannot achieve the effect; desktop-only, ≤120KB gz (§19.8) |
 | A second experiment in the Instrument Bay | Only if the first is proven to hold engagement without hurting the route's budget |
-| Case-study reading progress / TOC | Only if case studies exceed ~1,500 words |
+| Case-study reading progress / TOC | Only if case studies are revived *and* exceed ~1,500 words |
 | i18n | Only for a concrete audience need; the fluid type scale and token system already accommodate it |
 | Live GitHub stats | Build-time fetch only, with a committed fallback — never a runtime API call |
-| MDX-authored case studies | If case-study layouts start needing per-project custom blocks |
+| MDX-authored case studies | Only alongside a case-study revival, if layouts need per-project custom blocks |
 | View-source / "how this was built" page | A natural extension of `/instruments`; high appeal to the peer-engineer journey (§6.3) |
-| Print stylesheet for case studies | Low cost, occasionally requested by recruiters |
+| Print stylesheet beyond `/dossier` | Low cost; `/dossier` already has one (§8.3) |
 
 ---
 
@@ -2530,7 +2577,8 @@ Tick every box before declaring the project complete.
 - [ ] Corner-tick and hairline treatment consistent across all panels
 
 **Content**
-- [ ] C1–C8 resolved or consciously deferred and recorded
+- [x] C1–C8 resolved and recorded (Phase 0 complete; see Content readiness)
+- [ ] No employer field, screenshot, or case-study route was reintroduced
 - [ ] No lorem ipsum, no placeholder images, no "coming soon" chips
 - [ ] Absent optional fields are invisible, not empty-labelled
 - [ ] §13.1 banned words absent; every paragraph carries a verifiable specific
@@ -2559,7 +2607,7 @@ Tick every box before declaring the project complete.
 - [ ] Mobile is the smallest bundle by a wide margin
 
 **Accessibility**
-- [ ] Zero `axe-core` violations on all six route types, enforced in CI
+- [ ] Zero `axe-core` violations on all five route types, enforced in CI
 - [ ] WCAG 2.2 AA conformance verified
 - [ ] Full keyboard operability with a visible focus indicator
 - [ ] VoiceOver and NVDA passes recorded
@@ -2584,7 +2632,7 @@ Tick every box before declaring the project complete.
 - [ ] Content-in-HTML test passes with JS disabled
 
 **Analytics**
-- [ ] Exactly the eight §28.1 events, each firing once per action
+- [ ] Exactly the seven §28.1 events, each firing once per action
 - [ ] No PII, no third-party pixels, no consent banner needed
 - [ ] Lighthouse re-verified after analytics went live
 
@@ -2633,7 +2681,7 @@ A single-pass sign-off. Every line is a yes/no with evidence.
 | 13 | No unjustified runtime dependency was added | `package.json` diff + Decision log |
 | 14 | Design tokens are the sole source of visual values | Token lint green |
 | 15 | SEO complete: metadata, structured data, sitemap, OG images, canonicals | Rich Results Test + social previews |
-| 16 | Analytics limited to the eight defined events, no PII | Provider dashboard |
+| 16 | Analytics limited to the seven defined events, no PII | Provider dashboard |
 | 17 | All nine CI gates enforce the above on every PR | CI config review |
 | 18 | Cross-browser verified on six browsers | Test matrix record |
 | 19 | Deployed on a custom domain with redirects and rollback | Production checks |
@@ -2654,7 +2702,22 @@ Append one row per significant decision, deviation, or deferral. This is how a f
 | 2026-09-04 | 0 | **No project filtering** | 2–3 projects; revisit at ≥6 (§10.4) |
 | 2026-09-04 | 0 | Old site's simulated terminal boot splash **removed** | Gates content behind theatre and delays first paint (§1, §9.3) |
 | 2026-09-04 | 0 | Skill percentages **replaced by three named tiers** | Percentages are the "React ⭐⭐⭐⭐⭐" problem restated; tiers are honest and readable (§11.1) |
-| 2026-09-04 | 0 | `SHB-3b` "Static Websites" **dropped from Projects** pending C4 | It is a category, not a project, and has no demo (§10.1) |
 | 2026-09-04 | 0 | Hero lede rewritten from the source copy | The original is generic and could describe anyone (§9.2, C7) |
 | 2026-09-04 | 0 | "UI Showcase" reframed as **Instrument Bay** with four evidenced instruments | Nine icon chips were unevidenced claims — the weakest content on the old site (§14.1) |
+| 2026-09-04 | 0 | **Experience is role-only: `FRONTEND ENGINEER · 4 YEARS`.** No employer names; `company` and dates are optional schema fields | Owner decision (C1). Design leans into it rather than apologising — the seven burn events carry the scope. Employment specifics live in the résumé PDF. Years corrected from "3+" to **4** everywhere |
+| 2026-09-04 | 0 | **No project screenshots anywhere.** Replaced by procedural gradient plates seeded per slug | Owner decision (C2): screenshots looked wrong in the layout. Dense-UI thumbnails become grey mush at card size, date instantly, and fight the site's visual language. Project image budget → **0 bytes**; §26.2 mobile total cut 320KB → 260KB (§10.6, §29) |
+| 2026-09-04 | 0 | **`/worlds/[slug]` case-study routes removed entirely** | Owner decision (C3): detailed write-ups not wanted. Three compact projects would have produced three thin pages, which this plan already forbade. The card is now the whole record, so card copy inherits case-study-level effort (§10.3) |
+| 2026-09-04 | 0 | `SHB-3b` is **Portfolio v1** — the previous portfolio — replacing "Static Websites" | Owner decision (C3/C4). Named "v1" so the self-reference reads as iteration rather than a duplicate (§10) |
+| 2026-09-04 | 0 | **Legacy-domain redirect cancelled** — `shubham-portfolio-modern.vercel.app` stays live and un-redirected | It is now project `SHB-3b`'s only link. Redirecting it for link equity would break the exhibit; the two are mutually exclusive and the exhibit wins (§35) |
+| 2026-09-04 | 0 | Headline metric is **14× faster page delivery**, with its basis stated inline | C5 verified: 2 pages per 14-day sprint → 2 pages per day. The old "~80% faster" claim *understated* the result. Only one burn event carries a metric — one supported number beats seven soft ones (§12.2) |
+| 2026-09-04 | 0 | About section copy **written in full** and locked in §13.2 | C7. Meets its own anti-generic rules: four verifiable specifics, one arguable opinion, three genuinely open questions |
+| 2026-09-04 | 0 | Contact shows location, timezone (Asia/Kolkata), and weekday availability, but **no response-time claim** | C8. The owner did not commit to a response time, and an unmet "replies within 24h" is worse than silence (§15.2) |
+| 2026-09-04 | 0 | Analytics event set reduced from 8 to **7** | `world_open` tracked case-study navigation, which no longer exists (§28.1) |
+| 2026-09-04 | 0 | Portrait must move from `public/images/` to `src/assets/images/` | Files in `public/` bypass `astro:assets`, so the 249KB PNG would ship unoptimised (Phase 1 task 9) |
+| 2026-09-04 | 1 | **Fonts use Astro 7's stable Fonts API** (`fonts` in `astro.config.mjs`) instead of hand-rolled `@font-face` in `src/assets/fonts/` | It self-hosts, subsets to latin, emits woff2 with `display: swap`, and generates metric-override fallbacks automatically — every requirement §26.3 listed, without hand-maintained CSS. Measured 107.9KB total, inside the ≤110KB budget. Astro owns `--ff-*`; `@theme` maps `--font-*` onto them to avoid a namespace collision |
+| 2026-09-04 | 1 | `zod` added as a direct dependency (pinned to Astro's own 4.5.x) | `astro:content`'s `z` re-export is deprecated in Astro 7 and emitted ~60 warnings. Also migrated to Zod v4 top-level formats (`z.url()`, `z.email()`, `z.iso.date()`) |
+| 2026-09-04 | 1 | `typescript` pinned to **6.x**, not 7.x | `astro check` cannot run on TS 7: the native compiler does not yet expose the programmatic API the language server needs. Revisit when withastro/roadmap#1321 lands |
+| 2026-09-04 | 1 | Components annotate `Astro.props` explicitly (`}: Props = Astro.props`) | Implicit `Props` inference is not applied under `astro check`, which left prop types as `any` and produced both an error and "Props declared but never used" warnings |
+| 2026-09-04 | 1 | `skills` is a **content collection** (`src/content/skills.json`), not `src/data/skills.ts` | §20.3 (collection) and §21.1 (data module) disagreed. The collection wins: it gets the same build-time Zod validation as every other content type, so a bad coordinate or a typo'd tier fails the build. `src/data/` keeps only the PRNG (`seed.ts`) |
+| 2026-09-04 | 1 | Corner ticks are a Tailwind `@utility ticks` driven by `--tick-color`/`--tick-size` | One utility covers all three §17.2 intensities; verified compiling and rendering. A functional utility (`ticks-*`) was tried first and abandoned as unnecessarily clever |
 
