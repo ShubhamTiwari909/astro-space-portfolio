@@ -1,0 +1,67 @@
+---
+/**
+ * Fixed 64px bar (§7.2). Wordmark left, résumé right — and nothing else,
+ * ever. It never grows. The résumé lives here so it stays ≤1 interaction
+ * from every route on every scroll position (§6.1).
+ */
+import Button from '../ui/Button.astro';
+
+interface Props {
+	name: string;
+	resumePdf: string;
+}
+
+const { name, resumePdf }: Props = Astro.props;
+---
+
+<header class="topbar">
+	<a href="/" class="topbar__mark">{name}</a>
+	<Button
+		variant="secondary"
+		href={resumePdf}
+		icon="arrow-down"
+		download
+		class="topbar__cta"
+		data-analytics="dossier_download"
+		data-analytics-location="topbar"
+	>
+		Dossier
+	</Button>
+</header>
+
+<style>
+	.topbar {
+		position: fixed;
+		inset-block-start: 0;
+		inset-inline: 0;
+		z-index: var(--z-nav);
+		height: var(--nav-h);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding-inline: var(--gutter);
+		border-bottom: 1px solid var(--color-hairline);
+		background-color: color-mix(in oklab, var(--color-void) 72%, transparent);
+	}
+
+	@supports (backdrop-filter: blur(1px)) {
+		.topbar {
+			backdrop-filter: blur(12px);
+		}
+	}
+
+	.topbar__mark {
+		font-family: var(--font-mono);
+		font-size: var(--text-label);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-ink-hi);
+		text-decoration: none;
+	}
+
+	.topbar__cta {
+		min-height: 2.25rem;
+		padding-inline: 0.875rem;
+	}
+</style>

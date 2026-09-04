@@ -1,0 +1,48 @@
+[
+  {
+    "id": "frontend-engineer",
+    "role": "Frontend Engineer",
+    "durationLabel": "4 years",
+    "achievements": [
+      {
+        "title": "Next.js platform modernization",
+        "description": "Led the migration of legacy frontend applications to Next.js, improving performance, SEO, accessibility, and developer experience.",
+        "technologies": ["Next.js", "React", "TypeScript"]
+      },
+      {
+        "title": "Headless CMS & delivery",
+        "description": "Designed and built a scalable headless CMS on Next.js, Payload CMS, and PostgreSQL, transforming how fast pages reach production.",
+        "technologies": ["Next.js", "Payload CMS", "PostgreSQL"],
+        "metric": {
+          "value": "14×",
+          "label": "faster page delivery",
+          "basis": "From 2 pages per 14-day sprint to 2 pages per day"
+        }
+      },
+      {
+        "title": "Multi-brand CMS setup",
+        "description": "Architected a multi-brand CMS on a monorepo, improving code reuse, maintainability, and onboarding speed for new brands.",
+        "technologies": ["Monorepo", "Payload CMS", "Next.js"]
+      },
+      {
+        "title": "Playwright automation suite",
+        "description": "Built a Playwright suite covering E2E flows, API testing, UI and snapshot tests, accessibility checks, link validation, and authentication workflows.",
+        "technologies": ["Playwright", "TypeScript"]
+      },
+      {
+        "title": "Cross-team delivery ownership",
+        "description": "Worked with backend, QA, and product teams to own frontend delivery and improve product stability and release confidence."
+      },
+      {
+        "title": "Database schema & data migrations",
+        "description": "Performed database schema and data migrations in coordination with Payload CMS and PostgreSQL.",
+        "technologies": ["PostgreSQL", "Payload CMS"]
+      },
+      {
+        "title": "Legacy JSP maintenance",
+        "description": "Maintained and enhanced legacy JSP applications, enabling gradual modernization without disrupting production systems.",
+        "technologies": ["JSP", "Java"]
+      }
+    ]
+  }
+]

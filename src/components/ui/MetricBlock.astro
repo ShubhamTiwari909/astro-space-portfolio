@@ -1,0 +1,51 @@
+---
+/**
+ * A number is never orphaned from its meaning (§12.5): the value and label
+ * are one sentence to a screen reader, and the basis line sits with them so
+ * the claim survives scrutiny (§12.2).
+ */
+interface Props {
+	value: string;
+	label: string;
+	basis?: string;
+	class?: string;
+}
+const { value, label, basis, class: className = '' }: Props = Astro.props;
+---
+
+<p class:list={['metric', className]}>
+	<strong class="metric__value">{value}</strong>
+	<span class="metric__label">{label}</span>
+	{basis && <span class="metric__basis">{basis}</span>}
+</p>
+
+<style>
+	.metric {
+		display: grid;
+		gap: 0.25rem;
+		margin: 0;
+	}
+
+	.metric__value {
+		font-family: var(--font-mono);
+		font-size: var(--text-display-l);
+		font-weight: 500;
+		line-height: 1;
+		color: var(--color-ember);
+	}
+
+	.metric__label {
+		font-family: var(--font-mono);
+		font-size: var(--text-label);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-ink-mid);
+	}
+
+	.metric__basis {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.04em;
+		color: var(--color-ink-low);
+	}
+</style>

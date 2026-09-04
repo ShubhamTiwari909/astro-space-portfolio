@@ -1,0 +1,54 @@
+---
+/**
+ * Lost signal (§8.3). No cleverness that costs a visitor their next click:
+ * three real links, zero JS.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+---
+
+<BaseLayout
+	title="Signal lost · Shubham Tiwari"
+	description="That coordinate isn't in the catalog."
+	indexable={false}
+>
+	<div class="lost">
+		<p class="lost__eyebrow">Signal lost · 404</p>
+		<h1 class="lost__title">This coordinate isn't in the catalog.</h1>
+		<div class="lost__actions">
+			<Button variant="primary" href="/" icon="arrow-right">Survey</Button>
+			<Button variant="secondary" href="/#worlds">Worlds</Button>
+			<Button variant="secondary" href="/#uplink">Uplink</Button>
+		</div>
+	</div>
+</BaseLayout>
+
+<style>
+	.lost {
+		position: relative;
+		z-index: var(--z-content);
+		max-width: var(--container-panel);
+		margin-inline: auto;
+		padding-block: calc(var(--section-y) + var(--nav-h));
+		padding-inline: var(--gutter);
+	}
+
+	.lost__eyebrow {
+		font-family: var(--font-mono);
+		font-size: var(--text-label);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-ink-low);
+	}
+
+	.lost__title {
+		font-size: var(--text-display-l);
+		margin-block: 1rem 2rem;
+	}
+
+	.lost__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+	}
+</style>

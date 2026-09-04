@@ -1,0 +1,57 @@
+---
+/**
+ * Instrument panel (§17.2). Glass readout over the sky: translucent surface,
+ * hairline border, corner ticks. Falls back to an opaque surface where
+ * backdrop-filter is unsupported or transparency is unwanted — the @supports
+ * and prefers-reduced-transparency branches live in global.css.
+ */
+interface Props {
+	variant?: 'subtle' | 'standard' | 'strong';
+	as?: 'div' | 'article' | 'section' | 'li' | 'aside';
+	ticks?: boolean;
+	class?: string;
+}
+
+const {
+	variant = 'standard',
+	as: Tag = 'div',
+	ticks = true,
+	class: className = '',
+}: Props = Astro.props;
+
+const tickVars = {
+	subtle: '--tick-color: var(--color-hairline); --tick-size: 6px;',
+	standard: '--tick-color: var(--color-hairline-hi); --tick-size: 8px;',
+	strong: '--tick-color: color-mix(in oklab, var(--color-ion) 45%, transparent); --tick-size: 12px;',
+}[variant];
+---
+
+<Tag
+	class:list={['panel', ticks && 'ticks', className]}
+	style={ticks ? tickVars : undefined}
+>
+	<slot />
+</Tag>
+
+<style>
+	.panel {
+		background-color: color-mix(in oklab, var(--color-surface-1) 72%, transparent);
+		border: 1px solid var(--color-hairline);
+		border-radius: var(--radius-panel);
+		box-shadow: var(--shadow-panel);
+	}
+
+	@supports (backdrop-filter: blur(1px)) {
+		.panel {
+			backdrop-filter: blur(12px);
+		}
+	}
+
+	/* Blur is expensive on mobile GPUs — opaque below md (§24.2) */
+	@media (width < 48rem) {
+		.panel {
+			backdrop-filter: none;
+			background-color: var(--color-surface-1);
+		}
+	}
+</style>

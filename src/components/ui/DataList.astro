@@ -1,0 +1,63 @@
+---
+/**
+ * Real <dl> for label/value data (§25.1). Used by field notes and record
+ * readouts — the "instrument metadata panel" look comes from the mono labels
+ * and hairline rows, not from a table.
+ */
+interface Props {
+	items: Array<{ label: string; value: string }>;
+	class?: string;
+}
+const { items, class: className = '' }: Props = Astro.props;
+---
+
+<dl class:list={['datalist', className]}>
+	{
+		items.map((item) => (
+			<div class="datalist__row">
+				<dt>{item.label}</dt>
+				<dd>{item.value}</dd>
+			</div>
+		))
+	}
+</dl>
+
+<style>
+	.datalist {
+		display: grid;
+		gap: 0;
+	}
+
+	.datalist__row {
+		display: grid;
+		grid-template-columns: minmax(6rem, 9rem) 1fr;
+		gap: 1rem;
+		padding-block: 0.625rem;
+		border-bottom: 1px solid var(--color-hairline);
+	}
+
+	.datalist__row:last-child {
+		border-bottom: 0;
+	}
+
+	dt {
+		font-family: var(--font-mono);
+		font-size: var(--text-label);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-ink-low);
+	}
+
+	dd {
+		font-size: var(--text-data);
+		color: var(--color-ink-hi);
+		margin: 0;
+	}
+
+	@media (width < 30rem) {
+		.datalist__row {
+			grid-template-columns: 1fr;
+			gap: 0.125rem;
+		}
+	}
+</style>

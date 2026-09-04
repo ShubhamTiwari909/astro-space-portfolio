@@ -1,0 +1,50 @@
+[
+  {
+    "id": "react-component-library-tailwind-v4",
+    "title": "I built a React component library with Tailwind v4, Framer Motion & typed hooks",
+    "url": "https://dev.to/shubhamtiwari909/i-built-a-react-component-library-with-tailwind-v4-framer-motion-typed-hooks-19ci",
+    "publishedAt": "2026-04-30",
+    "source": "dev.to",
+    "excerpt": "3 weeks ago I started building yet another component library. I know, I know. The world doesn't need…"
+  },
+  {
+    "id": "nextjs-data-fetching-mistake",
+    "title": "Next.js Data Fetching Mistake That Blocks Your Entire Page (And How to Fix It)",
+    "url": "https://dev.to/shubhamtiwari909/nextjs-data-fetching-mistake-that-blocks-your-entire-page-and-how-to-fix-it-k9a",
+    "publishedAt": "2025-12-22",
+    "source": "dev.to",
+    "excerpt": "A common Next.js App Router mistake that can block your entire page, and how to fix it."
+  },
+  {
+    "id": "javascript-patterns",
+    "title": "5 Essential JavaScript Patterns Every Developer Should Know",
+    "url": "https://dev.to/shubhamtiwari909/javascript-patterns-7fo",
+    "publishedAt": "2025-08-20",
+    "source": "dev.to",
+    "excerpt": "Five useful patterns you can reach for in day-to-day frontend work."
+  },
+  {
+    "id": "next-express-mongo-ai-stack",
+    "title": "Next JS + Express + Mongo + AI stack",
+    "url": "https://dev.to/shubhamtiwari909/next-js-express-mongo-ai-stack-4epj",
+    "publishedAt": "2025-08-19",
+    "source": "dev.to",
+    "excerpt": "The daily tech stack I reach for as a frontend engineer, and why each piece is there."
+  },
+  {
+    "id": "server-to-client-infinite-scroll",
+    "title": "From Server to Client: Handling Initial Data Fetching and Infinite Scroll",
+    "url": "https://dev.to/shubhamtiwari909/the-perfect-blend-server-side-rendering-with-client-side-infinite-scrolling-4j4i",
+    "publishedAt": "2025-08-18",
+    "source": "dev.to",
+    "excerpt": "A data-fetching pattern that pairs server-side rendering with client-side infinite scrolling."
+  },
+  {
+    "id": "tailwind-tips-and-tricks",
+    "title": "Mastering Tailwind CSS: Hidden Gems & Productivity Hacks",
+    "url": "https://dev.to/shubhamtiwari909/tailwind-tips-and-tricks-bfa",
+    "publishedAt": "2025-07-15",
+    "source": "dev.to",
+    "excerpt": "Useful Tailwind snippets and habits that cut down repetition."
+  }
+]

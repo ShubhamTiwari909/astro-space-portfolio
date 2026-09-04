@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Section from '../components/ui/Section.astro';
+
+const articles = await getCollection('articles');
+---
+
+<BaseLayout
+	title="Writing · Shubham Tiwari"
+	description="Articles on frontend platforms, Next.js, Tailwind, and testing — published on dev.to."
+>
+	<Section
+		id="transmissions"
+		codename="Transmissions"
+		readout={`${articles.length} signals`}
+		title="Writing"
+		lede="Everything published so far. Full posts live on dev.to."
+	>
+		<p class="shell">Full transmission index — Phase 3.</p>
+	</Section>
+</BaseLayout>
+
+<style>
+	.shell {
+		font-family: var(--font-mono);
+		font-size: var(--text-data);
+		color: var(--color-ink-low);
+		padding: 2rem;
+		border: 1px dashed var(--color-hairline);
+		border-radius: var(--radius-card);
+	}
+</style>

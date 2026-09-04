@@ -1,0 +1,47 @@
+---
+/**
+ * Status is ALWAYS conveyed by text alongside the dot — never colour alone
+ * (§25.1 colour independence). The dot is decorative reinforcement.
+ */
+interface Props {
+	status: 'LIVE' | 'ARCHIVED' | 'PRIVATE' | 'OPEN' | 'CLOSED';
+	label?: string;
+	class?: string;
+}
+const { status, label, class: className = '' }: Props = Astro.props;
+const active = status === 'LIVE' || status === 'OPEN';
+---
+
+<span class:list={['status', active && 'status--active', className]}>
+	<span class="status__dot" aria-hidden="true"></span>
+	<span>{label ?? status}</span>
+</span>
+
+<style>
+	.status {
+		--dot-size: 6px;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-family: var(--font-mono);
+		font-size: var(--text-label);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-ink-low);
+	}
+
+	.status__dot {
+		width: var(--dot-size);
+		height: var(--dot-size);
+		border-radius: var(--radius-pill);
+		background-color: currentColor;
+	}
+
+	.status--active {
+		color: var(--color-ion);
+	}
+
+	.status--active .status__dot {
+		box-shadow: var(--shadow-glow-1);
+	}
+</style>

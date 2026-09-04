@@ -1,0 +1,362 @@
+---
+/**
+ * Token + primitive reference (§Phase 1 task 13). This is the visual
+ * regression baseline for every later phase: if a token changes, it shows
+ * up here first.
+ *
+ * Excluded from the sitemap (astro.config.mjs filter) and marked noindex.
+ * Phase 8 removes it from the production build entirely.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Button from '../../components/ui/Button.astro';
+import Chip from '../../components/ui/Chip.astro';
+import DataList from '../../components/ui/DataList.astro';
+import ExternalLink from '../../components/ui/ExternalLink.astro';
+import Icon, { type IconName } from '../../components/ui/Icon.astro';
+import MetricBlock from '../../components/ui/MetricBlock.astro';
+import Panel from '../../components/ui/Panel.astro';
+import StatusDot from '../../components/ui/StatusDot.astro';
+
+const surfaces = ['void', 'surface-0', 'surface-1', 'surface-2'];
+const inks = ['ink-hi', 'ink-mid', 'ink-low'];
+const accents = ['ion', 'plasma', 'ember', 'danger'];
+
+const typeScale = [
+	['display-xl', 'Hi, I&rsquo;m Shubham'],
+	['display-l', 'Catalogued Worlds'],
+	['display-m', 'Headless CMS & delivery'],
+	['display-s', 'Sub-heading'],
+	['body-l', 'Lede paragraph at body-l.'],
+	['body', 'Body copy at the base size.'],
+	['data', 'DATA READOUT 14× 2025'],
+	['label', 'EYEBROW LABEL'],
+] as const;
+
+const icons: IconName[] = [
+	'arrow-up-right', 'arrow-right', 'arrow-down', 'copy', 'check', 'mail',
+	'home', 'atlas', 'trajectory', 'worlds', 'instruments', 'transmissions',
+	'more', 'github', 'linkedin', 'devto', 'instagram',
+];
+
+const radii = ['chip', 'card', 'panel', 'pill'];
+const glows = ['glow-1', 'glow-2', 'glow-3'];
+---
+
+<BaseLayout
+	title="Design tokens · DEEP FIELD"
+	description="Internal token and primitive reference."
+	indexable={false}
+>
+	<div class="dev">
+		<h1>Design tokens &amp; primitives</h1>
+		<p class="dev__note">
+			Internal reference. Master plan §17–§18. Every value below is a token —
+			no literals.
+		</p>
+
+		<h2>Colour — surfaces</h2>
+		<div class="swatches">
+			{surfaces.map((name) => (
+				<div class="swatch">
+					<div class="swatch__chip" style={`background-color: var(--color-${name})`}></div>
+					<code>--color-{name}</code>
+				</div>
+			))}
+		</div>
+
+		<h2>Colour — ink</h2>
+		<div class="swatches">
+			{inks.map((name) => (
+				<div class="swatch">
+					<div class="swatch__chip swatch__chip--text" style={`color: var(--color-${name})`}>Aa</div>
+					<code>--color-{name}</code>
+				</div>
+			))}
+		</div>
+
+		<h2>Colour — accents</h2>
+		<div class="swatches">
+			{accents.map((name) => (
+				<div class="swatch">
+					<div class="swatch__chip" style={`background-color: var(--color-${name})`}></div>
+					<code>--color-{name}</code>
+				</div>
+			))}
+		</div>
+
+		<h2>Hairlines</h2>
+		<div class="stack">
+			<div class="rule" style="border-color: var(--color-hairline)"></div>
+			<code>--color-hairline</code>
+			<div class="rule" style="border-color: var(--color-hairline-hi)"></div>
+			<code>--color-hairline-hi</code>
+		</div>
+
+		<h2>Type scale</h2>
+		<div class="stack">
+			{typeScale.map(([token, sample]) => (
+				<div class="type-row">
+					<code>--text-{token}</code>
+					<p class={`sample sample--${token}`} set:html={sample} />
+				</div>
+			))}
+		</div>
+
+		<h2>Families</h2>
+		<div class="stack">
+			<p style="font-family: var(--font-display); font-size: var(--text-display-m)">
+				Instrument Serif — display
+			</p>
+			<p style="font-family: var(--font-body); font-size: var(--text-body-l)">
+				Inter — body copy
+			</p>
+			<p style="font-family: var(--font-mono); font-size: var(--text-data)">
+				JetBrains Mono — DATA 0123456789
+			</p>
+		</div>
+
+		<h2>Buttons — all six states</h2>
+		<div class="row">
+			<Button variant="primary">Primary</Button>
+			<Button variant="secondary">Secondary</Button>
+			<Button variant="ghost">Ghost</Button>
+			<Button variant="primary" icon="arrow-right">With icon</Button>
+			<Button variant="primary" disabled>Disabled</Button>
+			<Button variant="primary" data-loading>Loading</Button>
+		</div>
+		<p class="dev__note">
+			Hover and focus-visible states are interactive — tab through the row.
+		</p>
+
+		<h2>Panels</h2>
+		<div class="row row--panels">
+			<Panel variant="subtle"><p class="panel-demo">subtle ticks</p></Panel>
+			<Panel variant="standard"><p class="panel-demo">standard ticks</p></Panel>
+			<Panel variant="strong"><p class="panel-demo">strong ticks</p></Panel>
+			<Panel ticks={false}><p class="panel-demo">no ticks</p></Panel>
+		</div>
+
+		<h2>Chips</h2>
+		<div class="row">
+			<Chip>Next.js</Chip>
+			<Chip>Tailwind CSS</Chip>
+			<Chip>MongoDB</Chip>
+			<Chip>Playwright</Chip>
+		</div>
+
+		<h2>Status</h2>
+		<div class="row">
+			<StatusDot status="LIVE" />
+			<StatusDot status="ARCHIVED" />
+			<StatusDot status="PRIVATE" />
+			<StatusDot status="OPEN" label="Open to roles" />
+		</div>
+
+		<h2>Metric block</h2>
+		<MetricBlock
+			value="14×"
+			label="faster page delivery"
+			basis="From 2 pages per 14-day sprint to 2 pages per day"
+		/>
+
+		<h2>Data list</h2>
+		<Panel variant="standard" class="datalist-demo">
+			<DataList
+				items={[
+					{ label: 'Location', value: 'India' },
+					{ label: 'Timezone', value: 'Asia/Kolkata · UTC+5:30' },
+					{ label: 'Experience', value: '4 years' },
+				]}
+			/>
+		</Panel>
+
+		<h2>Links</h2>
+		<p>
+			An <ExternalLink href="https://dev.to/shubhamtiwari909">external link</ExternalLink>
+			carries an arrow and a hidden new-tab warning.
+		</p>
+
+		<h2>Icons ({icons.length})</h2>
+		<div class="icons">
+			{icons.map((name) => (
+				<div class="icon-cell">
+					<Icon name={name} size={24} />
+					<code>{name}</code>
+				</div>
+			))}
+		</div>
+
+		<h2>Radius</h2>
+		<div class="row">
+			{radii.map((r) => (
+				<div class="radius-demo" style={`border-radius: var(--radius-${r})`}>
+					<code>{r}</code>
+				</div>
+			))}
+		</div>
+
+		<h2>Glow</h2>
+		<div class="row">
+			{glows.map((g) => (
+				<div class="glow-demo" style={`box-shadow: var(--shadow-${g})`}>
+					<code>{g}</code>
+				</div>
+			))}
+		</div>
+
+		<h2>Easing &amp; duration</h2>
+		<DataList
+			items={[
+				{ label: 'instant', value: '120ms' },
+				{ label: 'fast', value: '200ms — L2 interaction' },
+				{ label: 'base', value: '320ms — rail, transitions' },
+				{ label: 'slow', value: '560ms — L3 entrances' },
+				{ label: 'cinematic', value: '900ms — L4 storytelling' },
+				{ label: 'ambient', value: '24s — L1 nebula drift' },
+				{ label: 'out-expo', value: 'cubic-bezier(0.16, 1, 0.3, 1)' },
+				{ label: 'ui', value: 'cubic-bezier(0.4, 0, 0.2, 1)' },
+			]}
+		/>
+	</div>
+</BaseLayout>
+
+<style>
+	.dev {
+		position: relative;
+		z-index: var(--z-content);
+		max-width: var(--container-content);
+		margin-inline: auto;
+		padding-block: calc(var(--nav-h) + 3rem) 6rem;
+		padding-inline: var(--gutter);
+	}
+
+	.dev h1 {
+		font-size: var(--text-display-l);
+	}
+
+	.dev h2 {
+		font-size: var(--text-display-s);
+		margin-block: 3rem 1rem;
+		padding-bottom: 0.5rem;
+		border-bottom: 1px solid var(--color-hairline);
+	}
+
+	.dev__note {
+		font-size: var(--text-data);
+		color: var(--color-ink-low);
+	}
+
+	code {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		color: var(--color-ink-low);
+	}
+
+	.swatches {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+		gap: 1rem;
+	}
+
+	.swatch__chip {
+		height: 4rem;
+		border: 1px solid var(--color-hairline);
+		border-radius: var(--radius-card);
+		margin-bottom: 0.375rem;
+		display: grid;
+		place-items: center;
+	}
+
+	.swatch__chip--text {
+		font-family: var(--font-display);
+		font-size: 1.5rem;
+		background-color: var(--color-surface-0);
+	}
+
+	.stack {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.rule {
+		border-top: 1px solid;
+	}
+
+	.type-row {
+		display: grid;
+		gap: 0.25rem;
+		padding-block: 0.5rem;
+		border-bottom: 1px solid var(--color-hairline);
+	}
+
+	.sample {
+		margin: 0;
+		color: var(--color-ink-hi);
+	}
+
+	.sample--display-xl { font-family: var(--font-display); font-size: var(--text-display-xl); }
+	.sample--display-l  { font-family: var(--font-display); font-size: var(--text-display-l); }
+	.sample--display-m  { font-family: var(--font-display); font-size: var(--text-display-m); }
+	.sample--display-s  { font-family: var(--font-display); font-size: var(--text-display-s); }
+	.sample--body-l     { font-size: var(--text-body-l); color: var(--color-ink-mid); }
+	.sample--body       { font-size: var(--text-body); color: var(--color-ink-mid); }
+	.sample--data       { font-family: var(--font-mono); font-size: var(--text-data); letter-spacing: 0.04em; }
+	.sample--label      { font-family: var(--font-mono); font-size: var(--text-label); letter-spacing: 0.14em; color: var(--color-ink-low); }
+
+	.row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.row--panels {
+		align-items: stretch;
+	}
+
+	.panel-demo {
+		margin: 0;
+		padding: 2rem 2.5rem;
+		font-family: var(--font-mono);
+		font-size: var(--text-label);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-ink-mid);
+	}
+
+	.datalist-demo {
+		padding: 1.5rem;
+		max-width: var(--container-panel);
+	}
+
+	.icons {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+		gap: 1rem;
+	}
+
+	.icon-cell {
+		display: grid;
+		gap: 0.375rem;
+		place-items: center;
+		padding: 1rem 0.5rem;
+		border: 1px solid var(--color-hairline);
+		border-radius: var(--radius-card);
+		color: var(--color-ion);
+		text-align: center;
+	}
+
+	.radius-demo,
+	.glow-demo {
+		display: grid;
+		place-items: center;
+		width: 6rem;
+		height: 4rem;
+		background-color: var(--color-surface-1);
+		border: 1px solid var(--color-hairline);
+	}
+
+	.glow-demo {
+		border-radius: var(--radius-card);
+	}
+</style>

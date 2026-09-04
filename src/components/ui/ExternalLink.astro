@@ -1,0 +1,44 @@
+---
+/**
+ * External links always carry a visually-hidden new-tab warning (§25.1) and
+ * rel="noopener noreferrer". The arrow is decorative.
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+	href: string;
+	arrow?: boolean;
+	class?: string;
+}
+const { href, arrow = true, class: className = '' }: Props = Astro.props;
+---
+
+<a
+	href={href}
+	target="_blank"
+	rel="noopener noreferrer"
+	class:list={['extlink', className]}
+>
+	<slot />
+	{arrow && <Icon name="arrow-up-right" size={14} />}
+	<span class="sr-only">(opens in a new tab)</span>
+</a>
+
+<style>
+	.extlink {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		color: var(--color-ion);
+		text-decoration-line: underline;
+		text-decoration-color: color-mix(in oklab, var(--color-ion) 40%, transparent);
+		text-underline-offset: 3px;
+		transition: text-decoration-color var(--duration-fast) var(--ease-ui);
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.extlink:hover {
+			text-decoration-color: var(--color-ion);
+		}
+	}
+</style>

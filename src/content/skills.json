@@ -1,0 +1,242 @@
+[
+  {
+    "id": "react",
+    "name": "React",
+    "tier": "CORE",
+    "constellation": "INTERFACE",
+    "x": 200,
+    "y": 70,
+    "sortScore": 95,
+    "connections": ["typescript", "nextjs", "astro"]
+  },
+  {
+    "id": "javascript",
+    "name": "JavaScript",
+    "tier": "CORE",
+    "constellation": "INTERFACE",
+    "x": 100,
+    "y": 95,
+    "sortScore": 95,
+    "connections": []
+  },
+  {
+    "id": "typescript",
+    "name": "TypeScript",
+    "tier": "CORE",
+    "constellation": "INTERFACE",
+    "x": 295,
+    "y": 120,
+    "sortScore": 88,
+    "connections": []
+  },
+  {
+    "id": "html",
+    "name": "HTML",
+    "tier": "CORE",
+    "constellation": "INTERFACE",
+    "x": 65,
+    "y": 175,
+    "sortScore": 95,
+    "connections": []
+  },
+  {
+    "id": "css",
+    "name": "CSS",
+    "tier": "CORE",
+    "constellation": "INTERFACE",
+    "x": 145,
+    "y": 215,
+    "sortScore": 95,
+    "connections": []
+  },
+  {
+    "id": "tailwind-css",
+    "name": "Tailwind CSS",
+    "tier": "CORE",
+    "constellation": "INTERFACE",
+    "x": 225,
+    "y": 185,
+    "sortScore": 92,
+    "connections": []
+  },
+  {
+    "id": "astro",
+    "name": "Astro",
+    "tier": "WORKING",
+    "constellation": "INTERFACE",
+    "x": 360,
+    "y": 75,
+    "sortScore": 80,
+    "connections": []
+  },
+  {
+    "id": "nextjs",
+    "name": "Next.js",
+    "tier": "WORKING",
+    "constellation": "INTERFACE",
+    "x": 315,
+    "y": 245,
+    "sortScore": 85,
+    "connections": ["vercel"]
+  },
+  {
+    "id": "nodejs",
+    "name": "Node.js",
+    "tier": "CORE",
+    "constellation": "SUBSTRATE",
+    "x": 560,
+    "y": 105,
+    "sortScore": 90,
+    "connections": ["express"]
+  },
+  {
+    "id": "express",
+    "name": "Express",
+    "tier": "WORKING",
+    "constellation": "SUBSTRATE",
+    "x": 660,
+    "y": 165,
+    "sortScore": 80,
+    "connections": ["rest-apis"]
+  },
+  {
+    "id": "rest-apis",
+    "name": "REST APIs",
+    "tier": "WORKING",
+    "constellation": "SUBSTRATE",
+    "x": 555,
+    "y": 215,
+    "sortScore": 85,
+    "connections": []
+  },
+  {
+    "id": "payload-cms",
+    "name": "Payload CMS",
+    "tier": "WORKING",
+    "constellation": "SUBSTRATE",
+    "x": 710,
+    "y": 250,
+    "sortScore": 85,
+    "connections": ["mongodb"]
+  },
+  {
+    "id": "mongodb",
+    "name": "MongoDB",
+    "tier": "FAMILIAR",
+    "constellation": "SUBSTRATE",
+    "x": 620,
+    "y": 300,
+    "sortScore": 75,
+    "connections": []
+  },
+  {
+    "id": "gemini-llm-apis",
+    "name": "Gemini / LLM APIs",
+    "tier": "WORKING",
+    "constellation": "SUBSTRATE",
+    "x": 480,
+    "y": 140,
+    "sortScore": 85,
+    "connections": ["rest-apis"]
+  },
+  {
+    "id": "vercel",
+    "name": "Vercel",
+    "tier": "WORKING",
+    "constellation": "OPERATIONS",
+    "x": 360,
+    "y": 360,
+    "sortScore": 80,
+    "connections": []
+  },
+  {
+    "id": "git",
+    "name": "Git",
+    "tier": "CORE",
+    "constellation": "OPERATIONS",
+    "x": 170,
+    "y": 420,
+    "sortScore": 95,
+    "connections": []
+  },
+  {
+    "id": "docker",
+    "name": "Docker",
+    "tier": "FAMILIAR",
+    "constellation": "OPERATIONS",
+    "x": 300,
+    "y": 415,
+    "sortScore": 60,
+    "connections": []
+  },
+  {
+    "id": "eslint-prettier",
+    "name": "ESLint / Prettier",
+    "tier": "CORE",
+    "constellation": "OPERATIONS",
+    "x": 250,
+    "y": 500,
+    "sortScore": 90,
+    "connections": []
+  },
+  {
+    "id": "ai-assisted-development",
+    "name": "AI-assisted development",
+    "tier": "CORE",
+    "constellation": "OPERATIONS",
+    "x": 145,
+    "y": 545,
+    "sortScore": 90,
+    "connections": []
+  },
+  {
+    "id": "figma",
+    "name": "Figma",
+    "tier": "WORKING",
+    "constellation": "OPERATIONS",
+    "x": 420,
+    "y": 465,
+    "sortScore": 85,
+    "connections": []
+  },
+  {
+    "id": "playwright",
+    "name": "Playwright",
+    "tier": "WORKING",
+    "constellation": "OPERATIONS",
+    "x": 545,
+    "y": 395,
+    "sortScore": 80,
+    "connections": ["accessibility"]
+  },
+  {
+    "id": "accessibility",
+    "name": "Accessibility",
+    "tier": "WORKING",
+    "constellation": "OPERATIONS",
+    "x": 620,
+    "y": 460,
+    "sortScore": 80,
+    "connections": []
+  },
+  {
+    "id": "performance-optimisation",
+    "name": "Performance optimisation",
+    "tier": "WORKING",
+    "constellation": "OPERATIONS",
+    "x": 520,
+    "y": 530,
+    "sortScore": 80,
+    "connections": []
+  },
+  {
+    "id": "seo",
+    "name": "SEO",
+    "tier": "WORKING",
+    "constellation": "OPERATIONS",
+    "x": 660,
+    "y": 545,
+    "sortScore": 80,
+    "connections": []
+  }
+]

@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Section from '../components/ui/Section.astro';
+
+const instruments = await getCollection('instruments');
+---
+
+<BaseLayout
+	title="Instrument Bay — Engineering Lab · Shubham Tiwari"
+	description="The instruments behind the products: a component library, a Playwright suite, a multi-brand CMS architecture, and one Canvas simulation."
+>
+	<Section
+		id="bay"
+		codename="Instrument Bay"
+		readout={`${instruments.length} instruments`}
+		title="Engineering Lab"
+		lede="The tools and systems behind the products, rather than the products themselves."
+	>
+		<p class="shell">Instrument panels and the Orbit experiment — Phase 5.</p>
+	</Section>
+</BaseLayout>
+
+<style>
+	.shell {
+		font-family: var(--font-mono);
+		font-size: var(--text-data);
+		color: var(--color-ink-low);
+		padding: 2rem;
+		border: 1px dashed var(--color-hairline);
+		border-radius: var(--radius-card);
+	}
+</style>

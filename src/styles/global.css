@@ -1,1 +1,279 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/* ==========================================================================
+   DEEP FIELD — design tokens
+   Master plan §18. Every visual value in the codebase comes from here.
+   Tailwind v4 reserves --color-*, --font-*, --text-*, --radius-*, --shadow-*,
+   --ease-*, --breakpoint-*, --container-*. Text COLOURS are --color-ink-*,
+   because --text-* is the font-size namespace.
+   ========================================================================== */
+
+@theme {
+	/* ---- void & surfaces ---- */
+	--color-void: #04060d;
+	--color-surface-0: #080c16;
+	--color-surface-1: #0d1322;
+	--color-surface-2: #141c2e;
+
+	/* ---- ink ---- */
+	--color-ink-hi: #eaf0fa;
+	--color-ink-mid: #9ba8c2;
+	--color-ink-low: #7c89a5;
+
+	/* ---- accents (one job each) ---- */
+	--color-ion: #7de2ff;
+	--color-plasma: #a78bfa;
+	--color-ember: #ffb454;
+	--color-danger: #ff8080;
+
+	/* ---- derived ---- */
+	--color-hairline: color-mix(in oklab, var(--color-ion) 12%, transparent);
+	--color-hairline-hi: color-mix(in oklab, var(--color-ion) 24%, transparent);
+
+	/* ---- families (Astro's Fonts API owns --ff-*) ---- */
+	--font-display: var(--ff-display);
+	--font-body: var(--ff-body);
+	--font-mono: var(--ff-mono);
+
+	/* ---- type scale ---- */
+	--text-label: 0.75rem;
+	--text-label--line-height: 1.4;
+	--text-label--letter-spacing: 0.14em;
+	--text-data: 0.8125rem;
+	--text-data--line-height: 1.5;
+	--text-data--letter-spacing: 0.04em;
+	--text-body: 1rem;
+	--text-body--line-height: 1.65;
+	--text-body-l: 1.125rem;
+	--text-body-l--line-height: 1.7;
+	--text-display-s: clamp(1.25rem, 1.2vw + 1rem, 1.5rem);
+	--text-display-s--line-height: 1.3;
+	--text-display-m: clamp(1.5rem, 2vw + 1rem, 2.25rem);
+	--text-display-m--line-height: 1.2;
+	--text-display-l: clamp(2.25rem, 4vw + 1rem, 4rem);
+	--text-display-l--line-height: 1.08;
+	--text-display-l--letter-spacing: -0.01em;
+	--text-display-xl: clamp(3rem, 7vw + 1rem, 7rem);
+	--text-display-xl--line-height: 0.95;
+	--text-display-xl--letter-spacing: -0.02em;
+
+	/* ---- radius ---- */
+	--radius-chip: 2px;
+	--radius-card: 8px;
+	--radius-panel: 16px;
+	--radius-pill: 999px;
+
+	/* ---- glow ---- */
+	--shadow-glow-1: 0 0 12px -2px color-mix(in oklab, var(--color-ion) 40%, transparent);
+	--shadow-glow-2: 0 0 24px -4px color-mix(in oklab, var(--color-ion) 55%, transparent);
+	--shadow-glow-3: 0 0 48px -8px color-mix(in oklab, var(--color-ember) 45%, transparent);
+	--shadow-panel: inset 0 1px 0 0 color-mix(in oklab, var(--color-ion) 8%, transparent);
+
+	/* ---- easing ---- */
+	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-ui: cubic-bezier(0.4, 0, 0.2, 1);
+	--ease-soft: cubic-bezier(0.65, 0, 0.35, 1);
+
+	/* ---- breakpoints: Tailwind defaults kept; xs added ---- */
+	--breakpoint-xs: 30rem;
+
+	/* ---- containers ---- */
+	--container-content: 75rem;
+	--container-panel: 45rem;
+}
+
+/* Non-namespaced tokens: Tailwind has no z-index/duration theme namespace,
+   so these are plain custom properties used via var(). */
+:root {
+	--duration-instant: 120ms;
+	--duration-fast: 200ms;
+	--duration-base: 320ms;
+	--duration-slow: 560ms;
+	--duration-cinematic: 900ms;
+	--duration-ambient: 24s;
+	--stagger: 60ms;
+
+	--z-void: 0;
+	--z-nebula: 1;
+	--z-stars: 2;
+	--z-grain: 3;
+	--z-content: 10;
+	--z-rail: 40;
+	--z-nav: 45;
+	--z-overlay: 60;
+	--z-skip: 90;
+
+	--section-y: clamp(6rem, 12vh, 10rem);
+	--gutter: clamp(1rem, 4vw, 2.5rem);
+	--nav-h: 4rem;
+	--rail-w: 3rem;
+	--tabbar-h: 3.5rem;
+
+	--prose: 68ch;
+
+	color-scheme: dark;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+	html {
+		-webkit-text-size-adjust: 100%;
+		scroll-padding-top: var(--nav-h);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		html {
+			scroll-behavior: smooth;
+		}
+	}
+
+	body {
+		background-color: var(--color-void);
+		color: var(--color-ink-mid);
+		font-family: var(--font-body);
+		font-size: var(--text-body);
+		line-height: 1.65;
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4 {
+		color: var(--color-ink-hi);
+		font-family: var(--font-display);
+		font-weight: 400;
+		text-wrap: balance;
+	}
+
+	p {
+		text-wrap: pretty;
+	}
+
+	:where(a) {
+		color: var(--color-ion);
+	}
+
+	/* Focus: 2px ion ring, 2px offset, never removed (§25.1) */
+	:focus-visible {
+		outline: 2px solid var(--color-ion);
+		outline-offset: 2px;
+		border-radius: 2px;
+	}
+
+	:where(:focus:not(:focus-visible)) {
+		outline: none;
+	}
+
+	/* Anchor targets must clear the fixed top bar (§7.4) */
+	:where(section[id], [id]:target) {
+		scroll-margin-top: calc(var(--nav-h) + 1rem);
+	}
+
+	::selection {
+		background-color: color-mix(in oklab, var(--color-ion) 30%, transparent);
+		color: var(--color-ink-hi);
+	}
+
+	/* Tabular figures wherever numbers align (§17.3) */
+	:where(.font-mono, [class*='font-mono']) {
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+@utility sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border-width: 0;
+}
+
+/* Corner ticks — the site's signature motif (§17.2). Zero bytes of asset.
+   Intensity is set with --tick-color / --tick-size, so one utility covers the
+   subtle / standard / strong variants in §17.2. */
+@utility ticks {
+	position: relative;
+	--tick-color: var(--color-hairline-hi);
+	--tick-size: 8px;
+	--tick-inset: 8px;
+
+	&::before,
+	&::after {
+		content: '';
+		position: absolute;
+		width: var(--tick-size);
+		height: var(--tick-size);
+		pointer-events: none;
+		border-color: var(--tick-color);
+	}
+
+	&::before {
+		top: var(--tick-inset);
+		left: var(--tick-inset);
+		border-top-width: 1px;
+		border-left-width: 1px;
+	}
+
+	&::after {
+		right: var(--tick-inset);
+		bottom: var(--tick-inset);
+		border-right-width: 1px;
+		border-bottom-width: 1px;
+	}
+}
+
+/* ==========================================================================
+   Motion — §16.4. One global rule; components never re-implement this.
+   L1 ambient / L3 navigation / L4 storytelling are all suppressed.
+   L2 interaction feedback is kept but shortened: removing it harms usability.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: var(--duration-instant) !important;
+		scroll-behavior: auto !important;
+	}
+
+	html {
+		scroll-behavior: auto !important;
+	}
+
+	/* Entrance animations resolve to their final state immediately */
+	[data-observe] {
+		opacity: 1 !important;
+		transform: none !important;
+	}
+}
+
+/* Opaque surfaces where transparency is unwanted or unsupported (§17.2) */
+@media (prefers-reduced-transparency: reduce) {
+	.panel {
+		backdrop-filter: none;
+		background-color: var(--color-surface-1);
+	}
+}
+
+@media (prefers-contrast: more) {
+	:root {
+		--color-hairline: color-mix(in oklab, var(--color-ion) 40%, transparent);
+		--color-hairline-hi: color-mix(in oklab, var(--color-ion) 60%, transparent);
+		--color-ink-low: var(--color-ink-mid);
+	}
+}

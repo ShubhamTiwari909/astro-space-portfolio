@@ -1,0 +1,62 @@
+[
+  {
+    "id": "shubham-tiwari",
+    "name": "Shubham Tiwari",
+    "role": "Frontend Engineer",
+    "location": "India",
+    "timezone": "Asia/Kolkata · UTC+5:30",
+    "availability": "Weekdays",
+    "openTo": "Frontend / platform roles",
+    "email": "shubhmtiwri00@gmail.com",
+    "yearsExperience": 4,
+    "resumePdf": "/Shubham_resume_2026.pdf",
+    "lede": "I build fast, accessible web platforms — and the systems that keep them fast as they grow.",
+    "socials": [
+      {
+        "network": "github",
+        "label": "GitHub",
+        "url": "https://github.com/ShubhamTiwari909",
+        "professional": true
+      },
+      {
+        "network": "linkedin",
+        "label": "LinkedIn",
+        "url": "https://www.linkedin.com/in/shubham-tiwari-b7544b193/",
+        "professional": true
+      },
+      {
+        "network": "devto",
+        "label": "dev.to",
+        "url": "https://dev.to/shubhamtiwari909",
+        "professional": true
+      },
+      {
+        "network": "instagram",
+        "label": "Instagram",
+        "url": "https://www.instagram.com/supremacism__shubh/",
+        "professional": false
+      }
+    ],
+    "philosophy": "Most frontend problems are really delivery problems — the interesting work is making the fast path the easy path for everyone who touches the codebase.",
+    "prose": [
+      "I've spent four years on frontend platforms — the kind where the hard part isn't the component, it's that a lot of people need to ship pages without breaking the build. Most of my work has been migrations and plumbing: moving legacy applications onto Next.js, standing up a headless CMS that took page publishing from two pages a sprint to two a day, and wiring a Playwright suite covering E2E, API, accessibility, and visual regression so releases stopped being a negotiation.",
+      "I care more about the second year of a codebase than the first week of it. In practice that means I'd rather add a lint rule than a conventions document, and I'll usually argue for the boring, typed, testable version of a feature. Outside of work I build small things to learn from — an AI content app on Gemini, a blog CMS on Payload — and I write up what breaks at dev.to."
+    ],
+    "fieldNotes": [
+      { "label": "Location", "value": "India" },
+      { "label": "Timezone", "value": "Asia/Kolkata · UTC+5:30" },
+      { "label": "Experience", "value": "4 years" },
+      { "label": "Focus", "value": "Frontend platforms, performance, accessibility" },
+      { "label": "Currently", "value": "Astro, design systems" },
+      { "label": "Availability", "value": "Weekdays" },
+      { "label": "Writes at", "value": "dev.to/shubhamtiwari909" },
+      { "label": "Open to", "value": "Frontend / platform roles" }
+    ],
+    "openQuestions": [
+      "How far can a design system go before it starts constraining product velocity?",
+      "What does genuinely accessible rich-text editing look like?",
+      "Where does AI-assisted development actually pay off in a large codebase — and where does it just add review load?"
+    ],
+    "tags": ["TypeScript", "React", "Design systems", "A11y", "Performance"]
+  }
+]

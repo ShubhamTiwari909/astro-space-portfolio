@@ -1,0 +1,34 @@
+---
+import { getEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Section from '../components/ui/Section.astro';
+
+const profile = await getEntry('profile', 'shubham-tiwari');
+if (!profile) throw new Error('profile entry missing');
+---
+
+<BaseLayout
+	title="Résumé · Shubham Tiwari"
+	description="Frontend Engineer with 4 years building fast, accessible web platforms. Readable résumé plus PDF download."
+>
+	<Section
+		id="dossier"
+		codename="Mission Dossier"
+		readout={`${profile.data.yearsExperience} years`}
+		title="Résumé"
+		lede="A readable version, plus the PDF for ATS pipelines."
+	>
+		<p class="shell">HTML résumé and print stylesheet — Phase 3.</p>
+	</Section>
+</BaseLayout>
+
+<style>
+	.shell {
+		font-family: var(--font-mono);
+		font-size: var(--text-data);
+		color: var(--color-ink-low);
+		padding: 2rem;
+		border: 1px dashed var(--color-hairline);
+		border-radius: var(--radius-card);
+	}
+</style>

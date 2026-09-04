@@ -1,0 +1,44 @@
+[
+  {
+    "id": "component-library",
+    "designation": "I-01",
+    "name": "Component library",
+    "claim": "Tailwind v4 + Framer Motion + typed hooks",
+    "body": "A component library built on Tailwind v4 with Framer Motion for movement and fully typed hooks for behaviour. The interesting parts are the API surface — how much a consumer has to know to use a component correctly — and keeping animation configurable without leaking implementation detail into props.",
+    "order": 1,
+    "evidence": "demo",
+    "links": [
+      {
+        "label": "Read the write-up",
+        "url": "https://dev.to/shubhamtiwari909/i-built-a-react-component-library-with-tailwind-v4-framer-motion-typed-hooks-19ci"
+      }
+    ]
+  },
+  {
+    "id": "playwright-suite",
+    "designation": "I-02",
+    "name": "Playwright automation suite",
+    "claim": "E2E, API, snapshot, a11y, link validation, auth flows",
+    "body": "A test suite that covers end-to-end flows, API contracts, UI snapshots, accessibility checks, link validation, and authentication workflows. The goal was release confidence: making a green pipeline mean something specific rather than something vague.",
+    "order": 2,
+    "evidence": "code"
+  },
+  {
+    "id": "multi-brand-cms",
+    "designation": "I-03",
+    "name": "Multi-brand monorepo CMS",
+    "claim": "Next.js + Payload + PostgreSQL across brands",
+    "body": "A CMS serving several brands from one monorepo. Shared primitives and per-brand overrides, so adding a brand is configuration rather than a fork. The measurable outcome was onboarding speed for a new brand and how much code stayed shared.",
+    "order": 3,
+    "evidence": "diagram"
+  },
+  {
+    "id": "orbit",
+    "designation": "I-04",
+    "name": "Orbit",
+    "claim": "Canvas n-body simulation with live telemetry",
+    "body": "An n-body gravity simulation on Canvas 2D, built for this site. It reports its own frame time, body count and device pixel ratio, halves its workload when it falls behind, and stops entirely when off-screen or hidden. Canvas rather than WebGL because 200 bodies do not need a GPU pipeline — which is the point.",
+    "order": 4,
+    "evidence": "live"
+  }
+]

@@ -1,19 +1,113 @@
 ---
-import Demo from "../components/Demo";
-import "../styles/global.css";
+/**
+ * The survey. Phase 1 renders the eight anchor sections as styled shells with
+ * their real codenames, titles and readouts; content lands in Phase 3, the
+ * hero and cosmos in Phase 2.
+ *
+ * Anchor ids are frozen from Phase 2 onward — they are a public API (§23).
+ */
+import { getCollection, getEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Section from '../components/ui/Section.astro';
+
+const profile = await getEntry('profile', 'shubham-tiwari');
+if (!profile) throw new Error('profile entry missing');
+
+const [skills, projects, articles, instruments] = await Promise.all([
+	getCollection('skills'),
+	getCollection('projects'),
+	getCollection('articles'),
+	getCollection('instruments'),
+]);
+
+const constellations = new Set(skills.map((s) => s.data.constellation));
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1 class="text-5xl">Astro</h1>
-		<Demo />
-	</body>
-</html>
+<BaseLayout
+	title={`${profile.data.name} — ${profile.data.role}`}
+	description={profile.data.lede}
+>
+	<Section
+		id="first-light"
+		codename="First Light"
+		readout={`${profile.data.location} · UTC+5:30`}
+		title={`Hi, I'm ${profile.data.name}`}
+		lede={profile.data.lede}
+	>
+		<p class="shell">Hero composition — Phase 2.</p>
+	</Section>
+
+	<Section
+		id="log"
+		codename="Observer's Log"
+		readout={`${profile.data.yearsExperience} years`}
+		title="About"
+	>
+		<p class="shell">Observer's Log — Phase 3.</p>
+	</Section>
+
+	<Section
+		id="atlas"
+		codename="The Atlas"
+		readout={`${skills.length} entries · ${constellations.size} constellations`}
+		title="Skills"
+	>
+		<p class="shell">Constellation map and skill list — Phase 3.</p>
+	</Section>
+
+	<Section
+		id="trajectory"
+		codename="Trajectory"
+		readout={profile.data.yearsExperience + ' years · 7 burn events'}
+		title="Experience"
+	>
+		<p class="shell">Trajectory spine — Phase 3.</p>
+	</Section>
+
+	<Section
+		id="worlds"
+		codename="Catalogued Worlds"
+		readout={`${projects.length} catalogued`}
+		title="Projects"
+	>
+		<p class="shell">World records — Phase 3.</p>
+	</Section>
+
+	<Section
+		id="instruments"
+		codename="Instrument Bay"
+		readout={`${instruments.length} instruments`}
+		title="What I Build"
+	>
+		<p class="shell">Instrument teaser — Phase 3.</p>
+	</Section>
+
+	<Section
+		id="transmissions"
+		codename="Transmissions"
+		readout={`${articles.length} latest`}
+		title="Writing"
+	>
+		<p class="shell">Transmission list — Phase 3.</p>
+	</Section>
+
+	<Section
+		id="uplink"
+		codename="Uplink"
+		readout={`${profile.data.timezone} · ${profile.data.availability}`}
+		title="Contact"
+	>
+		<p class="shell">Uplink panel — Phase 3.</p>
+	</Section>
+</BaseLayout>
+
+<style>
+	.shell {
+		font-family: var(--font-mono);
+		font-size: var(--text-data);
+		color: var(--color-ink-low);
+		padding: 2rem;
+		border: 1px dashed var(--color-hairline);
+		border-radius: var(--radius-card);
+	}
+</style>
