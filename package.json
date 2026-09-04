@@ -13,12 +13,16 @@
     "check": "astro check",
     "art": "node scripts/generate-art.mjs",
     "lint:tokens": "node scripts/lint-tokens.mjs",
-    "verify": "pnpm lint:tokens && pnpm check && pnpm build && pnpm test:content",
-    "test:content": "node tests/content-in-html.mjs"
+    "verify": "pnpm lint:tokens && pnpm check && pnpm build && pnpm test:content && pnpm test:budgets && pnpm test:scene && pnpm test:flight",
+    "test:content": "node tests/content-in-html.mjs",
+    "test:budgets": "node tests/budgets.mjs",
+    "test:scene": "node tests/delete-the-canvas.mjs",
+    "test:flight": "node --experimental-strip-types tests/flight-path.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.5",
     "@astrojs/sitemap": "^3.7.4",
+    "@react-three/fiber": "^9.7.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
@@ -27,6 +31,7 @@
     "react-dom": "^19.2.8",
     "sharp": "^0.35.4",
     "tailwindcss": "^4.3.3",
+    "three": "^0.185.1",
     "zod": "^4.5.4"
   },
   "allowScripts": {
@@ -34,6 +39,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@types/three": "^0.185.4",
     "typescript": "^6.0.3"
   }
 }

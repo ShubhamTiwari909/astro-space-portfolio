@@ -13,7 +13,17 @@
  */
 import ArtBackdrop from './ArtBackdrop.astro';
 import Grain from './Grain.astro';
+import DeepFieldScene from './scene/DeepFieldScene';
 ---
 
 <ArtBackdrop />
+
+{/*
+  The scene claims --z-scene, between the art and the grain. `client:idle`
+  so it never competes with LCP: the hero paints from static HTML, the
+  chunk is fetched after the browser goes idle, and the canvas cross-fades
+  in over the art once its first frame is drawn (§9.3, §20.2).
+*/}
+<DeepFieldScene client:idle />
+
 <Grain />

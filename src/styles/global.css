@@ -118,6 +118,9 @@
 	--duration-slow: 560ms;
 	--duration-cinematic: 900ms;
 	--duration-ambient: 24s;
+	/* Art → scene handover (§17.1). Its own token because it is a distinct
+	   specified timing, not a reuse of an interface duration. */
+	--duration-handover: 600ms;
 	--stagger: 60ms;
 
 	/* Backdrop stack (§17.1). --z-scene is reserved and left EMPTY in Phase 2;
