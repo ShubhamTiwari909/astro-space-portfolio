@@ -59,6 +59,25 @@ function stripComments(line) {
 
 const RULES = [
 	{
+		/*
+		 * Tailwind v4 shorthand. `duration-[var(--duration-fast)]` and
+		 * `duration-(--duration-fast)` compile to byte-identical CSS — the
+		 * only difference is the class name — so the bracket form is just
+		 * noise once a codebase reads almost entirely in tokens, which this
+		 * one does. Converting all 55 occurrences left the compiled output
+		 * at exactly 635 declaration blocks, unchanged.
+		 *
+		 * Only a BARE custom property is flagged. The shorthand cannot
+		 * express a fallback (`var(--x, 1)`) or a composite value (a shadow
+		 * with offsets), so those keep their brackets and are not matched.
+		 * `text-` needs a type hint — `text-(color:--b)` — because it takes
+		 * both colours and font sizes.
+		 */
+		id: 'varshorthand',
+		pattern: /(?:[a-z]+:)*[a-z][a-z-]*-\[var\(--[A-Za-z0-9-]+\)\]/g,
+		message: 'use the Tailwind v4 shorthand: utility-(--token), not utility-[var(--token)]',
+	},
+	{
 		id: 'hex',
 		// Hex colours, except inside a var() fallback chain or a comment.
 		pattern: /#[0-9a-fA-F]{3,8}\b/g,

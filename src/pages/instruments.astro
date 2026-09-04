@@ -94,6 +94,7 @@ const coverageLayers =
 	description="The instruments behind the products: a component library, a Playwright suite, a multi-brand CMS architecture, and one WebGL simulation with live telemetry."
 >
 	<Section
+		as="h1"
 		id="bay"
 		codename="Instrument Bay"
 		readout={`${instruments.length} instruments`}
@@ -103,12 +104,12 @@ const coverageLayers =
 		<div class="grid gap-8">
 			{
 				instruments.map((instrument) => (
-					<InstrumentPanel instrument={instrument}>
+					<InstrumentPanel instrument={instrument} as="h2">
 						{/* I-01 — two annotated excerpts from the published types. */}
 						{
 							instrument.id === 'component-library' &&
 								excerptsFor('component-library').map((excerpt) => (
-									<CodeExcerpt excerpt={excerpt} />
+									<CodeExcerpt excerpt={excerpt} as="h3" />
 								))
 						}
 
@@ -117,11 +118,11 @@ const coverageLayers =
 							instrument.id === 'playwright-suite' && (
 								<>
 									<div class="grid gap-3">
-										<h4
+										<h3
 											class="font-mono text-label tracking-[0.14em] text-ink-low uppercase"
 										>
 											Coverage layers
-										</h4>
+										</h3>
 										<ul class="m-0 flex list-none flex-wrap gap-2 p-0">
 											{coverageLayers.map((layer) => (
 												<li>
@@ -131,7 +132,7 @@ const coverageLayers =
 										</ul>
 									</div>
 									{excerptsFor('playwright-suite').map((excerpt) => (
-										<CodeExcerpt excerpt={excerpt} />
+										<CodeExcerpt excerpt={excerpt} as="h3" />
 									))}
 								</>
 							)

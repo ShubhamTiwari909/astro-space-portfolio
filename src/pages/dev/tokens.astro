@@ -64,7 +64,7 @@ const glows = ['glow-1', 'glow-2', 'glow-3'];
 	backdrop={false}
 	indexable={false}
 >
-	<div class="relative z-[var(--z-content)] mx-auto max-w-content px-[var(--gutter)] pt-[calc(var(--nav-h)+3rem)] pb-24">
+	<div class="relative z-(--z-content) mx-auto max-w-content px-(--gutter) pt-[calc(var(--nav-h)+3rem)] pb-24">
 		<h1 class="text-display-l">Design tokens &amp; primitives</h1>
 		<p class="text-data text-ink-low">
 			Internal reference. Master plan §17–§18. Every value below is a token —
@@ -101,14 +101,14 @@ const glows = ['glow-1', 'glow-2', 'glow-3'];
 		<div class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-5">
 			{uniqueBands.map((band) => (
 				<div class="grid gap-1 rounded-card border border-hairline bg-surface-0 p-3.5" style={`--b: ${band.hex}`}>
-					<div class="h-12 rounded-chip bg-[var(--b)] shadow-[0_0_24px_-6px_var(--b)]"></div>
+					<div class="h-12 rounded-chip bg-(--b) shadow-[0_0_24px_-6px_var(--b)]"></div>
 					<p class="mt-1.5 mb-0 text-data text-ink-hi">{band.name}</p>
 					<code class="font-mono text-[0.6875rem] text-ink-low">{band.hex}</code>
 					<p class="m-0 text-[0.625rem] leading-snug text-ink-low">{band.source}</p>
-					<p class:list={["mt-1 mb-0 font-mono text-[0.625rem] tracking-[0.04em]", band.contrastOnVoid >= 4.5 ? "text-[var(--b)]" : "text-danger"]}>
+					<p class:list={["mt-1 mb-0 font-mono text-[0.625rem] tracking-[0.04em]", band.contrastOnVoid >= 4.5 ? "text-(color:--b)" : "text-danger"]}>
 						{band.contrastOnVoid.toFixed(1)}:1 on void
 					</p>
-					<p class="mt-1 mb-0 text-data text-[var(--b)]">Link text at this band</p>
+					<p class="mt-1 mb-0 text-data text-(color:--b)">Link text at this band</p>
 				</div>
 			))}
 		</div>

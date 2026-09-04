@@ -20,7 +20,7 @@ import { CODE_THEME } from '../../lib/codeTheme';
 interface Props {
 	excerpt: CollectionEntry<'codeExcerpts'>;
 	/** Heading level, so the excerpt nests correctly under its instrument. */
-	as?: 'h4' | 'h5';
+	as?: 'h3' | 'h4' | 'h5';
 }
 
 const { excerpt, as: Heading = 'h4' }: Props = Astro.props;
@@ -60,15 +60,27 @@ const html = await codeToHtml(code, {
 const ordered = [...notes].sort((a, b) => a.line - b.line);
 ---
 
-<figure class="m-0 grid gap-4">
-	<div class="grid gap-1">
+<figure class="m-0 grid min-w-0 gap-4">
+	{/*
+	  `wrap-anywhere` on the provenance line is a fix for a measured 320px
+	  overflow, and the cause is worth naming: a package specifier like
+	  `@zentauri-ui/zentauri-components@2.12.0` is a single 39-character
+	  token with no break opportunity, so the element's min-content width
+	  was 309px inside a 238px column and pushed the page sideways. No
+	  amount of `min-w-0` on ancestors fixes that — the string itself has to
+	  be breakable. `anywhere` rather than `break-all` so it only breaks
+	  when there is no other option.
+	*/}
+	<div class="grid min-w-0 gap-1">
 		<Heading class="text-display-s">{title}</Heading>
-		<p class="font-mono text-[0.6875rem] tracking-[0.08em] text-ink-low uppercase">
+		<p
+			class="font-mono text-[0.6875rem] tracking-[0.08em] text-ink-low uppercase wrap-anywhere"
+		>
 			{source}
 		</p>
 	</div>
 
-	<p class="max-w-[var(--prose)] text-body text-ink-mid">{caption}</p>
+	<p class="max-w-(--prose) text-body text-ink-mid">{caption}</p>
 
 	{/*
 	  The scroll container is the one element allowed to scroll sideways
@@ -88,18 +100,25 @@ const ordered = [...notes].sort((a, b) => a.line - b.line);
 	<figcaption class="grid gap-3">
 		{
 			sourceNote && (
-				<p class="text-data text-ink-low">{sourceNote}</p>
+				<p class="text-data text-ink-low wrap-anywhere">{sourceNote}</p>
 			)
 		}
 		{
 			ordered.length > 0 && (
 				<ol class="m-0 grid list-none gap-3 p-0">
 					{ordered.map((note) => (
+						/*
+						 * Annotations quote code identifiers by nature — the L8
+						 * note here contains `ComponentPropsWithRef<'button'>`,
+						 * a 31-character token whose min-content measured 281px
+						 * and stretched the whole panel past a 320px viewport.
+						 * Same cause as the provenance line above, same fix.
+						 */
 						<li class="grid grid-cols-[3.25rem_1fr] gap-3 text-data text-ink-mid">
 							<span class="font-mono text-ink-low tabular-nums">
 								L{note.line}
 							</span>
-							<span>{note.text}</span>
+							<span class="min-w-0 wrap-anywhere">{note.text}</span>
 						</li>
 					))}
 				</ol>

@@ -17,7 +17,7 @@ const monoLabel = 'font-mono text-label tracking-[0.14em] uppercase';
 ---
 
 <footer
-	class="relative z-[var(--z-content)] border-t border-hairline px-[var(--gutter)] py-12"
+	class="relative z-(--z-content) border-t border-hairline px-(--gutter) py-12"
 >
 	<div
 		class="mx-auto grid max-w-content gap-4 md:grid-cols-[1fr_auto] md:items-center"
@@ -38,7 +38,7 @@ const monoLabel = 'font-mono text-label tracking-[0.14em] uppercase';
 							href={social.url}
 							target="_blank"
 							rel="noopener noreferrer"
-							class={`inline-flex min-h-11 items-center gap-1.5 text-ink-mid no-underline transition-colors duration-[var(--duration-fast)] ease-ui hover:text-accent ${monoLabel}`}
+							class={`inline-flex min-h-11 items-center gap-1.5 text-ink-mid no-underline transition-colors duration-(--duration-fast) ease-ui hover:text-accent ${monoLabel}`}
 						>
 							<Icon name={social.network as IconName} size={16} />
 							<span>{social.label}</span>

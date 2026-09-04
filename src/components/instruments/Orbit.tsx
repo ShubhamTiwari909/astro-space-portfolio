@@ -252,7 +252,7 @@ export default function Orbit({
 					type="button"
 					aria-pressed={running}
 					onClick={running ? stop : start}
-					className="rounded-chip border border-accent/60 px-4 py-2 font-mono text-label tracking-[0.14em] text-accent uppercase transition-colors duration-[var(--duration-fast)] ease-ui hover:border-accent hover:bg-accent/10 focus-visible:outline-2"
+					className="rounded-chip border border-accent/60 px-4 py-2 font-mono text-label tracking-[0.14em] text-accent uppercase transition-colors duration-(--duration-fast) ease-ui hover:border-accent hover:bg-accent/10 focus-visible:outline-2"
 				>
 					{running ? 'Stop simulation' : 'Start simulation'}
 				</button>
@@ -264,7 +264,7 @@ export default function Orbit({
 				)}
 			</div>
 
-			<p className="max-w-[var(--prose)] text-body text-ink-mid">{description}</p>
+			<p className="max-w-(--prose) text-body text-ink-mid">{description}</p>
 		</div>
 	);
 }

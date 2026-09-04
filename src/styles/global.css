@@ -372,6 +372,81 @@ html[data-scene-ready] {
 	}
 }
 
+/* ==========================================================================
+   Forced colors — §25.1, Phase 6 task 5.
+   
+   In Windows High Contrast (and any forced-colors mode) the OS palette is
+   authoritative and this site's palette is not. Measured before this block
+   existed: axe reported 240 contrast failures on the home route under
+   forced colors, with `#eaf0fa` text computed against a `#ffffff` ground —
+   the background had been forced, the text had not, so the entire page was
+   white-on-white.
+   
+   The fix is to map the semantic tokens onto system colors, so every
+   accent, hairline and code colour resolves through the same pair the OS
+   chose. Everything is remapped at the token layer rather than per
+   component, which is the whole reason the token layer exists.
+   ========================================================================== */
+
+@media (forced-colors: active) {
+	:root {
+		--color-void: Canvas;
+		--color-surface-0: Canvas;
+		--color-surface-1: Canvas;
+		--color-surface-2: Canvas;
+
+		--color-ink-hi: CanvasText;
+		--color-ink-mid: CanvasText;
+		--color-ink-low: GrayText;
+
+		/* The eight bands collapse to one system pair. Hue is decoration
+		   here, and a forced palette has no room for it. */
+		--band: LinkText;
+		--color-accent: LinkText;
+		--color-accent-dim: LinkText;
+		--color-danger: CanvasText;
+
+		/* Borders must be a real colour, not a mix: color-mix against a
+		   system keyword is not dependable, and a hairline that disappears
+		   takes every panel edge with it. */
+		--color-hairline: CanvasText;
+		--color-hairline-hi: CanvasText;
+
+		--code-fg: CanvasText;
+		--code-comment: GrayText;
+		--code-punct: CanvasText;
+		--code-keyword: LinkText;
+		--code-string: CanvasText;
+		--code-number: CanvasText;
+		--code-function: LinkText;
+		--code-type: LinkText;
+		--code-prop: CanvasText;
+
+		/* Glow carries no information and cannot survive a forced palette. */
+		--shadow-glow-1: none;
+		--shadow-glow-2: none;
+		--shadow-glow-3: none;
+		--shadow-panel: none;
+	}
+
+	/*
+	 * Both backdrop layers are decoration and both are aria-hidden already.
+	 * Removed rather than dimmed: forced colors exists so text sits on a
+	 * flat, predictable ground, and an image or a WebGL wash behind it is
+	 * exactly what the mode is asking us to stop doing.
+	 */
+	.art-plate,
+	[data-scene-tier] {
+		display: none !important;
+	}
+
+	/* Keep focus visible against the system ground. */
+	:focus-visible {
+		outline: 2px solid CanvasText;
+		outline-offset: 2px;
+	}
+}
+
 @media (prefers-contrast: more) {
 	:root {
 		--color-hairline: color-mix(in oklab, var(--band) 40%, transparent);

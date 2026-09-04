@@ -67,7 +67,7 @@ export default function CopyEmail({ email, targetId }: Props) {
 				type="button"
 				onClick={copy}
 				aria-label="Copy email address"
-				className="shrink-0 cursor-pointer rounded-chip border border-accent/35 bg-transparent px-3 py-2 font-mono text-label tracking-[0.14em] text-ink-hi uppercase transition-colors duration-[var(--duration-fast)] ease-ui hover:border-accent/60 hover:bg-surface-2 data-[state=copied]:border-accent data-[state=copied]:text-accent"
+				className="min-h-11 shrink-0 cursor-pointer rounded-chip border border-accent/35 bg-transparent px-3 py-2 font-mono text-label tracking-[0.14em] text-ink-hi uppercase transition-colors duration-(--duration-fast) ease-ui hover:border-accent/60 hover:bg-surface-2 data-[state=copied]:border-accent data-[state=copied]:text-accent"
 				data-state={state}
 			>
 				{LABEL[state]}

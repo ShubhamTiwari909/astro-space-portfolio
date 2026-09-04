@@ -28,7 +28,7 @@ const OVERFLOW = [
 ] as const;
 
 const ITEM_CLASS =
-	'flex w-full min-h-[var(--tabbar-h)] cursor-pointer flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-1 py-1.5 font-mono text-[0.5625rem] tracking-[0.08em] text-ink-low uppercase no-underline transition-colors duration-[var(--duration-fast)] ease-ui data-[active]:text-accent';
+	'flex w-full min-h-(--tabbar-h) cursor-pointer flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-1 py-1.5 font-mono text-[0.5625rem] tracking-[0.08em] text-ink-low uppercase no-underline transition-colors duration-(--duration-fast) ease-ui data-[active]:text-accent';
 
 function TabIcon({ name }: { name: string }) {
 	return (
@@ -95,7 +95,7 @@ export default function MobileNav() {
 				<div
 					aria-hidden="true"
 					onClick={() => setSheetOpen(false)}
-					className="fixed inset-0 z-[var(--z-overlay)] bg-void/70"
+					className="fixed inset-0 z-(--z-overlay) bg-void/70"
 				/>
 			)}
 
@@ -103,7 +103,7 @@ export default function MobileNav() {
 				aria-label="Sections"
 				ref={barRef}
 				data-hidden={hidden || undefined}
-				className="fixed inset-x-0 bottom-0 z-[var(--z-nav)] block border-t border-hairline bg-void/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md transition-transform duration-[var(--duration-fast)] ease-ui data-[hidden]:translate-y-full md:hidden"
+				className="fixed inset-x-0 bottom-0 z-(--z-nav) block border-t border-hairline bg-void/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md transition-transform duration-(--duration-fast) ease-ui data-[hidden]:translate-y-full md:hidden"
 			>
 				<ul className="m-0 grid list-none grid-cols-5 p-0">
 					{PRIMARY.map((item) => (

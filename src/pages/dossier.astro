@@ -41,6 +41,7 @@ const working = skills
 	description={`${profile.data.role} with ${profile.data.yearsExperience} years building fast, accessible web platforms. Readable résumé plus PDF download.`}
 >
 	<Section
+		as="h1"
 		id="dossier"
 		codename="Mission Dossier"
 		readout={`${profile.data.yearsExperience} years · ${profile.data.location}`}
@@ -83,12 +84,12 @@ const working = skills
 			}
 
 			<section>
-				<h3 class="mb-5 text-display-s">Experience</h3>
+				<h2 class="mb-5 text-display-s">Experience</h2>
 				<ol class="m-0 grid list-none gap-8 p-0">
 					{
 						experience.map((position) => (
 							<li>
-								<h4 class="text-display-s">{position.data.role}</h4>
+								<h3 class="text-display-s">{position.data.role}</h3>
 								<p
 									class="mt-1 mb-4 font-mono text-label tracking-[0.14em] text-accent uppercase"
 								>
@@ -125,7 +126,7 @@ const working = skills
 			</section>
 
 			<section>
-				<h3 class="mb-5 text-display-s">Skills</h3>
+				<h2 class="mb-5 text-display-s">Skills</h2>
 				<div class="grid gap-5">
 					<div>
 						<p
@@ -159,7 +160,7 @@ const working = skills
 			</section>
 
 			<section>
-				<h3 class="mb-5 text-display-s">Selected projects</h3>
+				<h2 class="mb-5 text-display-s">Selected projects</h2>
 				<ul class="m-0 grid list-none gap-4 p-0">
 					{
 						projects

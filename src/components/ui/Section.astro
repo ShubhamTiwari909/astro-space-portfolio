@@ -19,17 +19,33 @@ interface Props {
 	readout?: string;
 	title: string;
 	lede?: string;
+	/**
+	 * The section title's heading level.
+	 *
+	 * `h2` on the one-page survey, where the Hero owns the `h1`. But on a
+	 * sub-route the section *is* the page, and those shipped with no `h1` at
+	 * all — an `h2` as the first heading, which is a broken outline for
+	 * anyone navigating by headings.
+	 */
+	as?: 'h1' | 'h2';
 	class?: string;
 }
 
-const { id, codename, readout, title, lede, class: className = '' }: Props =
-	Astro.props;
+const {
+	id,
+	codename,
+	readout,
+	title,
+	lede,
+	as: Heading = 'h2',
+	class: className = '',
+}: Props = Astro.props;
 ---
 
 <section
 	id={id}
 	class:list={[
-		'relative z-[var(--z-content)] px-[var(--gutter)] py-[var(--section-y)]',
+		'relative z-(--z-content) px-(--gutter) py-(--section-y)',
 		className,
 	]}
 >
@@ -39,14 +55,14 @@ const { id, codename, readout, title, lede, class: className = '' }: Props =
 			class="mb-4 font-mono text-label tracking-[0.14em] text-ink-low uppercase"
 		>
 			<span>{codename}</span>
-			{readout && <span class="opacity-80"> · {readout}</span>}
+			{readout && <span> · {readout}</span>}
 		</p>
-		<h2 data-observe class="mb-4 text-display-l">{title}</h2>
+		<Heading data-observe class="mb-4 text-display-l">{title}</Heading>
 		{
 			lede && (
 				<p
 					data-observe
-					class="mb-12 max-w-[var(--prose)] text-body-l text-ink-mid"
+					class="mb-12 max-w-(--prose) text-body-l text-ink-mid"
 				>
 					{lede}
 				</p>

@@ -5,6 +5,72 @@ disproved an estimate in `space-portfolio-master-plan.md`, the correction is
 recorded here and in that document's Decision log — the plan is not edited
 to match reality silently.
 
+
+## Phase 6 — Responsive & Accessibility Hardening
+
+`pnpm test:browser` — 80 checks, five routes, on the built output through
+`astro preview`. Runs in CI.
+
+| Check | Coverage | Result |
+|-------|----------|--------|
+| axe-core WCAG 2.2 AA | 5 routes | 0 violations |
+| axe-core, reduced motion + forced colors | 3 routes | 0 violations |
+| Horizontal overflow | 5 routes × 9 widths (320→1920) | none |
+| Tap targets ≥44×44 | 5 routes × 3 widths | all pass |
+| 400% reflow (320 CSS px) | 5 routes | no two-axis scrolling |
+| Keyboard order, focus, traps | 5 routes, 10–39 stops each | all pass |
+| Heading outline, landmarks, decoration | 5 routes | all pass |
+| Reduced motion | home | 0 animations, content visible |
+| JavaScript disabled | 5 routes | 326–9,953 chars of text, links live |
+
+### Contrast, measured against the shipped CSS
+
+| Colour | Hex | On | Measured | Was documented |
+|--------|-----|----|----------|----------------|
+| Ion Cyan | #7DE2FF | void | 13.69:1 | ~13.0:1 |
+| Nebula Magenta | #FF5FA2 | void | **7.15:1** | ~7.4:1 ← overstated |
+| Stellar Blue | #8FB8FF | void | 10.09:1 | ~9.8:1 |
+| Solar Ember | #FFB454 | void | 11.48:1 | ~10.9:1 |
+| Plasma Violet | #A78BFA | void | **7.44:1** | ~7.9:1 ← overstated |
+| Aurora Green | #5BE9B9 | void | 13.31:1 | ~11.6:1 |
+| Signal Gold | #FFD76E | void | 14.65:1 | ~13.1:1 |
+| ink-hi | #EAF0FA | void | 17.69:1 | ~16.4:1 |
+| ink-mid | #9BA8C2 | surface-0 | 8.17:1 | ~7.3:1 |
+| ink-low | #7C89A5 | surface-0 | 5.56:1 | ~4.9:1 |
+| ink-low | #7C89A5 | surface-2 | 4.84:1 | prohibited pairing |
+
+Nothing ever breached 4.5:1. But the two bands §25.2 itself named as having
+the least headroom were the two it **overstated**, which is the direction
+that matters. Now measured on every build with a 0.02 tolerance.
+
+### Fixed here
+
+| Problem | Measured | Cause |
+|---------|----------|-------|
+| No `h1` on 3 routes | h1 × 0 | `Section` always rendered `h2` |
+| Forced-colors contrast | 240 axe violations | dark palette did not adapt; `#eaf0fa` on forced `#ffffff` |
+| Section readout contrast | <4.5:1 | `opacity-80` on `text-ink-low` |
+| Skip link target | 175×**43** | one pixel short of 44 |
+| TopBar wordmark | 124×**17** | no vertical padding |
+| Copy button | 62×**35** | — |
+| Email link | 142×**20** | — |
+| Instrument links | 90×**26** | — |
+| 320px sideways scroll | min-content **309px** in a 238px column | two unbreakable code tokens; the L8 annotation's `ComponentPropsWithRef<'button'>` alone measured **281px** |
+
+### Tailwind v4 shorthand sweep
+
+55 `utility-[var(--token)]` classes → `utility-(--token)`. Compiled CSS:
+**635 declaration blocks before, 635 after**, one intended difference
+(`opacity:var(--art-strength,1)` → `opacity:var(--art-strength)`).
+
+### Still outstanding — needs a person and a device
+
+Real iOS Safari and Android Chrome on hardware (task 1), and VoiceOver +
+NVDA (task 4). Emulation cannot stand in for either, and neither is claimed
+as done.
+
+---
+
 ## Phase 5 — Engineering Showcase
 
 | Resource | Measured | Budget |

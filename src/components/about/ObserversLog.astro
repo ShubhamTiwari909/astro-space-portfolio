@@ -50,7 +50,7 @@ const { profile }: Props = Astro.props;
 
 		{
 			profile.prose?.map((paragraph) => (
-				<p data-observe class="mb-5 max-w-[var(--prose)] text-body-l">
+				<p data-observe class="mb-5 max-w-(--prose) text-body-l">
 					{paragraph}
 				</p>
 			))

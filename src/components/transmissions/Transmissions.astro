@@ -15,10 +15,17 @@ interface Props {
 	limit?: number;
 	moreHref?: string;
 	moreLabel?: string;
+	/** Passed through to each row so the outline matches the host page. */
+	headingAs?: 'h2' | 'h3';
 }
 
-const { articles, limit, moreHref, moreLabel = 'Load more' }: Props =
-	Astro.props;
+const {
+	articles,
+	limit,
+	moreHref,
+	moreLabel = 'Load more',
+	headingAs = 'h3',
+}: Props = Astro.props;
 
 const sorted = [...articles].sort((a, b) =>
 	b.data.publishedAt.localeCompare(a.data.publishedAt),
@@ -30,7 +37,7 @@ const shown = limit ? sorted.slice(0, limit) : sorted;
 	<ol class="m-0 grid list-none p-0">
 		{
 			shown.map((article) => (
-				<TransmissionRow article={article.data} slug={article.id} />
+				<TransmissionRow article={article.data} slug={article.id} as={headingAs} />
 			))
 		}
 	</ol>

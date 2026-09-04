@@ -48,9 +48,18 @@ check(
 );
 
 // ── 2. The art fallback is unconditional ─────────────────────────────────
+/*
+ * Matched on `data-art-layer`, not on a class name. This assertion used to
+ * grep for `z-[var(--z-art)]` and broke the moment those classes moved to
+ * Tailwind v4's `z-(--z-art)` shorthand — a rename with no behavioural
+ * change failed a gate about whether the fallback exists at all. A test
+ * guarding a guarantee should key on a stable hook, not on the styling
+ * syntax that happens to be in fashion.
+ */
 check(
 	'art fallback layer present',
-	/class="[^"]*z-\[var\(--z-art\)\]/.test(html),
+	/<div[^>]*\sdata-art-layer/.test(html),
+	'the ArtBackdrop container must carry data-art-layer',
 );
 const plates = (html.match(/class="art-plate/g) ?? []).length;
 check('an art plate per band', plates === 8, `found ${plates}`);

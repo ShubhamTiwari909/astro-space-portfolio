@@ -580,7 +580,7 @@ The hero does not pin, snap, or scroll-jack. On first scroll:
 
 **Technical.** `Hero.astro` (static) + `StarField.tsx` island (`client:idle` + `client:media`). Canvas is `position: fixed; inset: 0; z-index: 1; pointer-events: none`, sized to `min(devicePixelRatio, 1.5)`. Star data is generated from a seeded PRNG so the field is deterministic across reloads (a "random" sky that changes every reload feels broken).
 
-**Accessibility.** `<h1>` contains the full accessible name "Hi, I'm Shubham Tiwari — Frontend Engineer" (the visual line break is `<span>`-based, not two headings). Canvas is `aria-hidden="true"` and `role="presentation"`. Corner ticks and rules are CSS pseudo-elements, invisible to AT. Stat strip is a `<dl>`. Contrast per §25.2: name ~16.4:1, lede ~7.3:1, mono eyebrow ~4.9:1 — all to be verified with a checker in Phase 1.
+**Accessibility.** `<h1>` contains the full accessible name "Hi, I'm Shubham Tiwari — Frontend Engineer" (the visual line break is `<span>`-based, not two headings). Canvas is `aria-hidden="true"` and `role="presentation"`. Corner ticks and rules are CSS pseudo-elements, invisible to AT. Stat strip is a `<dl>`. Contrast per §25.2, measured: name 17.69:1, lede 8.17:1, mono eyebrow 5.56:1.
 
 **Performance.** Hero ships **0KB of JS** for its content — the heading, lede, CTAs and stats are all static HTML. LCP target ≤2.2s desktop / ≤3.0s mobile, and the LCP element is the name. The scene chunk hydrates after idle and never competes with it (§9.3). No layout shift: portrait, stat strip and the fixed backdrop all reserve or sit outside flow. Budget: hero-critical bytes (HTML+CSS+fonts+portrait+hero art plate) ≤400KB desktop, ≤300KB mobile.
 
@@ -1797,28 +1797,34 @@ The scene is decorative in the strict WCAG sense: **it conveys no information th
 
 ### 25.2 Contrast targets
 
-All values must be verified with a contrast checker during Phase 1 and re-verified after any token change. Approximate computed ratios for the §18 palette:
+**Measured against the shipped stylesheet by `tests/contrast.mjs`, which runs
+on every build.** The figures below are no longer estimates: the test reads
+the tokens out of `dist/_astro/*.css`, computes WCAG 2.x ratios, and fails if
+any value moves. Phase 6 replaced the original approximations, which had
+drifted by up to 1.7 — and in the two cases that mattered they were
+*overstated*, which is the dangerous direction (see below).
 
-| Foreground | Background | Ratio | Use | Requirement |
-|-----------|-----------|-------|-----|-------------|
-| `ink-hi` #EAF0FA | `void` #04060D | ~16.4:1 | Headings, key values | ≥4.5:1 ✓ |
-| `ink-mid` #9BA8C2 | `surface-0` #080C16 | ~7.3:1 | Body copy | ≥4.5:1 ✓ |
-| `ink-low` #7C89A5 | `surface-0` #080C16 | ~4.9:1 | Labels, captions (small text) | ≥4.5:1 ✓ |
+| Foreground | Background | Measured | Use | Requirement |
+|-----------|-----------|----------|-----|-------------|
+| `ink-hi` #EAF0FA | `void` #04060D | **17.69:1** | Headings, key values | ≥4.5:1 ✓ |
+| `ink-mid` #9BA8C2 | `surface-0` #080C16 | **8.17:1** | Body copy | ≥4.5:1 ✓ |
+| `ink-low` #7C89A5 | `surface-0` #080C16 | **5.56:1** | Labels, captions (small text) | ≥4.5:1 ✓ |
+| `ink-low` #7C89A5 | `surface-2` #141C2E | **4.84:1** | **Prohibited** — passes, but has no headroom left | n/a |
 | `hairline` (band 12%) | `surface-1` | <3:1 | **Decorative only** — never the sole indicator of a boundary or state | n/a |
 
 **All eight bands, on `void` — every one must clear 4.5:1, because any of them can be the link colour:**
 
-| Band | Hex | Ratio on void | Status |
-|------|-----|--------------|--------|
-| Ion Cyan | #7DE2FF | ~13.0:1 | ✓ |
-| Nebula Magenta | #FF5FA2 | ~7.4:1 | ✓ |
-| Stellar Blue | #8FB8FF | ~9.8:1 | ✓ |
-| Solar Ember | #FFB454 | ~10.9:1 | ✓ |
-| Plasma Violet | #A78BFA | ~7.9:1 | ✓ |
-| Aurora Green | #5BE9B9 | ~11.6:1 | ✓ |
-| Signal Gold | #FFD76E | ~13.1:1 | ✓ |
+| Band | Hex | Measured on void | Was documented | Status |
+|------|-----|-----------------|----------------|--------|
+| Ion Cyan | #7DE2FF | **13.69:1** | ~13.0:1 | ✓ |
+| Nebula Magenta | #FF5FA2 | **7.15:1** | ~7.4:1 | ✓ (overstated) |
+| Stellar Blue | #8FB8FF | **10.09:1** | ~9.8:1 | ✓ |
+| Solar Ember | #FFB454 | **11.48:1** | ~10.9:1 | ✓ |
+| Plasma Violet | #A78BFA | **7.44:1** | ~7.9:1 | ✓ (overstated) |
+| Aurora Green | #5BE9B9 | **13.31:1** | ~11.6:1 | ✓ |
+| Signal Gold | #FFD76E | **14.65:1** | ~13.1:1 | ✓ |
 
-This is *why* the bands are all light, high-value hues rather than the saturated mid-tones a "space palette" usually reaches for: a deep nebula purple would look right and fail contrast. **Magenta (7.4:1) and Violet (7.9:1) have the least headroom** — they are the first two to re-verify if any token changes, and neither may be used on `surface-2` at label sizes without re-measuring.
+This is *why* the bands are all light, high-value hues rather than the saturated mid-tones a "space palette" usually reaches for: a deep nebula purple would look right and fail contrast. **Magenta (7.15:1) and Violet (7.44:1) have the least headroom** — they are the first two to re-verify if any token changes, and neither may be used on `surface-2` at label sizes without re-measuring. The original table put these two at 7.4 and 7.9; both were *overstated*, which is the failure direction that matters. Every other estimate was conservative. This is exactly why the numbers are now measured on every build rather than written down once.
 
 `ink-low` has the least headroom of the inks: never below 12px, never for body copy, never on `surface-2`.
 
@@ -3348,4 +3354,21 @@ Owner directive: *"space/universe images, 3D components, something unique, React
 | 2026-09-04 | 5 | The poster is a **screenshot of the running simulation** (`pnpm poster`) | §14.3 requires the poster to stay in sync with the real sim's look, and it is what most visitors see — everyone below 1024px and everyone under `prefers-reduced-motion`. A hand-made approximation would drift every time the physics changed, invisibly to us. Generated by driving real Chrome, so it cannot lie |
 | 2026-09-04 | 5 | `shiki` added as a **dev dependency**, pinned to Astro's own 4.4.3 | Astro bundles Shiki for Markdown but exposes no helper for arbitrary strings, and its `css-variables` theme is not in the v4 bundle. A theme whose colours are all `var()` is a better fit anyway: highlighting is driven by the token layer rather than a second palette. Build-time only — the shipped output is `<span>`s, and the route ships no highlighter |
 | 2026-09-04 | 5 | `playwright-core` added as a **dev dependency**; `token-lint-ignore` added to the token linter | Playwright drives the poster generator and the visual passes, and Phase 6 needs it regardless. The linter gained a line-level opt-out **requiring a stated reason** (media queries cannot use custom properties; an `IntersectionObserver` margin is not a style value) and learned to recognise `{/* … */}` comment blocks, which it had been linting as code |
+
+### Phase 6 — Responsive & Accessibility Hardening (implementation corrections)
+
+| Date | Phase | Decision / Deviation | Reason |
+|------|-------|---------------------|--------|
+| 2026-09-04 | 6 | **BUG FIXED: three sub-routes shipped with no `h1` at all.** `/instruments`, `/dossier` and `/transmissions` opened on an `h2` | `Section` always rendered `h2`, which is right on the one-page survey where the Hero owns the `h1` and wrong everywhere else. It gained an `as` prop, and the level is now threaded down through `InstrumentPanel`, `Transmissions`/`TransmissionRow` and the dossier's own sections so nothing skips a level. axe never caught this — "page has one main heading" is a best-practice rule, not a WCAG one, which is why the suite asserts the outline directly |
+| 2026-09-04 | 6 | **BUG FIXED: 240 axe contrast violations under forced colors.** A `@media (forced-colors: active)` block now maps the tokens onto system colours | The site declared a dark palette that did not adapt: measured, the *background* was forced to `#ffffff` while the text stayed `#eaf0fa`, so the entire home route was white-on-white in Windows High Contrast. Fixed at the token layer — `Canvas`, `CanvasText`, `GrayText`, `LinkText` — which is the whole reason a token layer exists; the eight bands collapse to one system pair, glows go to `none`, and both decorative backdrop layers are removed rather than dimmed, because forced colors exists precisely so text sits on a flat predictable ground |
+| 2026-09-04 | 6 | **BUG FIXED: the section eyebrow's readout failed contrast.** `opacity-80` removed | `text-ink-low` at 80% opacity fell under 4.5:1. The readout is already distinguished by its `·` separator, so the dimming was decoration bought with contrast — the one trade this project does not make |
+| 2026-09-04 | 6 | **BUG FIXED: five tap targets under 44×44** (§25.1) | The skip link was 43px — one pixel short, which is the kind of miss only measurement finds; the TopBar wordmark 124×17; the Copy button 62×35; the email link 142×20; the instrument footer links 90×26. All now `min-h-11`. Inline links inside running prose are deliberately exempt: WCAG 2.5.8 excludes targets in a sentence, and padding a link in a paragraph to 44px would wreck the line rhythm |
+| 2026-09-04 | 6 | **BUG FIXED: `/instruments` scrolled sideways at 320px, and failed 400% reflow.** Two unbreakable code tokens | Both causes named in Phase 6's own implementation notes, and it took measuring the ancestor chain to tell them apart. First a grid item with `min-width: auto` around an SVG (`min-w-0` on the figure). Then the real one: the provenance line `@zentauri-ui/zentauri-components@2.12.0` is a single 39-character token, and the L8 annotation quotes `ComponentPropsWithRef<'button'>` with a **measured min-content of 281px inside a 238px column**. No amount of `min-w-0` fixes that — the string itself has to break, so those lines carry `wrap-anywhere`. Annotations quote identifiers by nature, so this is a property of the component, not of one excerpt |
+| 2026-09-04 | 6 | **§25.2's contrast table was wrong and is now measured on every build** (`tests/contrast.mjs`) | The original figures were explicitly "approximate … to be verified with a checker". Verified: they had drifted by up to 1.7, and — the part that matters — **the two bands the table itself flagged as having least headroom were both overstated**: Magenta documented ~7.4 but measures 7.15, Violet ~7.9 but measures 7.44. Every other estimate was conservative. Nothing breached 4.5:1, so no user was ever harmed, but a wrong accessibility table is worse than none because someone will trust it. The table now holds exact measurements, read out of the shipped CSS, with a 0.02 tolerance so any token change fails the build |
+| 2026-09-04 | 6 | §25.2 says "all **eight** bands" and lists **seven** | There are eight *sections* but seven band hues: First Light and Uplink share Ion Cyan. Seven is correct |
+| 2026-09-04 | 6 | **All 55 `utility-[var(--token)]` classes converted to Tailwind v4's `utility-(--token)` shorthand**, with a lint rule to hold it | Owner request. Proven behaviour-preserving rather than assumed: the compiled stylesheet has **635 declaration blocks before and after**, and the single difference is the one intended change — `opacity-[var(--art-strength,1)]` lost a fallback that was already redundant, since `--art-strength` is defined on `:root` and an invalid `var()` on a non-inherited property resolves to its initial value anyway. `text-` uses the explicit `text-(color:--b)` hint because it takes both colours and font sizes; a fallback or a composite value cannot use the shorthand and keeps its brackets |
+| 2026-09-04 | 6 | The token linter learned two things it should always have known | It had been linting `{/* … */}` comment blocks as code, so a plan quotation inside one counted as a violation. It also gained a line-level `token-lint-ignore: <reason>` opt-out where a token is genuinely impossible — a media query cannot use a custom property, and an `IntersectionObserver` margin is not a style value. **A reason is required**; the marker alone does nothing, because a silent suppression would defeat the linter as thoroughly as not having one |
+| 2026-09-04 | 6 | **BUG FIXED (in the tests): the delete-the-canvas gate was keyed on a class name** | It grepped for `z-[var(--z-art)]` and failed the moment those classes took the v4 shorthand — a pure rename failing a gate about whether the fallback layer exists at all. It now matches `data-art-layer`. A test guarding a guarantee must key on a stable hook, not on styling syntax |
+| 2026-09-04 | 6 | Task 1's real-hardware pass and task 4's screen-reader pass are **NOT done, and are not claimed to be** | They need a person with an iPhone, an Android device, VoiceOver and NVDA. Everything a machine can check honestly is automated in `tests/browser-suite.mjs` and runs in CI — axe-core WCAG 2.2 AA on five routes, overflow at nine widths, tap targets, keyboard order and focus visibility, keyboard traps, heading outline, decoration staying out of the a11y tree, reduced motion, forced colors, 400% reflow, and the no-JavaScript pass: **80 checks**. What is automated is the part that would silently regress; the manual passes are a one-time sign-off and remain open |
+| 2026-09-04 | 6 | CI added (`.github/workflows/verify.yml`), running the whole of `pnpm verify` | Every gate in it corresponds to a written promise in this document. Two have already caught regressions no review would have: the scene-chunk budget silently stopped measuring three.js when the bundler hoisted it to a shared chunk, and the contrast table had drifted. CI uses the Playwright-managed Chromium via `BROWSER_CHANNEL=''`; locally the suite drives real Chrome, and SwiftShader is forced in both so WebGL cannot fail silently and let a scene assertion pass for the wrong reason |
 

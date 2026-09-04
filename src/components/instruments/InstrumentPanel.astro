@@ -16,9 +16,17 @@ import ExternalLink from '../ui/ExternalLink.astro';
 
 interface Props {
 	instrument: CollectionEntry<'instruments'>;
+	/**
+	 * Heading level for the instrument's name. `h3` suits the home-route
+	 * teaser context, where a Section owns an `h2`; on `/instruments` the
+	 * Section title is the page `h1`, so these become `h2` — otherwise the
+	 * outline jumps h1 → h3, which is a broken document for anyone
+	 * navigating by headings.
+	 */
+	as?: 'h2' | 'h3';
 }
 
-const { instrument }: Props = Astro.props;
+const { instrument, as: Heading = 'h3' }: Props = Astro.props;
 const { designation, name, claim, body, evidence, links } = instrument.data;
 
 /** What the reader is about to be shown, named honestly. */
@@ -41,14 +49,14 @@ const evidenceLabel = {
 			<Chip>{evidenceLabel}</Chip>
 		</div>
 
-		<h3 class="text-display-m">{name}</h3>
+		<Heading class="text-display-m">{name}</Heading>
 
 		<p class="font-mono text-data tracking-[0.04em] text-ink-low">{claim}</p>
 	</header>
 
-	<p class="max-w-[var(--prose)] text-body text-ink-mid">{body}</p>
+	<p class="max-w-(--prose) text-body text-ink-mid">{body}</p>
 
-	<div class="grid gap-8">
+	<div class="grid min-w-0 gap-8">
 		<slot />
 	</div>
 
@@ -65,7 +73,9 @@ const evidenceLabel = {
 						data-analytics-action="link"
 						data-analytics-label={link.label}
 					>
-						<ExternalLink href={link.url}>{link.label}</ExternalLink>
+						<ExternalLink href={link.url} class="min-h-11">
+							{link.label}
+						</ExternalLink>
 					</span>
 				))}
 			</footer>

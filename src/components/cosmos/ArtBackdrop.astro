@@ -88,13 +88,14 @@ body[data-band="${l.section}"] .art-plate[data-plate-band="${l.section}"]{
   still the complete no-WebGL experience (§17.1).
 */}
 <div
+	data-art-layer
 	aria-hidden="true"
-	class="fixed inset-0 z-[var(--z-art)] bg-void pointer-events-none opacity-[var(--art-strength,1)] transition-opacity duration-[var(--duration-handover)] ease-soft"
+	class="fixed inset-0 z-(--z-art) bg-void pointer-events-none opacity-(--art-strength) transition-opacity duration-(--duration-handover) ease-soft"
 >
 	{
 		layers.map((layer) => (
 			<div
-				class="art-plate absolute inset-0 bg-center bg-cover bg-no-repeat opacity-0 transition-opacity duration-[var(--band-fade)] ease-soft"
+				class="art-plate absolute inset-0 bg-center bg-cover bg-no-repeat opacity-0 transition-opacity duration-(--band-fade) ease-soft"
 				data-plate-band={layer.section}
 			/>
 		))

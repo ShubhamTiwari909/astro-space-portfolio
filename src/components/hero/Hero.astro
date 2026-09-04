@@ -41,7 +41,7 @@ const reveal =
 
 <section
 	id="first-light"
-	class="reveal-root relative z-[var(--z-content)] flex min-h-[min(100svh,var(--hero-max-h))] items-center px-[var(--gutter)] pt-[calc(var(--nav-h)+1.5rem)] pb-12 max-md:min-h-[88svh]"
+	class="reveal-root relative z-(--z-content) flex min-h-[min(100svh,var(--hero-max-h))] items-center px-(--gutter) pt-[calc(var(--nav-h)+1.5rem)] pb-12 max-md:min-h-[88svh]"
 >
 	<div
 		class="mx-auto grid w-full max-w-content gap-10 lg:grid-cols-[8fr_4fr] lg:items-center lg:gap-16"
@@ -124,7 +124,7 @@ const reveal =
 								href={social.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								class={`inline-flex min-h-11 items-center gap-1.5 text-ink-mid no-underline transition-colors duration-[var(--duration-fast)] ease-ui hover:text-accent ${monoLabel}`}
+								class={`inline-flex min-h-11 items-center gap-1.5 text-ink-mid no-underline transition-colors duration-(--duration-fast) ease-ui hover:text-accent ${monoLabel}`}
 							>
 								<Icon name={social.network as IconName} size={14} />
 								<span>{social.label}</span>

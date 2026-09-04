@@ -15,11 +15,11 @@ const { name, resumePdf }: Props = Astro.props;
 ---
 
 <header
-	class="fixed inset-x-0 top-0 z-[var(--z-nav)] flex h-[var(--nav-h)] items-center justify-between gap-4 border-b border-hairline bg-void/72 px-[var(--gutter)] backdrop-blur-md"
+	class="fixed inset-x-0 top-0 z-(--z-nav) flex h-(--nav-h) items-center justify-between gap-4 border-b border-hairline bg-void/72 px-(--gutter) backdrop-blur-md"
 >
 	<a
 		href="/"
-		class="font-mono text-label tracking-[0.14em] text-ink-hi uppercase no-underline"
+		class="inline-flex min-h-11 items-center font-mono text-label tracking-[0.14em] text-ink-hi uppercase no-underline"
 	>
 		{name}
 	</a>

@@ -18,13 +18,14 @@ const articles = await getCollection('articles');
 	description="Articles on frontend platforms, Next.js, Tailwind, testing and performance — published on dev.to."
 >
 	<Section
+		as="h1"
 		id="transmissions"
 		codename="Transmissions"
 		readout={`${articles.length} signals`}
 		title="Writing"
 		lede="Everything published so far. Full posts live on dev.to."
 	>
-		<Transmissions articles={articles} />
+		<Transmissions articles={articles} headingAs="h2" />
 
 		<div class="mt-10 flex flex-wrap gap-3">
 			<Button variant="secondary" href="/" icon="arrow-right">

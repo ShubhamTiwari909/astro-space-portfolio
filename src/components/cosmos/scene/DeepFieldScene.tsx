@@ -229,7 +229,7 @@ export default function DeepFieldScene({ planets, burnEvents }: Props) {
 			data-scene-tier={tier.name}
 			data-scene-dpr={tier.dpr}
 			data-scene-stars={tier.stars}
-			className="pointer-events-none fixed inset-0 z-[var(--z-scene)] opacity-0 transition-opacity duration-[var(--duration-handover)] ease-soft data-[scene-ready]:opacity-100 motion-reduce:transition-none"
+			className="pointer-events-none fixed inset-0 z-(--z-scene) opacity-0 transition-opacity duration-(--duration-handover) ease-soft data-[scene-ready]:opacity-100 motion-reduce:transition-none"
 		>
 			<SceneBoundary onError={() => setFailed(true)}>
 				<Canvas

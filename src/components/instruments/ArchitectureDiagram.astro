@@ -49,8 +49,16 @@ function rowX(count: number, index: number): number {
 }
 ---
 
+{/*
+  `min-w-0` on the figure is load-bearing, not tidying. A grid item's
+  automatic minimum size is its min-content width, and this one contains an
+  SVG with `min-w-[34rem]`; without it the column refuses to shrink below
+  544px and the whole panel — article, header, headings and all — overflows
+  a 320px viewport. The scroll container inside cannot help while its own
+  parent is being stretched.
+*/}
 <div class="grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:items-start lg:gap-10">
-	<figure class="m-0 grid gap-3">
+	<figure class="m-0 grid min-w-0 gap-3">
 		<div class="overflow-x-auto rounded-card border border-hairline bg-void/50 p-4">
 			<svg
 				viewBox={`0 0 ${W} 430`}
