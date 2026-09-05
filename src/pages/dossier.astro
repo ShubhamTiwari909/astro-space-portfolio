@@ -34,9 +34,17 @@ const core = skills
 const working = skills
 	.filter((s) => s.data.tier === 'WORKING')
 	.sort((a, b) => b.data.sortScore - a.data.sortScore);
+/*
+ * §8.3: "no cosmos behind it" — a single 68ch column on a solid panel, so
+ * the page reads as a document and prints as one. `scene={false}` is kept
+ * explicit alongside `backdrop={false}` so that re-enabling the backdrop
+ * later cannot quietly bring the 226KB WebGL chunk back to a reading
+ * route (§26.2).
+ */
 ---
 
 <BaseLayout
+	backdrop={false}
 	scene={false}
 	title="Résumé · Shubham Tiwari"
 	description={`${profile.data.role} with ${profile.data.yearsExperience} years building fast, accessible web platforms. Readable résumé plus PDF download.`}

@@ -23,14 +23,25 @@ const { name, resumePdf }: Props = Astro.props;
 	>
 		{name}
 	</a>
+	{/*
+	  Goes to the PAGE, not the PDF.
+	
+	  It said "Dossier" and downloaded a file, which left `/dossier` with no
+	  entry point anywhere on the site — the only link to it in the whole
+	  build was inside the `/resume` redirect stub. That defeated the route's
+	  entire rationale (§8.3: HTML is indexable, linkable, and readable on a
+	  phone in a way a PDF is not).
+	
+	  The PDF stays one tap away everywhere it matters: the Hero and Uplink
+	  both carry a direct "Download résumé", and the dossier page opens with
+	  a Download PDF button. No analytics event here, because navigating to
+	  a page is not a download and §28.1's event set is deliberately closed.
+	*/}
 	<Button
 		variant="secondary"
-		href={resumePdf}
-		icon="arrow-down"
-		download
+		href="/dossier"
+		icon="arrow-right"
 		class="min-h-9 !px-3.5"
-		data-analytics="dossier_download"
-		data-analytics-location="topbar"
 	>
 		Dossier
 	</Button>

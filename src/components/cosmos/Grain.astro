@@ -12,7 +12,7 @@ const grain = await getImage({ src: grainSrc, format: 'webp', quality: 90 });
 
 <div
 	aria-hidden="true"
-	class="fixed inset-0 z-(--z-grain) pointer-events-none opacity-[0.03] mix-blend-overlay bg-repeat bg-[size:128px_128px]"
+	class="fixed inset-0 z-(--z-grain) pointer-events-none opacity-[0.03] mix-blend-overlay bg-repeat bg-size-[128px_128px]"
 	style={`background-image:url("${grain.src}")`}
 >
 </div>
