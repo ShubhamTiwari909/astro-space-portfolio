@@ -45,7 +45,7 @@ export default function SectionRail() {
 	return (
 		<nav
 			aria-label="Sections"
-			className="group/rail fixed end-0 top-1/2 z-(--z-rail) hidden -translate-y-1/2 items-center gap-3 pe-4 lg:flex"
+			className="group/rail fixed inset-e-0 top-1/2 z-(--z-rail) hidden -translate-y-1/2 items-center gap-3 pe-4 lg:flex"
 		>
 			<ul className="order-1 m-0 grid list-none gap-1 p-0 text-end">
 				{BANDS.map((band, index) => (
@@ -54,13 +54,13 @@ export default function SectionRail() {
 							href={`#${band.section}`}
 							aria-current={index === activeIndex ? 'true' : undefined}
 							data-active={index === activeIndex || undefined}
-							className="group/tick flex min-h-[1.375rem] items-center justify-end gap-2 px-1 text-ink-low no-underline transition-colors duration-(--duration-base) ease-ui hover:text-ink-hi data-[active]:text-accent"
+							className="group/tick flex min-h-5.5 items-center justify-end gap-2 px-1 text-ink-low no-underline transition-colors duration-(--duration-base) ease-ui hover:text-ink-hi data-active:text-accent"
 						>
 							<span
 								aria-hidden="true"
-								className="block h-px w-1.5 bg-current transition-[width] duration-(--duration-base) ease-ui group-data-[active]/tick:w-3 group-data-[active]/tick:shadow-glow-1"
+								className="block h-px w-1.5 bg-current transition-[width] duration-(--duration-base) ease-ui group-data-active/tick:w-3 group-data-active/tick:shadow-glow-1"
 							/>
-							<span className="font-mono text-[0.625rem] tracking-[0.14em] uppercase opacity-0 transition-opacity duration-(--duration-fast) ease-ui group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-[active]/tick:opacity-100 2xl:opacity-100">
+							<span className="font-mono text-[0.625rem] tracking-[0.14em] uppercase opacity-0 transition-opacity duration-(--duration-fast) ease-ui group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-active/tick:opacity-100 2xl:opacity-100">
 								{LABELS[band.section]}
 							</span>
 						</a>

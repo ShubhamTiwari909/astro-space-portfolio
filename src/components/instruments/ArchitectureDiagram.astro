@@ -52,7 +52,7 @@ function rowX(count: number, index: number): number {
 {/*
   `min-w-0` on the figure is load-bearing, not tidying. A grid item's
   automatic minimum size is its min-content width, and this one contains an
-  SVG with `min-w-[34rem]`; without it the column refuses to shrink below
+  SVG with `min-w-136`; without it the column refuses to shrink below
   544px and the whole panel — article, header, headings and all — overflows
   a 320px viewport. The scroll container inside cannot help while its own
   parent is being stretched.
@@ -64,7 +64,7 @@ function rowX(count: number, index: number): number {
 				viewBox={`0 0 ${W} 430`}
 				role="img"
 				aria-label={ariaLabel}
-				class="block h-auto w-full min-w-[34rem]"
+				class="block h-auto w-full min-w-136"
 			>
 				{/* Buses first, so node fills cover the line ends. */}
 				{
@@ -156,7 +156,7 @@ function rowX(count: number, index: number): number {
 			description.map((line) => (
 				<li class="grid grid-cols-[0.75rem_1fr] gap-3 text-body text-ink-mid">
 					<span
-						class="mt-[0.6em] block h-[1px] w-3 bg-accent/60"
+						class="mt-[0.6em] block h-px w-3 bg-accent/60"
 						aria-hidden="true"
 					/>
 					<span>{line}</span>
