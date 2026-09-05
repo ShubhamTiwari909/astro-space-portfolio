@@ -35,6 +35,7 @@ const FRAGMENT = /* glsl */ `
   precision mediump float;
 
   uniform vec3  uColor;
+  uniform vec3  uColor2;
   uniform float uTime;
   uniform float uOpacity;
   uniform float uSeed;
@@ -84,7 +85,18 @@ const FRAGMENT = /* glsl */ `
     float alpha = n * edge * uOpacity;
     if (alpha < 0.004) discard;
 
-    gl_FragColor = vec4(uColor * (0.55 + n * 0.75), alpha);
+    /*
+     * Two hues, not one.
+     *
+     * A real nebula is an emission colour where the gas is dense and
+     * ionised, and a cooler reflection colour in the diffuse regions where
+     * dust is only scattering nearby starlight. Tinting the whole cloud a
+     * single hue is what makes procedural nebulae read as coloured fog; the
+     * mix is what makes them read as gas. It costs one uniform and one
+     * mix() — the noise value is already computed.
+     */
+    vec3 tint = mix(uColor2, uColor, smoothstep(0.12, 0.72, n));
+    gl_FragColor = vec4(tint * (0.55 + n * 0.75), alpha);
   }
 `;
 
@@ -103,6 +115,9 @@ export default function NebulaVolume({ layers }: Props) {
 	const groupRef = useRef<Group>(null);
 	const bandColor = useMemo(() => new Color(BANDS[0].hex), []);
 	const targetColor = useMemo(() => new Color(), []);
+	/** The neighbouring band, carrying the diffuse regions. */
+	const bandColor2 = useMemo(() => new Color(BANDS[1].hex), []);
+	const targetColor2 = useMemo(() => new Color(), []);
 
 	/**
 	 * Layers occupy the FIRST HALF of the flight only — the nebula-wall and
@@ -160,7 +175,7 @@ export default function NebulaVolume({ layers }: Props) {
 						blending: AdditiveBlending,
 					}),
 			),
-		[specs, bandColor],
+		[specs, bandColor, bandColor2],
 	);
 
 	useFrame((state, delta) => {
@@ -168,8 +183,14 @@ export default function NebulaVolume({ layers }: Props) {
 		// reads — so page and scene can never disagree on colour (§3.3).
 		const band = BANDS[scrollState.bandIndex] ?? BANDS[0];
 		targetColor.set(band.hex);
+		// The next band along, so the two hues are always neighbours on the
+		// site's own spectrum rather than an unrelated second colour.
+		const next = BANDS[(scrollState.bandIndex + 1) % BANDS.length] ?? BANDS[1];
+		targetColor2.set(next.hex);
 		// Ease rather than cut, matching the DOM's band cross-fade.
-		bandColor.lerp(targetColor, 1 - Math.exp(-delta * 2.2));
+		const ease = 1 - Math.exp(-delta * 2.2);
+		bandColor.lerp(targetColor, ease);
+		bandColor2.lerp(targetColor2, ease);
 
 		const t = state.clock.elapsedTime;
 		for (const material of materials) material.uniforms.uTime.value = t;

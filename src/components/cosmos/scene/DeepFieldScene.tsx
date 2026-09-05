@@ -15,7 +15,10 @@ import ProbeTrail from './ProbeTrail';
 import RelayBeams from './RelayBeams';
 import StarField from './StarField';
 import type { PlanetDatum } from './planetLayout';
+import BlackHole from './BlackHole';
+import DustMotes from './DustMotes';
 import Station from './Station';
+import Transients from './Transients';
 import { degrade, useSceneTier, type SceneTier } from './useSceneTier';
 import {
 	isSceneSuspended,
@@ -255,6 +258,28 @@ export default function DeepFieldScene({ planets, burnEvents }: Props) {
 					<StarField count={tier.stars} pixelRatio={tier.dpr} />
 					<NebulaVolume layers={tier.nebulaLayers} />
 					<GalaxySprites />
+
+					{/*
+					  Near-field parallax and the occasional meteor. Both are
+					  skipped on the low tier, where the budget is fps rather
+					  than bytes, and transients are ambient motion so they go
+					  entirely under prefers-reduced-motion (§16.4).
+					*/}
+					{tier.name !== 'low' && (
+						<DustMotes
+							count={tier.name === 'high' ? 420 : 260}
+							pixelRatio={tier.dpr}
+						/>
+					)}
+					<Transients
+						pixelRatio={tier.dpr}
+						enabled={tier.name !== 'low' && !tier.staticCamera}
+					/>
+
+					{/* The run-in to Catalogued Worlds. Two meshes here; the
+					    lensing that sells it lives in StarField's shader. */}
+					{tier.name !== 'low' && <BlackHole />}
+
 
 					{/* Set pieces (§4b). Subdivision and the atmosphere shell
 					    come from the tier — mobile drops both (§24.2). */}
