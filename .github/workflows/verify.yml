@@ -13,6 +13,10 @@
 #   test:contrast   §25.2's table matches the shipped CSS
 #   test:browser    axe-core WCAG 2.2 AA, overflow at nine widths, tap
 #                   targets, keyboard order, forced colors, reflow, no-JS
+#   test:perf       §26.2 per-route transfer measured over the network,
+#                   image over-delivery, the save-data bail-out, plus the
+#                   static CSS / animation / canvas audits
+#   test:lighthouse accessibility 100 and CLS <= 0.02 on four routes
 #
 # A failure here is not a formality. Two of these gates have already caught
 # real regressions that no amount of review would have: the scene-chunk
@@ -35,7 +39,8 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Lighthouse runs four full traces, so this is slower than a lint job.
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4

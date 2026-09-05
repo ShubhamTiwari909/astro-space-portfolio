@@ -3,7 +3,7 @@
  * Responsive & accessibility regression suite — master plan Phase 6, §34.
  *
  * One server, one browser, every automatable check in §34's matrix. It runs
- * against `dist` through `astro preview`, so it tests what actually ships
+ * against the built `dist` over a static server, so it tests what ships
  * rather than what the dev server happens to serve.
  *
  * ── What this can and cannot prove ───────────────────────────────────────
@@ -26,25 +26,13 @@
  *         PORT=4322 pnpm test:browser
  */
 
-import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { chromium } from 'playwright-core';
+import { serveDist } from './lib/serve.mjs';
 
 const require_ = createRequire(import.meta.url);
-/*
- * Resolved through the package rather than assumed at
- * `node_modules/astro/astro.js`: under pnpm the real package lives in a
- * content-addressed `.pnpm` directory and that path does not exist.
- */
-const ASTRO_BIN = join(
-	dirname(require_.resolve('astro/package.json')),
-	require_('astro/package.json').bin.astro,
-);
-
-const PORT = Number(process.env.PORT ?? 4329);
-const BASE = `http://localhost:${PORT}`;
 
 /** The five route types (§34), plus the dev token page which must not rot. */
 const ROUTES = [
@@ -82,33 +70,7 @@ function row(label, ok, detail = '') {
 
 // ── server ────────────────────────────────────────────────────────────────
 
-const serverLog = [];
-const server = spawn('node', [ASTRO_BIN, 'preview', '--port', String(PORT)], {
-	stdio: ['ignore', 'pipe', 'pipe'],
-});
-server.stdout.on('data', (d) => serverLog.push(String(d)));
-server.stderr.on('data', (d) => serverLog.push(String(d)));
-
-async function waitForServer() {
-	for (let i = 0; i < 60; i++) {
-		try {
-			const res = await fetch(BASE);
-			if (res.ok) return;
-		} catch {
-			/* not up yet */
-		}
-		await new Promise((r) => setTimeout(r, 500));
-	}
-	throw new Error(
-		`preview server did not start on ${PORT}\n${serverLog.join('')}`,
-	);
-}
-
-function stopServer() {
-	server.kill('SIGTERM');
-}
-
-process.on('exit', stopServer);
+const { base: BASE, close: stopServer } = await serveDist('dist');
 
 // ── checks ────────────────────────────────────────────────────────────────
 
@@ -245,8 +207,6 @@ async function keyboardWalk(page, max = 80) {
 }
 
 // ── run ───────────────────────────────────────────────────────────────────
-
-await waitForServer();
 
 /*
  * Locally this drives the installed Chrome by channel, which is what a
@@ -493,7 +453,7 @@ console.log('\n── JavaScript disabled ────────────�
 }
 
 await browser.close();
-stopServer();
+await stopServer();
 
 // ── report ────────────────────────────────────────────────────────────────
 

@@ -6,6 +6,101 @@ recorded here and in that document's Decision log — the plan is not edited
 to match reality silently.
 
 
+
+## Phase 7 — Performance (local pass)
+
+### Build size
+
+| | Before | After |
+|---|---|---|
+| Total `dist` | **5.12MB** | **2.64MB** |
+| PNG | 2597.8KB (11 files) | 7.6KB (7 files) |
+
+One change: `fallbackFormat="webp"` on the hero `<Picture>`. Astro was
+up-converting a 130KB webp source into four PNG fallbacks — 1336KB, 710KB,
+362KB, 181KB — with the bare `src` pointing at the largest.
+
+### Per-route transfer, measured over the network (gzipped)
+
+| Route | HTML | CSS | JS crit | JS total | Fonts | Images | TOTAL | Reqs |
+|-------|------|-----|---------|----------|-------|--------|-------|------|
+| `/` mobile | 26.1 | 9.8 | 0.8 | **298.0** | 107.9 | 151.2 | 592.9 | 28/28 |
+| `/` desktop | 26.1 | 9.8 | 1.1 | 298.3 | 107.9 | 205.4 | 647.6 | 28/34 |
+| `/transmissions` | 17.4 | 9.8 | 1.1 | **3.0** | 107.9 | 34.5 | 172.6 | 13/16 |
+| `/dossier` | 15.4 | 9.8 | 1.1 | **3.0** | 107.9 | 34.5 | 170.6 | 13/16 |
+| `/instruments` | 23.4 | 9.8 | 1.1 | **301.8** | 107.9 | 82.1 | 525.3 | 21/32 |
+
+Everything is inside §26.2 except the two JS totals in bold-with-asterisk
+below. Critical-path JS is **≤1.1KB on every route**, against a 16KB budget.
+
+The reading routes went **297KB → 3.0KB** of JS: the scene should never have
+been mounted there (§26.2 says so explicitly), and `MobileNav` was pulling
+54.8KB of react-dom to run 1.3KB of component.
+
+### The JS floor — a deviation, pinned rather than raised
+
+| Piece | gz |
+|-------|-----|
+| three.js + @react-three/fiber | 227.0KB |
+| react-dom | 54.8KB |
+| react + scheduler | 4.6KB |
+| scene code, islands, runtime | ~11.0KB |
+| **Total** | **~297KB** |
+
+§26.2 budgets mobile at 190KB. That assumed a mobile-specific scene bundle
+(there is one build and one chunk) and accounted for **no react-dom at all**,
+though the scene is a React component. Unreachable since R2 chose R3F.
+
+Not raised, not hidden: `tests/perf-audit.mjs` reports these two rows as
+OVER with a ceiling pinned to the measurement, so the gap is visible on
+every run and cannot grow. Closing it needs an owner decision — drop the 3D
+on mobile (reverses R2), or replace R3F with raw three (~−99KB, a rewrite).
+
+### Lighthouse — local baseline, mobile emulation
+
+| Route | Perf | A11y | BP | SEO | LCP | CLS | TBT |
+|-------|------|------|----|-----|-----|-----|-----|
+| `/` | 46 | **100** | 96 | 100 | 3.1s | **0.000** | 570ms |
+| `/instruments` | 89 | **100** | 96 | 100 | 2.94s | **0.000** | 215ms |
+| `/transmissions` | 91 | **100** | 100 | 100 | 2.93s | **0.000** | 171ms |
+| `/dossier` | 94 | **100** | 100 | 100 | 2.78s | **0.000** | 46ms |
+
+**Accessibility is 100 everywhere and CLS is 0.000 everywhere** — both hard
+gates in CI. CLS 0.000 confirms the Fonts API metric overrides do their job
+(task 3) and that every image carries explicit dimensions (task 4).
+
+Performance is **recorded, not asserted**. This machine gives headless
+Chrome no GPU, so WebGL rasterises in software; home's score is dominated by
+1.3s of script evaluation (three.js parse) and 1.28s of style/layout under
+Lighthouse's 4× CPU throttle. Home FCP 2.2s / LCP 3.1s / Speed Index 2.2s
+are reasonable; TTI 9.5s is the number to re-measure on real hardware.
+
+### Audits passed
+
+- **Fonts**: 107.9KB of 110KB (98%), four faces, two preloaded. No waste —
+  the serif italic is used by the pull-quotes and mono 400/500 by the
+  metric blocks. CLS 0.000 on swap.
+- **Images**: no over-delivery at any tested viewport; every image AVIF or
+  WebP with `sizes` and explicit dimensions; one eager image per route.
+- **CSS**: one hashed stylesheet, 9.8KB gz of a 34KB budget, 43.9KB
+  inlined, token block declared once.
+- **Animation**: 16 transitioned properties in use, all compositor-friendly
+  or explicitly sanctioned; no `will-change` left applied; **zero layout
+  reads in any of the four frame callbacks**.
+- **Canvas**: 14/14 — DPR caps, pause on hidden and off-screen, one-way
+  degradation, stall discarding, hard-capped counts, zero per-frame
+  allocation, for both StarField and Orbit.
+- **Save-data**: zero scene chunks fetched, zero canvases created.
+
+### Still outstanding — needs the deployed site or real hardware
+
+Task 8's authoritative Lighthouse run, task 11's cache-header verification,
+and the 4× CPU / Slow 4G and 5-minute Orbit soak passes. Cache policy is
+exercised locally by the test server (hashed assets `immutable`, HTML
+`must-revalidate`), which proves the intent but not the host.
+
+---
+
 ## Phase 6 — Responsive & Accessibility Hardening
 
 `pnpm test:browser` — 80 checks, five routes, on the built output through

@@ -18,6 +18,24 @@ export default defineConfig({
 		sitemap({
 			filter: (page) => !page.includes('/dev/'),
 		}),
+		/*
+		 * `client:capable` — see src/lib/sceneDirective.mjs.
+		 *
+		 * A local integration rather than a package: it exists only to
+		 * register one directive, and the alternative was letting the scene
+		 * chunk download on devices §24.2 says must never receive it.
+		 */
+		{
+			name: 'client-capable-directive',
+			hooks: {
+				'astro:config:setup': ({ addClientDirective }) => {
+					addClientDirective({
+						name: 'capable',
+						entrypoint: './src/lib/sceneDirective.mjs',
+					});
+				},
+			},
+		},
 	],
 
 	// Self-hosted, latin-subset, woff2, display:swap, with metric-override fallbacks
@@ -61,5 +79,27 @@ export default defineConfig({
 
 	vite: {
 		plugins: [tailwindcss()],
+		build: {
+			rollupOptions: {
+				output: {
+					/*
+					 * Merge the shared runtime modules into one chunk.
+					 *
+					 * `src/lib/*` is imported from both the BaseLayout script
+					 * and the MobileNav script, so the bundler split each one
+					 * into its own file: scrollProgress, worldFocus, analytics,
+					 * observeOnce and bands arrived as five separate requests
+					 * totalling under 3KB. Five round trips for 3KB is worse
+					 * than one, and they are always fetched together.
+					 */
+					manualChunks(id) {
+						if (id.includes('/src/lib/') || id.includes('/src/data/')) {
+							return 'runtime';
+						}
+						return undefined;
+					},
+				},
+			},
+		},
 	},
 });

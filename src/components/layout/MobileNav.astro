@@ -1,0 +1,194 @@
+---
+/**
+ * Bottom tab bar — master plan §7.3.
+ *
+ * Four primary items plus a MORE sheet. Additive only: the markup below is
+ * static and fully functional as plain anchors; the script adds
+ * hide-on-scroll, active-section tracking, and the sheet.
+ *
+ * ── Why this is not a React island (Phase 7 task 1) ──────────────────────
+ * It was one, and it cost 54.8KB of react-dom plus 4.9KB of react and
+ * scheduler to run 1.3KB of component. On `/transmissions` and `/dossier`
+ * — which after §26.2's scene rule have no other island at all — that was
+ * the entire JavaScript payload of the route, 63.4KB against a 16KB budget,
+ * to toggle a menu. Exactly the same trade as `ScrollDriver` in Phase 2,
+ * and the same answer.
+ *
+ * Two rules from the plan that are easy to get wrong:
+ *  - the bar never hides while a focus ring is inside it (§7.3);
+ *  - every target is >=44px, with the safe-area inset respected (§24.3).
+ */
+import Icon from '../ui/Icon.astro';
+import type { IconName } from '../ui/Icon.astro';
+
+const PRIMARY: { id: string; label: string; icon: IconName }[] = [
+	{ id: 'first-light', label: 'Home', icon: 'home' },
+	{ id: 'atlas', label: 'Skills', icon: 'atlas' },
+	{ id: 'trajectory', label: 'Path', icon: 'trajectory' },
+	{ id: 'worlds', label: 'Work', icon: 'worlds' },
+];
+
+const OVERFLOW = [
+	{ id: 'log', label: 'About' },
+	{ id: 'instruments', label: 'Instrument Bay' },
+	{ id: 'transmissions', label: 'Writing' },
+	{ id: 'uplink', label: 'Uplink' },
+];
+
+const ITEM_CLASS =
+	'flex w-full min-h-(--tabbar-h) cursor-pointer flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-1 py-1.5 font-mono text-[0.5625rem] tracking-[0.08em] text-ink-low uppercase no-underline transition-colors duration-(--duration-fast) ease-ui data-[active]:text-accent';
+---
+
+{/*
+  Rendered but inert until the script runs: the overlay carries `hidden`,
+  which the script clears. With no JavaScript the bar is still four working
+  anchors and a MORE button that does nothing visible — so the primary
+  navigation never depends on hydration.
+*/}
+<div
+	id="mobile-nav-overlay"
+	aria-hidden="true"
+	hidden
+	class="fixed inset-0 z-(--z-overlay) bg-void/70 md:hidden"
+>
+</div>
+
+<nav
+	id="mobile-nav"
+	aria-label="Sections"
+	class="fixed inset-x-0 bottom-0 z-(--z-nav) block border-t border-hairline bg-void/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md transition-transform duration-(--duration-fast) ease-ui data-[hidden]:translate-y-full md:hidden"
+>
+	<ul class="m-0 grid list-none grid-cols-5 p-0">
+		{
+			PRIMARY.map((item) => (
+				<li>
+					<a href={`#${item.id}`} data-nav-item={item.id} class={ITEM_CLASS}>
+						<Icon name={item.icon} size={20} />
+						<span>{item.label}</span>
+					</a>
+				</li>
+			))
+		}
+		<li>
+			<button
+				type="button"
+				id="mobile-nav-more"
+				aria-expanded="false"
+				aria-controls="mobile-nav-sheet"
+				class={ITEM_CLASS}
+			>
+				<Icon name="more" size={20} />
+				<span>More</span>
+			</button>
+		</li>
+	</ul>
+
+	<ul
+		id="mobile-nav-sheet"
+		hidden
+		class="absolute inset-x-0 bottom-full z-[calc(var(--z-overlay)+1)] m-0 list-none border-t border-hairline bg-surface-1 p-2"
+	>
+		{
+			OVERFLOW.map((item) => (
+				<li>
+					<a
+						href={`#${item.id}`}
+						data-nav-close
+						class="flex min-h-11 items-center px-4 font-mono text-label tracking-[0.14em] text-ink-hi uppercase no-underline"
+					>
+						{item.label}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</nav>
+
+<script>
+	import { SECTION_ORDER } from '../../lib/bands';
+	import { scrollState, subscribe } from '../../lib/scrollProgress';
+
+	function init() {
+		const bar = document.getElementById('mobile-nav');
+		const sheet = document.getElementById('mobile-nav-sheet');
+		const overlay = document.getElementById('mobile-nav-overlay');
+		const more = document.getElementById('mobile-nav-more');
+		if (!bar || !sheet || !overlay || !more) return () => {};
+
+		const items = [...bar.querySelectorAll<HTMLElement>('[data-nav-item]')];
+		let sheetOpen = false;
+
+		function setSheet(open: boolean) {
+			sheetOpen = open;
+			sheet!.hidden = !open;
+			overlay!.hidden = !open;
+			more!.setAttribute('aria-expanded', String(open));
+			// Opening the sheet must never leave the bar mid-hide.
+			if (open) delete bar!.dataset.hidden;
+		}
+
+		const onMore = () => setSheet(!sheetOpen);
+		const onOverlay = () => setSheet(false);
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape' && sheetOpen) {
+				setSheet(false);
+				more!.focus();
+			}
+		};
+		const onSheetClick = (e: Event) => {
+			if ((e.target as HTMLElement).closest('[data-nav-close]')) setSheet(false);
+		};
+
+		more.addEventListener('click', onMore);
+		overlay.addEventListener('click', onOverlay);
+		sheet.addEventListener('click', onSheetClick);
+		document.addEventListener('keydown', onKey);
+
+		let lastIndex = -1;
+		const unsubscribe = subscribe(() => {
+			const { velocity, progress, bandIndex } = scrollState;
+
+			if (bandIndex !== lastIndex) {
+				lastIndex = bandIndex;
+				const activeId = SECTION_ORDER[bandIndex] ?? 'first-light';
+				for (const item of items) {
+					const active = item.dataset.navItem === activeId;
+					if (active) {
+						item.dataset.active = '';
+						item.setAttribute('aria-current', 'true');
+					} else {
+						delete item.dataset.active;
+						item.removeAttribute('aria-current');
+					}
+				}
+			}
+
+			/*
+			 * Never hide while focus is inside the bar (§7.3) — a hidden bar
+			 * with a focus ring in it strands a keyboard user off-screen —
+			 * nor while the sheet is open, nor near the top of the page.
+			 */
+			if (bar.contains(document.activeElement) || sheetOpen || progress < 0.04) {
+				delete bar.dataset.hidden;
+				return;
+			}
+			if (Math.abs(velocity) < 2) return;
+			if (velocity > 0) bar.dataset.hidden = '';
+			else delete bar.dataset.hidden;
+		});
+
+		return () => {
+			more.removeEventListener('click', onMore);
+			overlay.removeEventListener('click', onOverlay);
+			sheet.removeEventListener('click', onSheetClick);
+			document.removeEventListener('keydown', onKey);
+			unsubscribe();
+		};
+	}
+
+	let teardown = init();
+	document.addEventListener('astro:page-load', () => {
+		teardown?.();
+		teardown = init();
+	});
+</script>

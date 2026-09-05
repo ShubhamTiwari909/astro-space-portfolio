@@ -17,6 +17,23 @@ import Grain from './Grain.astro';
 import DeepFieldScene from './scene/DeepFieldScene';
 import { plateHueForIndex } from '../../data/seed';
 
+interface Props {
+	/**
+	 * Whether to mount the WebGL scene on top of the art layer.
+	 *
+	 * §26.2 states that `/transmissions` and `/dossier` "deliberately do
+	 * not mount the scene — they are reading routes". That was never
+	 * implemented: measured, both were fetching the 226KB scene chunk
+	 * against 16KB and 20KB JS budgets, 1858% and 1486% over. The art
+	 * layer still renders on those routes, because it is the designed
+	 * backdrop in its own right and costs ~34KB of images that are already
+	 * in their budget.
+	 */
+	scene?: boolean;
+}
+
+const { scene = true }: Props = Astro.props;
+
 /*
  * The scene's data comes from the same collections the DOM renders, so a
  * planet cannot exist without a project card — which is what keeps the
@@ -49,11 +66,15 @@ const burnEvents = experience.reduce(
 <ArtBackdrop />
 
 {/*
-  The scene claims --z-scene, between the art and the grain. `client:idle`
-  so it never competes with LCP: the hero paints from static HTML, the
-  chunk is fetched after the browser goes idle, and the canvas cross-fades
-  in over the art once its first frame is drawn (§9.3, §20.2).
+  The scene claims --z-scene, between the art and the grain.
+  `client:capable` is `client:idle` plus §24.2's bail-out moved in FRONT of
+  the download: it never competes with LCP, and a visitor with no WebGL or
+  `saveData` set never fetches the 227KB chunk at all — which is what
+  useSceneTier already claimed happened (§9.3, §20.2).
+
+  Omitted entirely on the reading routes (§26.2). Not hidden, not deferred
+  — absent, so the chunk is never requested.
 */}
-<DeepFieldScene client:idle planets={planets} burnEvents={burnEvents} />
+{scene && <DeepFieldScene client:capable planets={planets} burnEvents={burnEvents} />}
 
 <Grain />

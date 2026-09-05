@@ -48,10 +48,38 @@ let lastBandIndex = -1;
 /** Section elements in flight-path order, resolved once at start(). */
 let sections: HTMLElement[] = [];
 
+/*
+ * Cached geometry. The loop must not read layout.
+ *
+ * This used to call getBoundingClientRect() for every section plus
+ * documentElement.scrollHeight on EVERY frame, and then write custom
+ * properties to <body> in the same frame. A write to <body> invalidates
+ * style for the whole subtree, so the next frame's reads forced a full
+ * style recalc and layout — a synchronous reflow sixty times a second, for
+ * geometry that only changes when the viewport or the document does.
+ *
+ * Section offsets are absolute document positions, so `scrollY` alone
+ * decides the band. Re-measured on resize and whenever the document's own
+ * size changes (images decoding, sections revealing), never per frame.
+ */
+let sectionTops: number[] = [];
+let docMax = 0;
+let viewportH = 0;
+let resizeObserver: ResizeObserver | null = null;
+
 function resolveSections(): void {
 	sections = BANDS.map((b) => document.getElementById(b.section)).filter(
 		(el): el is HTMLElement => el !== null,
 	);
+	measure();
+}
+
+/** The only place layout is read. Never called from the frame loop. */
+function measure(): void {
+	viewportH = window.innerHeight;
+	docMax = document.documentElement.scrollHeight - viewportH;
+	const y = window.scrollY;
+	sectionTops = sections.map((el) => el.getBoundingClientRect().top + y);
 }
 
 /**
@@ -61,25 +89,24 @@ function resolveSections(): void {
  * its section owns the middle of the viewport, which is the same rule the
  * rail uses for `aria-current` so the two can never disagree.
  */
-function computeBand(): { index: number; blend: number } {
-	if (sections.length === 0) return { index: 0, blend: 0 };
+function computeBand(y: number): { index: number; blend: number } {
+	if (sectionTops.length === 0) return { index: 0, blend: 0 };
 
-	const mid = window.innerHeight / 2;
+	// The document position of the viewport's middle.
+	const mid = y + viewportH / 2;
 	let index = 0;
 
-	for (let i = 0; i < sections.length; i++) {
-		const rect = sections[i].getBoundingClientRect();
-		if (rect.top <= mid) index = i;
+	for (let i = 0; i < sectionTops.length; i++) {
+		if (sectionTops[i] <= mid) index = i;
 		else break;
 	}
 
 	// Blend across the gap between this section's midpoint and the next.
-	const current = sections[index].getBoundingClientRect();
-	const next = sections[index + 1]?.getBoundingClientRect();
 	let blend = 0;
-	if (next) {
-		const span = next.top - current.top;
-		if (span > 0) blend = Math.min(1, Math.max(0, (mid - current.top) / span));
+	const next = sectionTops[index + 1];
+	if (next !== undefined) {
+		const span = next - sectionTops[index];
+		if (span > 0) blend = Math.min(1, Math.max(0, (mid - sectionTops[index]) / span));
 	}
 
 	return { index, blend };
@@ -98,14 +125,15 @@ function applyBand(index: number): void {
 }
 
 function frame(): void {
+	// scrollY is the only layout-adjacent read left, and it is cheap: the
+	// scroll offset is maintained by the compositor, not recomputed.
 	const y = window.scrollY;
-	const max = document.documentElement.scrollHeight - window.innerHeight;
 
 	scrollState.velocity = y - lastY;
 	lastY = y;
-	scrollState.progress = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
+	scrollState.progress = docMax > 0 ? Math.min(1, Math.max(0, y / docMax)) : 0;
 
-	const { index, blend } = computeBand();
+	const { index, blend } = computeBand(y);
 	scrollState.bandIndex = index;
 	scrollState.bandBlend = blend;
 
@@ -148,12 +176,24 @@ export function init(): () => void {
 
 	start();
 	document.addEventListener('visibilitychange', onVisibility);
-	// Section offsets change on resize; re-resolve rather than caching rects.
-	window.addEventListener('resize', resolveSections, { passive: true });
+	window.addEventListener('resize', measure, { passive: true });
+
+	/*
+	 * The document's height changes without a resize event — images decode,
+	 * sections reveal, fonts swap. A ResizeObserver on <body> catches those;
+	 * without it the cached offsets would slowly go stale and the band would
+	 * change at the wrong scroll position.
+	 */
+	if (typeof ResizeObserver !== 'undefined') {
+		resizeObserver = new ResizeObserver(measure);
+		resizeObserver.observe(document.body);
+	}
 
 	return () => {
 		stop();
 		document.removeEventListener('visibilitychange', onVisibility);
-		window.removeEventListener('resize', resolveSections);
+		window.removeEventListener('resize', measure);
+		resizeObserver?.disconnect();
+		resizeObserver = null;
 	};
 }

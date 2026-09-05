@@ -13,7 +13,7 @@
     "check": "astro check",
     "art": "node scripts/generate-art.mjs",
     "lint:tokens": "node scripts/lint-tokens.mjs",
-    "verify": "pnpm lint:tokens && pnpm check && pnpm build && pnpm test:content && pnpm test:budgets && pnpm test:scene && pnpm test:flight && pnpm test:contrast && pnpm test:browser",
+    "verify": "pnpm lint:tokens && pnpm check && pnpm build && pnpm test:content && pnpm test:budgets && pnpm test:scene && pnpm test:flight && pnpm test:contrast && pnpm test:perf && pnpm test:browser && pnpm test:lighthouse",
     "test:content": "node tests/content-in-html.mjs",
     "test:budgets": "node tests/budgets.mjs",
     "test:scene": "node tests/delete-the-canvas.mjs",
@@ -21,7 +21,9 @@
     "poster": "node scripts/generate-orbit-poster.mjs",
     "shots": "node scripts/shoot-beats.mjs",
     "test:browser": "node tests/browser-suite.mjs",
-    "test:contrast": "node tests/contrast.mjs"
+    "test:contrast": "node tests/contrast.mjs",
+    "test:perf": "node tests/perf-static.mjs && node tests/perf-audit.mjs",
+    "test:lighthouse": "node tests/lighthouse.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.5",
@@ -45,6 +47,7 @@
     "@astrojs/check": "^0.9.10",
     "@types/three": "^0.185.4",
     "axe-core": "^4.13.0",
+    "lighthouse": "^13.4.1",
     "playwright-core": "^1.62.1",
     "shiki": "4.4.3",
     "typescript": "^6.0.3"

@@ -148,12 +148,22 @@ const reveal =
 				<div
 					class="relative overflow-hidden rounded-chip *:block max-lg:rounded-pill"
 				>
+					{/*
+					  `fallbackFormat` is not decoration. Without it Astro's
+					  <Picture> falls back to PNG, and it does so by
+					  UP-CONVERTING the 130KB webp source into four PNG variants
+					  totalling 2.59MB — 68% of the entire build. Nothing in the
+					  support matrix would ever fetch them: anything reaching the
+					  <img> fallback rather than the avif or webp <source> is old
+					  enough that a 1.3MB PNG is not a kindness.
+					*/}
 					<Picture
 						src={portrait}
 						alt={profile.name}
 						widths={[320, 480, 720]}
 						sizes="(min-width: 64rem) 20rem, 10rem"
 						formats={['avif', 'webp']}
+						fallbackFormat="webp"
 						loading="eager"
 						class="hero-portrait block h-auto w-40 object-cover max-lg:aspect-square lg:w-[min(30rem,100%)]"
 					/>
