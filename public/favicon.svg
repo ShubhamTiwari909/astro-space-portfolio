@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Shubham Tiwari">
+  <!--
+    A ringed world, in the site's own palette: void ground (#04060D) and
+    Ion Cyan (#7DE2FF), the band the home route opens on.
+
+    Drawn for 16px first — at that size a favicon is four or five shapes at
+    most, so this is a disc, a ring and one highlight. The ring is set at a
+    shallow angle and drawn OVER the disc, which is what reads as "planet"
+    rather than "target" when it is the size of a full stop.
+  -->
+  <rect width="32" height="32" rx="7" fill="#04060D" />
+  <circle cx="16" cy="15" r="6.5" fill="#7DE2FF" />
+  <circle cx="13.6" cy="12.6" r="2.1" fill="#04060D" opacity=".22" />
+  <ellipse
+    cx="16"
+    cy="15.5"
+    rx="12.4"
+    ry="3.9"
+    fill="none"
+    stroke="#7DE2FF"
+    stroke-width="2.1"
+    opacity=".8"
+    transform="rotate(-22 16 15.5)"
+  />
+</svg>

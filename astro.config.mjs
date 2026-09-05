@@ -4,9 +4,27 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
-// PENDING D2: replace with the real production domain before Phase 8 (SEO & Production).
-// Canonicals, sitemap entries and absolute OG URLs all derive from this.
-const SITE = 'https://example.com';
+/**
+ * The production origin. Canonicals, sitemap entries and absolute OG URLs
+ * all derive from it, so a wrong value here is silently wrong everywhere.
+ *
+ * Resolved rather than hardcoded, in this order:
+ *
+ *  1. `SITE_URL` — set this in Vercel's environment once a custom domain is
+ *     attached. It wins over everything.
+ *  2. `VERCEL_PROJECT_PRODUCTION_URL` — injected by Vercel on every build,
+ *     and always the *production* domain even in a preview deployment, so
+ *     preview builds never emit canonicals pointing at themselves.
+ *  3. localhost, for a local build.
+ *
+ * This is why there is no `https://example.com` left to forget about: a
+ * deployment cannot ship a placeholder domain, because there isn't one.
+ */
+const SITE =
+	process.env.SITE_URL ??
+	(process.env.VERCEL_PROJECT_PRODUCTION_URL
+		? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+		: 'http://localhost:4321');
 
 export default defineConfig({
 	site: SITE,

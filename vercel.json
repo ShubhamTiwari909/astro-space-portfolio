@@ -1,0 +1,31 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+
+  "trailingSlash": false,
+
+  "headers": [
+    {
+      "source": "/_astro/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ],
+
+  "redirects": [
+    { "source": "/projects", "destination": "/#worlds", "permanent": true },
+    { "source": "/blog", "destination": "/transmissions", "permanent": true },
+    { "source": "/resume", "destination": "/dossier", "permanent": true },
+    { "source": "/lab", "destination": "/instruments", "permanent": true }
+  ]
+}
