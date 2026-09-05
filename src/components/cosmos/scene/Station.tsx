@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
-import type { Group } from 'three';
+import type { Group, Material, Mesh } from 'three';
 import { bandForSection } from '../../../lib/bands';
 
 /**
@@ -17,17 +17,56 @@ import { bandForSection } from '../../../lib/bands';
 /* Taken from the band source of truth, not duplicated (§3.3). */
 const AURORA = bandForSection('instruments').hex;
 
+/**
+ * Distance fade, in world units.
+ *
+ * Without it a station is a hairline wireframe at any range, and the
+ * Instrument Bay one — 232 units from the opening camera — was drawing a
+ * thin streak straight through the hero. It landed on "Tiwari" at 820px and
+ * across the lede at 390px, which is precisely what §9.1 forbids: the hero
+ * is typography-led, and nothing in the backdrop may compete with the h1.
+ *
+ * Fading by distance fixes that without moving anything, and it is what the
+ * object should do anyway — a station you are 200 units from is not visible
+ * as a wireframe, and one you fly past should recede rather than pop.
+ */
+const FADE_FULL = 110;
+const FADE_GONE = 175;
+
 export default function Station() {
 	const ref = useRef<Group>(null);
+	/** Authored opacities, captured once so the fade scales them. */
+	const materials = useRef<{ material: Material; base: number }[]>([]);
 
 	useFrame((state) => {
+		const group = ref.current;
+		if (!group) return;
+
 		// Very slow yaw: enough to catch the light, not enough to notice.
-		if (ref.current) ref.current.rotation.y = state.clock.elapsedTime * 0.035;
+		group.rotation.y = state.clock.elapsedTime * 0.035;
+
+		if (materials.current.length === 0) {
+			group.traverse((object) => {
+				const material = (object as Mesh).material as Material | undefined;
+				if (material && 'opacity' in material) {
+					materials.current.push({ material, base: material.opacity });
+				}
+			});
+		}
+
+		const distance = state.camera.position.distanceTo(group.position);
+		// 1 when close, 0 beyond FADE_GONE, smooth in between.
+		const t = (distance - FADE_FULL) / (FADE_GONE - FADE_FULL);
+		const fade = 1 - Math.min(1, Math.max(0, t));
+
+		// Skipping the draw entirely when invisible is the cheap part.
+		group.visible = fade > 0.01;
+		if (!group.visible) return;
+		for (const { material, base } of materials.current) {
+			material.opacity = base * fade;
+		}
 	});
 
-	// Far out and well off-axis. At z -86, and again at x -15, its wireframe
-	// tangled with the planet system in screen space and read as clutter
-	// rather than as a separate object.
 	return (
 		<group ref={ref} position={[-34, 16, -112]} rotation={[0.2, 0.5, 0.08]}>
 			{/* Spine */}

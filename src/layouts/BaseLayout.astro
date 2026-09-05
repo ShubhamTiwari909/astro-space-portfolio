@@ -57,7 +57,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 		<meta name="generator" content={Astro.generator} />
 		<meta name="theme-color" content="#04060D" />
 		<meta name="color-scheme" content="dark" />
+		{/*
+		  The SVG is the real icon; the .ico and the touch icon are the two
+		  fallbacks that actually matter. Chrome requests /favicon.ico
+		  implicitly whatever the link tags say, and caches the 404 hard;
+		  Safari has never supported SVG favicons. All three are generated
+		  from the same SVG by `pnpm icons`.
+		*/}
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon.ico" sizes="32x32" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
 		{/* Blocking + inline so the entrance state applies before first paint.
 		    Without JS this never runs and [data-observe] stays visible (P1). */}

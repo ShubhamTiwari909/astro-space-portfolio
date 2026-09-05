@@ -21,18 +21,32 @@
 import Icon from '../ui/Icon.astro';
 import type { IconName } from '../ui/Icon.astro';
 
-const PRIMARY: { id: string; label: string; icon: IconName }[] = [
-	{ id: 'first-light', label: 'Home', icon: 'home' },
-	{ id: 'atlas', label: 'Skills', icon: 'atlas' },
-	{ id: 'trajectory', label: 'Path', icon: 'trajectory' },
-	{ id: 'worlds', label: 'Work', icon: 'worlds' },
+/*
+ * Hrefs are absolute, not bare fragments.
+ *
+ * They were `#atlas`, `#log` and so on, which only resolve on the home
+ * route — from `/dossier` or `/instruments` every item in this bar pointed
+ * at a section that does not exist on the page and did nothing at all. A
+ * same-path fragment still scrolls without a reload, so `/#atlas` behaves
+ * identically on home and correctly everywhere else.
+ *
+ * The two entries with routes of their own link to the route rather than to
+ * the home-page teaser: from a phone's overflow menu, "Instrument Bay"
+ * means the bay, not a four-line summary of it.
+ */
+const PRIMARY: { id: string; href: string; label: string; icon: IconName }[] = [
+	{ id: 'first-light', href: '/#first-light', label: 'Home', icon: 'home' },
+	{ id: 'atlas', href: '/#atlas', label: 'Skills', icon: 'atlas' },
+	{ id: 'trajectory', href: '/#trajectory', label: 'Path', icon: 'trajectory' },
+	{ id: 'worlds', href: '/#worlds', label: 'Work', icon: 'worlds' },
 ];
 
 const OVERFLOW = [
-	{ id: 'log', label: 'About' },
-	{ id: 'instruments', label: 'Instrument Bay' },
-	{ id: 'transmissions', label: 'Writing' },
-	{ id: 'uplink', label: 'Uplink' },
+	{ href: '/#log', label: 'About' },
+	{ href: '/instruments', label: 'Instrument Bay' },
+	{ href: '/transmissions', label: 'Writing' },
+	{ href: '/dossier', label: 'Dossier' },
+	{ href: '/#uplink', label: 'Uplink' },
 ];
 
 const ITEM_CLASS =
@@ -44,12 +58,20 @@ const ITEM_CLASS =
   which the script clears. With no JavaScript the bar is still four working
   anchors and a MORE button that does nothing visible — so the primary
   navigation never depends on hydration.
+
+  The scrim sits just BELOW the nav, not at `--z-overlay`. It was at 60
+  while the nav is 45, and because the nav's own z-index creates a stacking
+  context, the sheet's `calc(--z-overlay + 1)` only ever counted *inside*
+  the nav — so the scrim painted over the whole bar, sheet included, and
+  the menu links it was meant to reveal were covered and unclickable. This
+  scrim dims the page for a menu the nav owns; it is not a modal layer over
+  the entire interface, so it belongs under the thing that owns it.
 */}
 <div
 	id="mobile-nav-overlay"
 	aria-hidden="true"
 	hidden
-	class="fixed inset-0 z-(--z-overlay) bg-void/70 md:hidden"
+	class="fixed inset-0 z-[calc(var(--z-nav)-1)] bg-void/70 md:hidden"
 >
 </div>
 
@@ -62,7 +84,7 @@ const ITEM_CLASS =
 		{
 			PRIMARY.map((item) => (
 				<li>
-					<a href={`#${item.id}`} data-nav-item={item.id} class={ITEM_CLASS}>
+					<a href={item.href} data-nav-item={item.id} class={ITEM_CLASS}>
 						<Icon name={item.icon} size={20} />
 						<span>{item.label}</span>
 					</a>
@@ -86,13 +108,13 @@ const ITEM_CLASS =
 	<ul
 		id="mobile-nav-sheet"
 		hidden
-		class="absolute inset-x-0 bottom-full z-[calc(var(--z-overlay)+1)] m-0 list-none border-t border-hairline bg-surface-1 p-2"
+		class="absolute inset-x-0 bottom-full m-0 list-none border-t border-hairline bg-surface-1 p-2"
 	>
 		{
 			OVERFLOW.map((item) => (
 				<li>
 					<a
-						href={`#${item.id}`}
+						href={item.href}
 						data-nav-close
 						class="flex min-h-11 items-center px-4 font-mono text-label tracking-[0.14em] text-ink-hi uppercase no-underline"
 					>

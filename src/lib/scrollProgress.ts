@@ -107,6 +107,30 @@ function computeBand(y: number): { index: number; blend: number } {
 	if (next !== undefined) {
 		const span = next - sectionTops[index];
 		if (span > 0) blend = Math.min(1, Math.max(0, (mid - sectionTops[index]) / span));
+
+		/*
+		 * The first section is a special case, and getting it wrong is
+		 * invisible until you go looking.
+		 *
+		 * At the very top of the document the viewport's midpoint is already
+		 * half a screen into section 0, so this returned a blend of ~0.45
+		 * before the visitor had scrolled at all. `CameraRig` turns
+		 * `index + blend` into its curve parameter, so the flight began ~6%
+		 * along its own path: measured, the camera sat at z=100.9 when the
+		 * opening keyframe authors it at z=120. The composition described in
+		 * §4.1 as the opening beat was never actually on screen.
+		 *
+		 * Rescaling section 0's blend so that scroll 0 maps to 0 fixes it
+		 * without moving any other beat — every later section still reaches
+		 * blend 1 exactly when the next one takes the middle of the screen.
+		 */
+		if (index === 0 && span > 0) {
+			const atRest = Math.min(
+				0.99,
+				Math.max(0, (viewportH / 2 - sectionTops[0]) / span),
+			);
+			blend = Math.max(0, (blend - atRest) / (1 - atRest));
+		}
 	}
 
 	return { index, blend };
