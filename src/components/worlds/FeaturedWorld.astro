@@ -49,12 +49,18 @@ const hue = plateHueForIndex(project.order - 1);
 		</div>
 
 		<div class="grid gap-6 p-6 md:p-8">
-			<div class="flex items-center gap-2">
+			<div class="flex items-center justify-between gap-2">
 				<span
 					class="rounded-chip border border-accent/40 px-2 py-1 font-mono text-[0.625rem] tracking-[0.14em] text-accent uppercase"
 				>
 					Featured
 				</span>
+				{project.liveUrl && (
+					<span class="inline-flex items-center gap-1.5 font-mono text-[0.625rem] tracking-[0.14em] text-ink-low uppercase">
+						<span class="pulse-glow size-1.5 rounded-pill bg-aurora" aria-hidden="true"></span>
+						Live
+					</span>
+				)}
 			</div>
 
 			<WorldRecord project={project} featured />

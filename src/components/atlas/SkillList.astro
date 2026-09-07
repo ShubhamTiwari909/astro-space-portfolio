@@ -50,11 +50,12 @@ const grouped = TIERS.map((tier) => ({
 }));
 ---
 
-<div class:list={['grid gap-8', className]}>
+<div class:list={['grid gap-6', className]}>
 	{
 		grouped.map((tier) => (
-			<section data-observe>
-				<h3 class="mb-1 flex items-baseline gap-2">
+			<section data-observe class="glass-card overflow-hidden">
+				{/* Tier header — avionics console header band */}
+				<header class="flex items-baseline gap-3 border-b border-hairline bg-surface-0/60 px-5 py-3">
 					<span
 						class="font-mono text-label tracking-[0.14em] text-accent uppercase"
 					>
@@ -63,19 +64,19 @@ const grouped = TIERS.map((tier) => ({
 					<span class="font-mono text-[0.6875rem] text-ink-low">
 						({tier.items.length})
 					</span>
-				</h3>
-				<p class="mb-3 text-[0.6875rem] leading-snug text-ink-low">
-					{tier.blurb}
-				</p>
+					<span class="ms-auto font-mono text-[0.6875rem] leading-snug text-ink-low">
+						{tier.blurb}
+					</span>
+				</header>
 				<ul class="m-0 grid list-none gap-0 p-0">
 					{tier.items.map((skill) => (
 						<li
 							data-skill-row={skill.id}
-							class="flex items-baseline justify-between gap-3 border-b border-hairline py-1.5 last:border-b-0"
+							class="console-row flex items-center justify-between gap-3 border-b border-hairline px-5 py-2.5 last:border-b-0"
 						>
 							<span class="text-data text-ink-hi">{skill.data.name}</span>
 							<span
-								class="shrink-0 font-mono text-[0.625rem] tracking-[0.08em] text-ink-low uppercase"
+								class="shrink-0 rounded-chip border border-hairline px-2 py-0.5 font-mono text-[0.625rem] tracking-[0.08em] text-ink-low uppercase"
 							>
 								{CONSTELLATION_PLAIN[skill.data.constellation]}
 							</span>

@@ -27,8 +27,16 @@ const links = profile.socials.filter((s) => s.professional);
 const emailId = 'uplink-email';
 ---
 
-<Panel variant="strong" class="mx-auto max-w-panel p-8 md:p-12" data-observe>
-	<div class="grid justify-items-center gap-8 text-center">
+<Panel variant="strong" class="mx-auto max-w-panel overflow-hidden" data-observe>
+	{/* Terminal header band */}
+	<div class="flex items-center gap-3 border-b border-hairline bg-surface-0/60 px-8 py-4 md:px-12">
+		<span class="pulse-glow size-1.5 rounded-pill bg-accent" aria-hidden="true"></span>
+		<span class="font-mono text-label tracking-[0.14em] text-ink-low uppercase">
+			Uplink · Transmission Ready
+		</span>
+	</div>
+
+	<div class="grid justify-items-center gap-8 p-8 text-center md:p-12">
 		<h3 class="text-display-m">Let's build something together.</h3>
 
 		<StatusDot

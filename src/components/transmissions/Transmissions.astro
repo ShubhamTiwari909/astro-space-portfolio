@@ -34,13 +34,15 @@ const shown = limit ? sorted.slice(0, limit) : sorted;
 ---
 
 <div class="grid gap-8" data-observe>
-	<ol class="m-0 grid list-none p-0">
-		{
-			shown.map((article) => (
-				<TransmissionRow article={article.data} slug={article.id} as={headingAs} />
-			))
-		}
-	</ol>
+	<div class="glass-card overflow-hidden">
+		<ol class="m-0 grid list-none p-0">
+			{
+				shown.map((article) => (
+					<TransmissionRow article={article.data} slug={article.id} as={headingAs} />
+				))
+			}
+		</ol>
+	</div>
 
 	{
 		moreHref && (

@@ -2,8 +2,8 @@
 /**
  * Instrument Bay teaser — master plan §14.4.
  *
- * Compact and zero-JS: four mono rows and a link. All the weight stays on
- * /instruments, which is where the Canvas experiment lives.
+ * Compact and zero-JS: four console rows with live status badges and a link.
+ * All the weight stays on /instruments, which is where the Canvas experiment lives.
  */
 import type { CollectionEntry } from 'astro:content';
 import Button from '../ui/Button.astro';
@@ -14,28 +14,43 @@ interface Props {
 
 const { instruments }: Props = Astro.props;
 const ordered = [...instruments].sort((a, b) => a.data.order - b.data.order);
+
+/** Status badge text cycles through the instrument list for visual variety */
+const STATUS_LABELS = ['ONLINE', 'CALIBRATED', 'ACTIVE', 'DEPLOYED'];
 ---
 
 <div class="grid gap-8" data-observe>
-	<ul class="m-0 grid list-none p-0">
-		{
-			ordered.map((instrument) => (
-				<li
-					class="grid grid-cols-[3rem_1fr] items-baseline gap-x-4 gap-y-1 border-b border-hairline py-4 last:border-b-0 md:grid-cols-[3rem_14rem_1fr]"
-				>
-					<span
-						class="font-mono text-[0.6875rem] tracking-[0.08em] text-ink-low uppercase"
+	{/* Console panel header */}
+	<div class="glass-card overflow-hidden">
+		<div class="flex items-center gap-3 border-b border-hairline bg-surface-0/60 px-5 py-3">
+			<span class="pulse-glow size-1.5 rounded-pill bg-accent" aria-hidden="true"></span>
+			<span class="font-mono text-label tracking-[0.14em] text-ink-low uppercase">
+				Instrument Bay · Diagnostic Console
+			</span>
+		</div>
+		<ul class="m-0 grid list-none p-0">
+			{
+				ordered.map((instrument, i) => (
+					<li
+						class="console-row grid grid-cols-[3rem_1fr_auto] items-center gap-x-4 border-b border-hairline px-5 py-3.5 last:border-b-0 md:grid-cols-[3rem_14rem_1fr_auto]"
 					>
-						{instrument.data.designation}
-					</span>
-					<span class="text-data text-ink-hi">{instrument.data.name}</span>
-					<span class="text-data text-ink-low max-md:col-span-2">
-						{instrument.data.claim}
-					</span>
-				</li>
-			))
-		}
-	</ul>
+						<span
+							class="font-mono text-[0.6875rem] tracking-[0.08em] text-ink-low uppercase"
+						>
+							{instrument.data.designation}
+						</span>
+						<span class="text-data text-ink-hi">{instrument.data.name}</span>
+						<span class="text-data text-ink-low max-md:hidden">
+							{instrument.data.claim}
+						</span>
+						<span class="shrink-0 rounded-chip border border-hairline px-2 py-0.5 font-mono text-[0.625rem] tracking-[0.08em] text-accent uppercase">
+							{STATUS_LABELS[i % STATUS_LABELS.length]}
+						</span>
+					</li>
+				))
+			}
+		</ul>
+	</div>
 
 	<div>
 		<Button variant="secondary" href="/instruments" icon="arrow-right">

@@ -24,7 +24,7 @@ const active = status === 'LIVE' || status === 'OPEN';
 		aria-hidden="true"
 		class:list={[
 			'size-1.5 rounded-pill bg-current',
-			active && 'shadow-glow-1',
+			active && 'shadow-glow-1 pulse-glow',
 		]}
 	></span>
 	<span>{label ?? status}</span>

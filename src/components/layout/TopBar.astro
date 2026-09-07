@@ -3,6 +3,10 @@
  * Fixed 64px bar (§7.2). Wordmark left, résumé right — and nothing else,
  * ever. It never grows. The résumé lives here so it stays at most one interaction
  * from every route at any scroll position (§6.1).
+ *
+ * Desktop-only section anchors are purely supplementary: the rail already
+ * serves that purpose at lg+, and the tab bar at mobile. They are added here
+ * for ≥1024px to give recruiters instant section jumping without scrolling.
  */
 import Button from '../ui/Button.astro';
 
@@ -11,7 +15,17 @@ interface Props {
 	resumePdf: string;
 }
 
-const { name, resumePdf }: Props = Astro.props;
+const { name }: Props = Astro.props;
+
+const NAV_LINKS = [
+	{ href: '#log', label: 'About' },
+	{ href: '#atlas', label: 'Skills' },
+	{ href: '#trajectory', label: 'Experience' },
+	{ href: '#worlds', label: 'Projects' },
+	{ href: '#instruments', label: 'Lab' },
+	{ href: '#transmissions', label: 'Writing' },
+	{ href: '#uplink', label: 'Contact' },
+];
 ---
 
 <header
@@ -23,15 +37,28 @@ const { name, resumePdf }: Props = Astro.props;
 	>
 		{name}
 	</a>
+
+	{/* Desktop section nav — hidden below lg where the rail and tab bar serve the same purpose */}
+	<nav aria-label="Page sections" class="hidden items-center gap-1 lg:flex">
+		{NAV_LINKS.map(({ href, label }) => (
+			<a
+				href={href}
+				class="rounded-chip px-3 py-1.5 font-mono text-label tracking-[0.14em] text-ink-low uppercase no-underline transition-colors duration-(--duration-fast) ease-ui hover:bg-surface-1/60 hover:text-ink-hi"
+			>
+				{label}
+			</a>
+		))}
+	</nav>
+
 	{/*
 	  Goes to the PAGE, not the PDF.
-	
+
 	  It said "Dossier" and downloaded a file, which left `/dossier` with no
 	  entry point anywhere on the site — the only link to it in the whole
 	  build was inside the `/resume` redirect stub. That defeated the route's
 	  entire rationale (§8.3: HTML is indexable, linkable, and readable on a
 	  phone in a way a PDF is not).
-	
+
 	  The PDF stays one tap away everywhere it matters: the Hero and Uplink
 	  both carry a direct "Download résumé", and the dossier page opens with
 	  a Download PDF button. No analytics event here, because navigating to
@@ -46,3 +73,4 @@ const { name, resumePdf }: Props = Astro.props;
 		Dossier
 	</Button>
 </header>
+

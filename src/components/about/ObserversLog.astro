@@ -48,25 +48,28 @@ const { profile }: Props = Astro.props;
 			)
 		}
 
-		{
-			profile.prose?.map((paragraph) => (
-				<p data-observe class="mb-5 max-w-(--prose) text-body-l">
-					{paragraph}
-				</p>
-			))
-		}
+		{/* Glass-backed prose block so 3D planets behind don't occlude text */}
+		<div data-observe class="glass-card mb-8 p-6">
+			{
+				profile.prose?.map((paragraph) => (
+					<p class="mb-5 last:mb-0 max-w-(--prose) text-body-l">
+						{paragraph}
+					</p>
+				))
+			}
+		</div>
 
 		{
 			profile.openQuestions && profile.openQuestions.length > 0 && (
-				<div data-observe class="mt-10">
+				<div data-observe class="mt-2">
 					<h3
 						class="mb-4 font-mono text-label tracking-[0.14em] text-ink-low uppercase"
 					>
 						Open questions
 					</h3>
-					<ul class="m-0 grid list-none gap-3 p-0">
+					<ul class="m-0 grid list-none gap-2 p-0">
 						{profile.openQuestions.map((question) => (
-							<li class="grid grid-cols-[1rem_1fr] gap-3 text-body text-ink-mid">
+							<li class="console-row grid grid-cols-[1rem_1fr] gap-3 rounded-card border border-hairline px-4 py-3 text-body text-ink-mid">
 								<span aria-hidden="true" class="font-mono text-accent">→</span>
 								<span>{question}</span>
 							</li>

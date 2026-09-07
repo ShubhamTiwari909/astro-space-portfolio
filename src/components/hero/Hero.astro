@@ -96,16 +96,17 @@ const reveal =
 			</div>
 
 			{/* Stats before socials: a recruiter's "4 years" outranks social
-			    links for above-the-fold priority (§6.1). */}
+			    links for above-the-fold priority (§6.1). Rendered as glass
+			    HUD telemetry blocks rather than plain text for visual elevation. */}
 			<dl
-				class={`m-0 mb-5 flex flex-wrap gap-6 border-t border-hairline pt-5 md:gap-10 ${reveal}`}
+				class={`m-0 mb-5 flex flex-wrap gap-3 border-t border-hairline pt-5 ${reveal}`}
 				style="--i: 6"
 			>
 				{
 					stats.map((stat) => (
-						<div class="flex flex-col-reverse gap-1">
+						<div class="ticks flex flex-col-reverse gap-1 rounded-card border border-hairline bg-surface-1/60 px-4 py-3 backdrop-blur-sm" style="--tick-color: color-mix(in oklab, var(--band) 30%, transparent); --tick-size: 6px; --tick-inset: 5px;">
 							<dt class={`text-ink-low ${monoLabel}`}>{stat.label}</dt>
-							<dd class="m-0 font-mono text-display-m leading-none font-medium text-ink-hi">
+							<dd class="m-0 font-mono text-display-m leading-none font-medium text-ink-hi shadow-glow-1">
 								{stat.value}
 							</dd>
 						</div>
@@ -141,35 +142,39 @@ const reveal =
 			class={`justify-self-start max-xs:hidden max-lg:order-1 lg:justify-self-end ${reveal}`}
 			style="--i: 2"
 		>
-			<div
-				class="ticks relative rounded-card border border-hairline bg-surface-1/60 p-2"
-				style="--tick-color: color-mix(in oklab, var(--band) 45%, transparent); --tick-size: 12px;"
-			>
+			{/* Outer glow halo ring — the ambient band color pulses softly
+			    around the portrait frame to anchor it in the scene. */}
+			<div class="hero-halo relative">
 				<div
-					class="relative overflow-hidden rounded-chip *:block max-lg:rounded-pill"
+					class="ticks relative rounded-card border border-hairline bg-surface-1/60 p-2"
+					style="--tick-color: color-mix(in oklab, var(--band) 55%, transparent); --tick-size: 14px;"
 				>
-					{/*
-					  `fallbackFormat` is not decoration. Without it Astro's
-					  <Picture> falls back to PNG, and it does so by
-					  UP-CONVERTING the 130KB webp source into four PNG variants
-					  totalling 2.59MB — 68% of the entire build. Nothing in the
-					  support matrix would ever fetch them: anything reaching the
-					  <img> fallback rather than the avif or webp <source> is old
-					  enough that a 1.3MB PNG is not a kindness.
-					*/}
-					<Picture
-						src={portrait}
-						alt={profile.name}
-						widths={[320, 480, 720]}
-						sizes="(min-width: 64rem) 20rem, 10rem"
-						formats={['avif', 'webp']}
-						fallbackFormat="webp"
-						loading="eager"
-						class="hero-portrait block h-auto w-40 object-cover max-lg:aspect-square lg:w-[min(30rem,100%)]"
-					/>
-					{/* Grades the studio backdrop into the void so the portrait
-					    reads as part of the composition, not a pasted rectangle. */}
-					<div class="hero-grade pointer-events-none absolute inset-0"></div>
+					<div
+						class="relative overflow-hidden rounded-chip *:block max-lg:rounded-pill"
+					>
+						{/*
+						  `fallbackFormat` is not decoration. Without it Astro's
+						  <Picture> falls back to PNG, and it does so by
+						  UP-CONVERTING the 130KB webp source into four PNG variants
+						  totalling 2.59MB — 68% of the entire build. Nothing in the
+						  support matrix would ever fetch them: anything reaching the
+						  <img> fallback rather than the avif or webp <source> is old
+						  enough that a 1.3MB PNG is not a kindness.
+						*/}
+						<Picture
+							src={portrait}
+							alt={profile.name}
+							widths={[320, 480, 720]}
+							sizes="(min-width: 64rem) 20rem, 10rem"
+							formats={['avif', 'webp']}
+							fallbackFormat="webp"
+							loading="eager"
+							class="hero-portrait block h-auto w-40 object-cover max-lg:aspect-square lg:w-[min(30rem,100%)]"
+						/>
+						{/* Grades the studio backdrop into the void so the portrait
+						    reads as part of the composition, not a pasted rectangle. */}
+						<div class="hero-grade pointer-events-none absolute inset-0"></div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -209,6 +214,34 @@ const reveal =
 	   touch — just enough to seat it in the composition. */
 	.hero-portrait {
 		filter: contrast(1.04) saturate(0.96);
+	}
+
+	/*
+	 * Ambient halo behind the portrait frame: a soft radial glow in the
+	 * live band colour. Purely atmospheric, aria-hidden, no new element.
+	 * Uses a pseudo-element on the wrapper so it sits behind the Panel border.
+	 */
+	.hero-halo::before {
+		content: '';
+		position: absolute;
+		inset: -1rem;
+		border-radius: var(--radius-panel);
+		background: radial-gradient(
+			ellipse 80% 80% at 50% 50%,
+			color-mix(in oklab, var(--band) 18%, transparent),
+			transparent 70%
+		);
+		pointer-events: none;
+		z-index: -1;
+		@media (prefers-reduced-motion: no-preference) {
+			/* token-lint-ignore: animation duration matches the ambient ambient token */
+			animation: halo-pulse var(--duration-ambient) ease-in-out infinite;
+		}
+	}
+
+	@keyframes halo-pulse {
+		0%, 100% { opacity: 0.6; }
+		50% { opacity: 1; }
 	}
 
 	/*

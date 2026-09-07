@@ -293,6 +293,46 @@
 	}
 }
 
+/* Glass card — translucent reading surface for text-heavy content that sits
+   over the live 3D scene. Keeps text legible without opaquing the backdrop.
+   Below md: backdrop-filter is too expensive over WebGL on mobile, so we
+   fall back to a solid surface (same logic as Panel). */
+@utility glass-card {
+	background-color: color-mix(in oklab, var(--color-surface-1) 80%, transparent);
+	backdrop-filter: blur(12px);
+	border: 1px solid var(--color-hairline);
+	border-radius: var(--radius-panel);
+
+	@media (width < 48rem) {
+		background-color: var(--color-surface-1);
+		backdrop-filter: none;
+	}
+}
+
+/* Console row — illuminated hover for avionics-style list items */
+@utility console-row {
+	transition:
+		background-color var(--duration-fast) var(--ease-ui),
+		border-color var(--duration-fast) var(--ease-ui);
+
+	&:hover {
+		background-color: color-mix(in oklab, var(--band) 6%, transparent);
+		border-color: color-mix(in oklab, var(--band) 28%, transparent);
+	}
+}
+
+/* Glow pulse — tiny ambient halo on beacon dots (status indicators) */
+@utility pulse-glow {
+	@media (prefers-reduced-motion: no-preference) {
+		animation: pulse-glow var(--duration-ambient) ease-in-out infinite;
+	}
+}
+
+@keyframes pulse-glow {
+	0%, 100% { box-shadow: 0 0 4px 0 color-mix(in oklab, var(--band) 60%, transparent); }
+	50% { box-shadow: 0 0 10px 2px color-mix(in oklab, var(--band) 80%, transparent); }
+}
+
 /* ==========================================================================
    Motion — §16.4. One global rule; components never re-implement this.
    L1 ambient / L3 navigation / L4 storytelling are all suppressed.

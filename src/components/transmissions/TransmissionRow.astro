@@ -37,7 +37,7 @@ const stamp = date
 		data-analytics="transmission_click"
 		data-analytics-slug={slug}
 		aria-label={article.title}
-		class="group/row grid min-h-22 grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 border-s-2 border-transparent py-5 ps-0 no-underline transition-[background-color,padding-inline-start,border-color] duration-(--duration-fast) ease-ui hover:border-s-accent hover:bg-surface-2/60 hover:ps-4 md:grid-cols-[6rem_1fr_auto] md:gap-x-6"
+		class="px-5 group/row grid min-h-22 grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 rounded-card border border-transparent py-4 no-underline transition-[background-color,padding-inline-start,border-color,backdrop-filter] duration-(--duration-fast) ease-ui hover:border-hairline hover:bg-surface-1/70 hover:ps-4 hover:backdrop-blur-sm md:grid-cols-[6rem_1fr_auto] md:gap-x-6"
 	>
 		<time
 			datetime={article.publishedAt}

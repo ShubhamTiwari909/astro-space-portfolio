@@ -45,7 +45,7 @@ export default function SectionRail() {
 	return (
 		<nav
 			aria-label="Sections"
-			className="group/rail fixed inset-e-0 top-1/2 z-(--z-rail) hidden -translate-y-1/2 items-center gap-3 pe-4 lg:flex"
+			className="rail group/rail fixed inset-e-0 top-1/2 z-(--z-rail) hidden -translate-y-1/2 items-center gap-3 pe-4 lg:flex"
 		>
 			<ul className="order-1 m-0 grid list-none gap-1 p-0 text-end">
 				{BANDS.map((band, index) => (
@@ -58,7 +58,7 @@ export default function SectionRail() {
 						>
 							<span
 								aria-hidden="true"
-								className="block h-px w-1.5 bg-current transition-[width] duration-(--duration-base) ease-ui group-data-active/tick:w-3 group-data-active/tick:shadow-glow-1"
+								className="block h-px w-2 bg-current transition-[width,box-shadow] duration-(--duration-base) ease-ui group-data-active/tick:w-4 group-data-active/tick:shadow-glow-1"
 							/>
 							<span className="font-mono text-[0.625rem] tracking-[0.14em] uppercase opacity-0 transition-opacity duration-(--duration-fast) ease-ui group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-active/tick:opacity-100 2xl:opacity-100">
 								{LABELS[band.section]}

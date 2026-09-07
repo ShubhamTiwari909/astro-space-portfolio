@@ -35,50 +35,51 @@ const { positions }: Props = Astro.props;
 						{position.data.company && <span> · {position.data.company}</span>}
 					</p>
 					{position.data.summary && (
-						<p class="mt-3 max-w-(--prose)">{position.data.summary}</p>
+						<p class="mt-3 max-w-(--prose) text-ink-mid">{position.data.summary}</p>
 					)}
 				</header>
 
-				{/* The spine: a hairline the burn events hang off. On mobile it
-				    is a plain border; no SVG, no scroll-linked work (§12.3). */}
+				{/* The spine: a hairline the burn events hang off. */}
 				<ol
-					class="relative m-0 grid list-none gap-10 border-s border-hairline p-0 ps-6 md:ps-10"
+					class="relative m-0 grid list-none gap-8 border-s border-hairline p-0 ps-6 md:ps-10"
 				>
 					{position.data.achievements.map((event, i) => (
 						<li data-observe class="relative">
-							{/* Burn marker, sitting on the spine. */}
+							{/* Burn marker — pulsing beacon on the spine */}
 							<span
 								aria-hidden="true"
-								class="absolute top-2 size-2 rounded-pill bg-accent shadow-glow-1 max-md:-inset-s-7 md:-inset-s-11"
+								class="pulse-glow absolute top-3 size-2 rounded-pill bg-accent max-md:-inset-s-7 md:-inset-s-11"
 							/>
 
-							<p
-								class="mb-1 font-mono text-[0.625rem] tracking-[0.14em] text-ink-low uppercase"
-							>
-								Burn {String(i + 1).padStart(2, '0')}
-							</p>
-							<h4 class="mb-2 text-display-s">{event.title}</h4>
-							<p class="mb-0 max-w-(--prose)">{event.description}</p>
+							<div class="glass-card p-5">
+								<p
+									class="mb-1 font-mono text-[0.625rem] tracking-[0.14em] text-ink-low uppercase"
+								>
+									Burn {String(i + 1).padStart(2, '0')}
+								</p>
+								<h4 class="mb-2 text-display-s text-ink-hi">{event.title}</h4>
+								<p class="mb-0 max-w-(--prose) text-ink-mid">{event.description}</p>
 
-							{event.metric && (
-								<div class="mt-5">
-									<MetricBlock
-										value={event.metric.value}
-										label={event.metric.label}
-										basis={event.metric.basis}
-									/>
-								</div>
-							)}
+								{event.metric && (
+									<div class="mt-5">
+										<MetricBlock
+											value={event.metric.value}
+											label={event.metric.label}
+											basis={event.metric.basis}
+										/>
+									</div>
+								)}
 
-							{event.technologies && (
-								<ul class="mt-4 flex list-none flex-wrap gap-2 p-0">
-									{event.technologies.map((tech) => (
-										<li>
-											<Chip>{tech}</Chip>
-										</li>
-									))}
-								</ul>
-							)}
+								{event.technologies && (
+									<ul class="mt-4 flex list-none flex-wrap gap-2 p-0">
+										{event.technologies.map((tech) => (
+											<li>
+												<Chip>{tech}</Chip>
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
 						</li>
 					))}
 				</ol>
