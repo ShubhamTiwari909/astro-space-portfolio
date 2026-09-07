@@ -59,20 +59,63 @@ export default defineConfig({
 	// Self-hosted, latin-subset, woff2, display:swap, with metric-override fallbacks
 	// generated automatically (optimizedFallbacks defaults to true).
 	fonts: [
+		/*
+		 * Instrument Serif is deliberately TWO entries rather than one family
+		 * with two styles. `<Font preload />` preloads every face of a
+		 * cssVariable, and the italic is used exactly twice on the whole site
+		 * — a pull-quote in the observer's log and one in the dossier, both
+		 * far below the fold. As a single family it therefore put 15.7KB on
+		 * the critical path, at High priority, competing with the stylesheet
+		 * and the LCP image for a face nobody can see until they scroll.
+		 *
+		 * Split, the roman keeps its preload (it sets the h1, which is the
+		 * LCP candidate) and the italic loads on demand where it is used.
+		 */
 		{
 			provider: fontProviders.google(),
 			name: 'Instrument Serif',
 			cssVariable: '--ff-display',
 			weights: [400],
-			styles: ['normal', 'italic'],
+			styles: ['normal'],
 			subsets: ['latin'],
 			fallbacks: ['Iowan Old Style', 'Georgia', 'serif'],
 		},
 		{
 			provider: fontProviders.google(),
+			name: 'Instrument Serif',
+			cssVariable: '--ff-display-italic',
+			weights: [400],
+			styles: ['italic'],
+			subsets: ['latin'],
+			fallbacks: ['Iowan Old Style', 'Georgia', 'serif'],
+		},
+		/*
+		 * Two static faces, not the `400 600` variable range it used to be.
+		 * A variable Inter carries every weight between the two ends in one
+		 * 48.6KB file, and it was the largest thing on the critical path —
+		 * preloaded, High priority, ahead of the stylesheet. Nothing on the
+		 * site asks for a weight between: the body renders at 400 throughout,
+		 * both `font-medium` uses are on the mono face, and 600 exists only
+		 * for the handful of default-weight `<strong>`s.
+		 *
+		 * The provider matters as much as the weights: Google serves Inter as
+		 * a single variable file no matter which weights are asked for, so
+		 * selecting weights against it changed nothing. Fontsource serves
+		 * real static faces, and the latin 400 is 23.7KB against the
+		 * variable's 48.4KB.
+		 *
+		 * One weight, because `<Font preload />` preloads every face of a
+		 * cssVariable — shipping a 600 as well simply put both on the
+		 * critical path and saved nothing. Nothing needs it: the body renders
+		 * at 400 throughout, both `font-medium` uses are on the mono face,
+		 * and the one default-weight `<strong>` was a metric, which now uses
+		 * mono medium like every other metric on the site.
+		 */
+		{
+			provider: fontProviders.fontsource(),
 			name: 'Inter',
 			cssVariable: '--ff-body',
-			weights: ['400 600'],
+			weights: [400],
 			styles: ['normal'],
 			subsets: ['latin'],
 			fallbacks: ['system-ui', 'sans-serif'],

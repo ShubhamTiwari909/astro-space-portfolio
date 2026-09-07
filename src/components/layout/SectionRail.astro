@@ -1,0 +1,126 @@
+---
+/**
+ * The declination rail — master plan §7.2.
+ *
+ * Additive only: this renders a complete, working anchor list, and the
+ * script below adds the active state and the progress fill. Delete its JS
+ * and navigation still works.
+ *
+ * ── Why this is not a React island ───────────────────────────────────────
+ * It was one, at `client:idle`, and it cost the home route react-dom: 53KB
+ * on the wire and a 73ms long task in the load window, to add two attributes
+ * and one `scale` to markup the server had already rendered. Worse, the rail
+ * is `hidden lg:flex` — it does not exist below 64rem — so every phone paid
+ * the whole bill for a component it could not see, which is exactly what
+ * §24.2 exists to prevent.
+ *
+ * The same reasoning retired the MobileNav island in Phase 7. React earns
+ * its place in this project once, for the scene, where the reconciler is
+ * doing real work; it does not earn it for a list of anchors.
+ *
+ * Reads scroll from the shared singleton rather than adding a listener
+ * (§19.2b), and never touches layout: the fill is a `scale`, and attribute
+ * writes happen only when the active section actually changes.
+ */
+import { BANDS } from '../../lib/bands';
+
+const LABELS: Record<string, string> = {
+	'first-light': 'Home',
+	log: 'About',
+	atlas: 'Skills',
+	trajectory: 'Experience',
+	worlds: 'Projects',
+	instruments: 'Lab',
+	transmissions: 'Writing',
+	uplink: 'Contact',
+};
+---
+
+<nav
+	aria-label="Sections"
+	data-section-rail
+	class="rail group/rail fixed inset-e-0 top-1/2 z-(--z-rail) hidden -translate-y-1/2 items-center gap-3 pe-4 lg:flex"
+>
+	<ul class="order-1 m-0 grid list-none gap-1 p-0 text-end">
+		{
+			BANDS.map((band, index) => (
+				<li>
+					<a
+						href={`#${band.section}`}
+						data-rail-tick
+						aria-current={index === 0 ? 'true' : undefined}
+						data-active={index === 0 ? true : undefined}
+						class="group/tick flex min-h-5.5 items-center justify-end gap-2 px-1 text-ink-low no-underline transition-colors duration-(--duration-base) ease-ui hover:text-ink-hi data-active:text-accent"
+					>
+						<span
+							aria-hidden="true"
+							class="block h-px w-2 bg-current transition-[width,box-shadow] duration-(--duration-base) ease-ui group-data-active/tick:w-4 group-data-active/tick:shadow-glow-1"
+						/>
+						<span
+							class="font-mono text-[0.625rem] tracking-[0.14em] uppercase opacity-0 transition-opacity duration-(--duration-fast) ease-ui group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-active/tick:opacity-100 2xl:opacity-100"
+						>
+							{LABELS[band.section]}
+						</span>
+					</a>
+				</li>
+			))
+		}
+	</ul>
+
+	{/* Axis: a hairline that fills top-to-bottom with scroll progress. */}
+	<div aria-hidden="true" class="relative order-2 h-44 w-px bg-hairline">
+		<div
+			data-rail-fill
+			style="scale: 1 0"
+			class="absolute inset-0 origin-top bg-linear-to-b from-transparent to-accent"
+		>
+		</div>
+	</div>
+</nav>
+
+<script>
+	import { scrollState, subscribe } from '../../lib/scrollProgress';
+
+	const rail = document.querySelector('[data-section-rail]');
+	const fill = rail?.querySelector<HTMLElement>('[data-rail-fill]');
+	const ticks = rail ? [...rail.querySelectorAll<HTMLElement>('[data-rail-tick]')] : [];
+
+	/*
+	 * The rail is `hidden lg:flex`. Below that it is not rendered, so there is
+	 * nothing to keep in sync and no reason to hold a scroll subscription.
+	 */
+	const wide = window.matchMedia('(min-width: 64rem)');
+
+	let unsubscribe: (() => void) | null = null;
+
+	function attach() {
+		if (unsubscribe || !fill || ticks.length === 0) return;
+		let lastIndex = -1;
+		unsubscribe = subscribe(() => {
+			// A scale on the compositor: no layout read, no layout write.
+			fill.style.setProperty('scale', `1 ${scrollState.progress}`);
+
+			if (scrollState.bandIndex === lastIndex) return;
+			lastIndex = scrollState.bandIndex;
+			ticks.forEach((tick, index) => {
+				const active = index === lastIndex;
+				tick.toggleAttribute('data-active', active);
+				if (active) tick.setAttribute('aria-current', 'true');
+				else tick.removeAttribute('aria-current');
+			});
+		});
+	}
+
+	function detach() {
+		unsubscribe?.();
+		unsubscribe = null;
+	}
+
+	function sync() {
+		if (wide.matches) attach();
+		else detach();
+	}
+
+	sync();
+	wide.addEventListener('change', sync);
+</script>

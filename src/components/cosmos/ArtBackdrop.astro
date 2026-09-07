@@ -12,6 +12,34 @@
  * band becomes active. Every plate also carries an inlined LQIP data URI so
  * it paints instantly with zero requests.
  *
+ * ── Only the opening plate carries a bitmap placeholder ──────────────────
+ * Inlining an LQIP for all eight bands put 11.8KB of base64 in the document,
+ * and base64 of a PNG is close to incompressible: measured, 7.9KB of the
+ * brotli'd HTML — 31% of the very first render-blocking resource on the
+ * page, for seven images that cannot be seen until the visitor has scrolled
+ * to their band.
+ *
+ * The opening band keeps its data URI: it genuinely paints in the first
+ * frame with no request, and it is the one plate that is on screen before
+ * the visitor has done anything.
+ *
+ * The other seven place a gradient in their own band hue instead. Emitting
+ * them as real files was tried first and rejected — it moved the bytes off
+ * the document but spent seven requests, which put the mobile home route at
+ * 34 against §26.2's budget of 28, and §26.2 is cut-scope-not-raise-the-
+ * number. A gradient costs one request fewer than nothing: no bytes worth
+ * measuring, no fetch, and it is the palette's own language (§3.3) rather
+ * than a blurred thumbnail of a photograph nobody has seen yet. It sits
+ * under the real plate for the moment between a band going active and its
+ * ~100KB image arriving.
+ *
+ * Each value is bound once to a `--lqip` custom property rather than
+ * repeated in all three rules that need it (base, active, mobile). That also
+ * turned out to be what defers the fetch: a plate is in the DOM from the
+ * first byte, `opacity:0` and all, so a `background-image` in its BASE rule
+ * is fetched immediately regardless of which band is active — but a custom
+ * property is not resolved until something *uses* it.
+ *
  * The generated <style> below is the one place a stylesheet is genuinely
  * required rather than Tailwind: the selectors are built at build time from
  * the band data, and no utility can express "fetch this image only when this
@@ -39,9 +67,22 @@ function lqipDataUri(name: string): string {
 	return `data:image/png;base64,${fs.readFileSync(file).toString('base64')}`;
 }
 
+/**
+ * The stand-in for the seven bands that cannot be on screen at first paint:
+ * the band's own hue, sunk into the void. A background-image value, so it
+ * layers under the real plate exactly as an LQIP url() did.
+ */
+function lqipWash(hex: string): string {
+	return (
+		`radial-gradient(120% 90% at 50% 42%,` +
+		` color-mix(in oklab, ${hex} 20%, var(--color-void)) 0%,` +
+		` var(--color-void) 72%)`
+	);
+}
+
 // One entry per band. Two bands share `field-deep`; the browser caches it.
 const layers = await Promise.all(
-	BANDS.map(async (band) => {
+	BANDS.map(async (band, index) => {
 		const asset = plateAsset(band.plate);
 		const [full, mobile] = await Promise.all([
 			getImage({ src: asset, format: 'avif', quality: 62, width: 2560 }),
@@ -51,7 +92,17 @@ const layers = await Promise.all(
 			section: band.section,
 			full: full.src,
 			mobile: mobile.src,
-			lqip: lqipDataUri(band.plate),
+			/*
+			 * Index 0 is the only band that can be on screen before the
+			 * visitor has done anything, so it is the only one worth paying
+			 * document bytes for.
+			 */
+			inline: index === 0,
+			/* A complete background-image value, url() included where it is one. */
+			lqip:
+				index === 0
+					? `url("${lqipDataUri(band.plate)}")`
+					: lqipWash(band.hex),
 		};
 	}),
 );
@@ -60,24 +111,57 @@ const first = layers[0];
 
 const bandCss = [
 	// LQIP is always present; the active band layers its full plate on top.
+	// `--lqip` holds the only copy of the data URI in the document.
 	...layers.map(
 		(l) => `
-.art-plate[data-plate-band="${l.section}"]{background-image:url("${l.lqip}")}
+.art-plate[data-plate-band="${l.section}"]{--lqip:${l.lqip}${
+			// Only the inlined opening plate may paint from the base rule.
+			// For the rest this would fetch all seven during first paint.
+			l.inline ? ';background-image:var(--lqip)' : ''
+		}}
 body[data-band="${l.section}"] .art-plate[data-plate-band="${l.section}"]{
-  opacity:1;background-image:url("${l.full}"),url("${l.lqip}")}
+  opacity:1;background-image:url("${l.full}"),var(--lqip)}
 @media (width < 48rem){
   body[data-band="${l.section}"] .art-plate[data-plate-band="${l.section}"]{
-    background-image:url("${l.mobile}"),url("${l.lqip}")}}`,
+    background-image:url("${l.mobile}"),var(--lqip)}}`,
 	),
-	// Pre-hydration: before ScrollDriver sets data-band, show the opening
-	// plate at full resolution rather than only its LQIP.
+	/*
+	 * Pre-hydration: before ScrollDriver sets data-band, show the opening
+	 * plate at full resolution rather than only its LQIP.
+	 *
+	 * The mobile variant is repeated here deliberately. Without it a phone
+	 * fetched the 2560px plate for this rule AND the 1280px plate the moment
+	 * data-band appeared — 28.5KB of a plate it can never resolve, at the
+	 * highest image priority on the page, followed by 10.7KB more.
+	 */
 	`body:not([data-band]) .art-plate[data-plate-band="${first.section}"]{
-  opacity:1;background-image:url("${first.full}"),url("${first.lqip}")}`,
+  opacity:1;background-image:url("${first.full}"),var(--lqip)}
+@media (width < 48rem){
+  body:not([data-band]) .art-plate[data-plate-band="${first.section}"]{
+    background-image:url("${first.mobile}"),var(--lqip)}}`,
 ].join('\n');
 ---
 
-{/* The opening plate is on the critical path for perceived quality (§9.3). */}
-<link rel="preload" as="image" href={first.full} fetchpriority="high" />
+{/*
+  The opening plate is on the critical path for perceived quality (§9.3) —
+  but only the variant the media query above will actually use. One preload
+  per breakpoint, because a single unconditional preload of the 2560px plate
+  is 28.5KB that a phone downloads at top priority and then discards.
+*/}
+<link
+	rel="preload"
+	as="image"
+	href={first.mobile}
+	media="(width < 48rem)"
+	fetchpriority="high"
+/>
+<link
+	rel="preload"
+	as="image"
+	href={first.full}
+	media="(width >= 48rem)"
+	fetchpriority="high"
+/>
 
 {/*
   --art-strength recedes once the scene is live (set on <html> by

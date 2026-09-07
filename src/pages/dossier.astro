@@ -85,7 +85,7 @@ const working = skills
 			{
 				profile.data.philosophy && (
 					<blockquote
-						class="m-0 border-s-2 border-accent ps-5 font-display text-display-s italic text-ink-hi"
+						class="m-0 border-s-2 border-accent ps-5 font-display-italic text-display-s italic text-ink-hi"
 					>
 						{profile.data.philosophy}
 					</blockquote>
@@ -116,7 +116,11 @@ const working = skills
 												{event.metric && (
 													<>
 														{' '}
-														<strong class="text-ink-hi">
+														{/* Mono medium, like every other metric on the site
+														    (MetricBlock, the hero readout). It was the one
+														    default-weight <strong> anywhere, and the only
+														    reason to ship a bold Inter. */}
+														<strong class="font-mono font-medium text-ink-hi">
 															{event.metric.value} {event.metric.label}
 														</strong>{' '}
 														<span class="text-ink-low">

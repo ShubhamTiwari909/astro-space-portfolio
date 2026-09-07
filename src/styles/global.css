@@ -33,6 +33,8 @@
 
 	/* ---- families (Astro's Fonts API owns --ff-*) ---- */
 	--font-display: var(--ff-display);
+	/* Roman and italic are separate families so only the roman is preloaded. */
+	--font-display-italic: var(--ff-display-italic);
 	--font-body: var(--ff-body);
 	--font-mono: var(--ff-mono);
 

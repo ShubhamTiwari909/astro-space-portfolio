@@ -7,6 +7,103 @@ to match reality silently.
 
 
 
+## Post-deployment — the local harness was grading itself
+
+Prompted by a complaint about the page-speed score. The site was already
+deployed, so it was measured directly.
+
+### The measurement was wrong before the site was
+
+`pnpm test:lighthouse` reported **56** on `/` with a TBT of 4502ms. The same
+build, deployed, scored **99 / 93 / 100** over three runs. The local suite was
+not measuring the site; it was measuring `tests/lib/serve.mjs`, which sent no
+`content-encoding` while its own doc comment claimed it served "exactly the
+bytes a CDN would". Vercel serves brotli.
+
+The tell was one number appearing twice: the scene chunk measured **880623
+bytes locally and 237731 deployed**. Lighthouse's simulated throttling derives
+its timings from *observed transfer sizes*, so every byte-sensitive metric was
+inflated ~3.7x.
+
+Fixing the server to negotiate brotli/gzip moved `/` from a median of 81 to a
+median of 97 with no change to the site at all. Same class of error as the
+Phase 4b budget test that silently stopped measuring three.js: the instrument
+agreed with itself and was wrong.
+
+### Then the real work, measured honestly
+
+Median of 6 runs on `/`, corrected harness throughout:
+
+| | Before | After |
+|---|---|---|
+| Performance (median) | 97 | **99** |
+| Performance (worst of 6) | 84 | **93** |
+| FCP | 1502–2329ms (bimodal) | 1209–1579ms |
+| LCP | 2402ms | **1953ms** |
+| First-wave critical path | ~150KB | **~89KB** |
+| Document (brotli) | 24803B | **17956B** |
+| Best practices | 96 | **100** |
+
+All four routes now score 100 on accessibility, best practices and SEO, and
+98–100 on performance.
+
+### What actually moved it
+
+| Change | Effect |
+|---|---|
+| Scene fetch deferred past the `load` event | Removed 212KB from first-paint contention. `requestIdleCallback` measures the **main thread, not the network** — the thread is idle almost immediately here, so the callback fired while the stylesheet, both fonts and the opening plate were still in flight. Lighthouse's dependency tree named it: the longest chain on `/` was `/` → `DeepFieldScene.js` → `react-three-fiber.esm.js`. This is what made FCP bimodal — ~1450ms when the fetch lost the race, ~2290ms when it won |
+| `SectionRail` de-Reacted | Removed **react-dom** from the load path: 53KB and a 73ms long task, to add two attributes and one `scale` to markup the server already rendered. The rail is `hidden lg:flex`, so every phone paid in full for a component it cannot display. Now 617B of Astro script |
+| Inter: Google variable → Fontsource static 400 | **48.4KB → 23.7KB** on the highest-priority critical-path resource |
+| Display italic split to its own family | 15.7KB off the critical path. `<Font preload />` preloads *every face* of a cssVariable, and the italic appears twice on the site, both far below the fold |
+| Opening art plate preloaded per breakpoint | **28.5KB off mobile.** One unconditional preload of the 2560px plate meant a phone fetched it at top priority *and* the 1280px variant once `data-band` appeared |
+| Seven LQIPs replaced with band-hue gradients | 7.9KB of near-incompressible base64 was 31% of the brotli'd document |
+| Scene gated on client mount | Fixed a **hydration mismatch** (React #418). Astro SSRs island markup whatever the directive, so the scene rendered at tier `low` with no `window`, and React discarded the server tree. Best practices 96 → 100 |
+
+### Two things I got wrong on the way, both caught by measurement
+
+**Deduplicating the LQIPs saved 86 bytes, not 8KB.** Each was emitted three
+times (base rule, active rule, mobile rule) and I expected a large win.
+Brotli collapses identical strings; only the *unique* bytes ever mattered. The
+dedup stayed for the 24KB of parser input, not for the wire.
+
+**Externalising the LQIPs as real files traded bytes for requests and broke a
+budget.** It took 6.8KB off the document and put the mobile home route at
+**34 requests against §26.2's 28**. §26.2 says cut scope, never raise the
+number — so the seven became gradients in their own band hue, which cost one
+request *fewer* than nothing. Also: a `background-image` in a plate's base
+rule is fetched immediately however `opacity:0` it is, whereas a custom
+property is not resolved until something *uses* it. That, not the file/data-URI
+choice, is what defers the fetch.
+
+**Selecting font weights against Google's provider changed nothing** — it
+serves one variable file whatever weights are requested. The provider, not the
+weight list, was the lever.
+
+### Per-route transfer, measured over the network (brotli)
+
+| Route | HTML | CSS | JS crit | JS total | Fonts | Images | TOTAL | Reqs |
+|-------|------|-----|---------|----------|-------|--------|-------|------|
+| `/` mobile | 19.7 | 10.1 | 1.2 | **300.7** | 83.8 | 108.6 | 522.8 | 27/28 |
+| `/` desktop | 19.7 | 10.1 | 1.2 | 300.7 | 83.8 | 206.0 | 620.3 | 27/34 |
+| `/transmissions` | 10.2 | 10.1 | 0.8 | 3.1 | 68.4 | 35.1 | 126.9 | 11/16 |
+| `/dossier` | 6.1 | 10.1 | 0.8 | 3.1 | 83.8 | 0.5 | 103.7 | 10/16 |
+| `/instruments` | 16.6 | 10.1 | 0.8 | **305.0** | 68.4 | 82.6 | 482.8 | 21/32 |
+
+Fonts fell **107.9KB → 83.8KB** and the home document **26.1KB → 19.7KB**.
+The two JS totals in bold are the deviation pinned in the Phase 7 section
+below; nothing here changed the architectural floor.
+
+### Still open
+
+The hero's `h1` is not an LCP candidate: it starts at `opacity: 0` behind the
+`motion-safe` first-light reveal, so LCP resolves against the header wordmark
+(124x44px) instead. That currently *flatters* the score and the reveal is a
+deliberate part of §9.x, so it was left alone — but it means the LCP figure
+above is not measuring the hero, and a future Chrome that treats
+animated-in text differently would change the number without the site
+changing.
+
+
 ## Phase 7 — Performance (local pass)
 
 ### Build size

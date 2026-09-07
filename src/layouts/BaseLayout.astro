@@ -11,7 +11,7 @@ import SkipLink from '../components/layout/SkipLink.astro';
 import TopBar from '../components/layout/TopBar.astro';
 import Footer from '../components/layout/Footer.astro';
 import Cosmos from '../components/cosmos/Cosmos.astro';
-import SectionRail from '../components/layout/SectionRail';
+import SectionRail from '../components/layout/SectionRail.astro';
 import MobileNav from '../components/layout/MobileNav.astro';
 
 interface Props {
@@ -74,9 +74,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 			document.documentElement.classList.add('js');
 		</script>
 
-		{/* Display + body preloaded; mono is not on the critical path (§26.3) */}
+		{/* Display roman + body preloaded. The display italic and the mono are
+		    not on the critical path (§26.3): the italic appears only in
+		    pull-quotes far below the fold, so preloading it spent 15.7KB of
+		    High-priority bandwidth against first paint for nothing. */}
 		<Font cssVariable="--ff-display" preload />
 		<Font cssVariable="--ff-body" preload />
+		<Font cssVariable="--ff-display-italic" />
 		<Font cssVariable="--ff-mono" />
 	</head>
 
@@ -89,7 +93,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 			resumePdf={profile.data.resumePdf}
 		/>
 
-		{rail && <SectionRail client:idle />}
+		{rail && <SectionRail />}
 
 		<main id="main">
 			<slot />

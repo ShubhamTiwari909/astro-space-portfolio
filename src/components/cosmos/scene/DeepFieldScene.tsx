@@ -184,6 +184,27 @@ export default function DeepFieldScene({ planets, burnEvents }: Props) {
 	const [suspended, setSuspended] = useState(isSceneSuspended);
 	useEffect(() => subscribeSceneSuspend(setSuspended), []);
 
+	/*
+	 * Nothing renders until this is mounted on the client, and that is about
+	 * correctness rather than timing.
+	 *
+	 * Astro server-renders an island's markup whatever its client directive,
+	 * so this component ran during the build with no `window`: the tier
+	 * ladder fell back to `low`, and R3F's <Canvas> emitted a wrapper with no
+	 * canvas in it. The client then rendered a different tier and created the
+	 * canvas imperatively, and React threw #418 — a hydration mismatch — and
+	 * discarded the server tree it had just been given.
+	 *
+	 * The whole scene is unavoidably client-only: it needs WebGL, a real
+	 * devicePixelRatio and matchMedia to decide anything at all. So the
+	 * server renders nothing, the first client render also renders nothing —
+	 * which is what makes them match — and the effect below releases the real
+	 * tree one tick later. §25.0 already wants the canvas absent from the
+	 * HTML; this is that, enforced by React's own rules.
+	 */
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => setMounted(true), []);
+
 	// Tier 'none': no WebGL, saveData, or reduced motion on a weak device.
 	// The art layer is the entire experience — a designed outcome (§16.4).
 	const enabled = detected.name !== 'none';
@@ -216,7 +237,7 @@ export default function DeepFieldScene({ planets, burnEvents }: Props) {
 		};
 	}, [ready, failed]);
 
-	if (!enabled || failed) return null;
+	if (!mounted || !enabled || failed) return null;
 
 	/*
 	 * The data-scene-* attributes below are test surface, not debug cruft:
