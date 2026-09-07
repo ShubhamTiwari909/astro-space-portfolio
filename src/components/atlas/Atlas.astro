@@ -6,9 +6,16 @@
  * the list gives scannability. Below `md` the map is dropped entirely and
  * the list carries everything — no information is lost, and no SVG or canvas
  * cost is paid on a phone (§11.5).
+ *
+ * The spectrograph leads, at every width. Unlike the map it is not
+ * supplementary — it is the section's one operable instrument, it carries
+ * facts (`connections`) that reach the page nowhere else as prose, and it is
+ * a short strip rather than a 620-unit plate, so it costs a phone almost
+ * nothing to render.
  */
 import type { CollectionEntry } from 'astro:content';
 import ConstellationMap from './ConstellationMap.astro';
+import Spectrograph from './Spectrograph.astro';
 import SkillList from './SkillList.astro';
 
 interface Props {
@@ -18,11 +25,17 @@ interface Props {
 const { skills }: Props = Astro.props;
 ---
 
-<div class="grid gap-10 lg:grid-cols-[7fr_5fr] lg:items-start lg:gap-12">
-	{/* Map: supplementary, hidden below md (§11.5). */}
-	<div class="max-md:hidden" data-observe>
-		<ConstellationMap skills={skills} />
+<div class="grid gap-10 lg:gap-12">
+	<div data-observe>
+		<Spectrograph skills={skills} />
 	</div>
 
-	<SkillList skills={skills} />
+	<div class="grid gap-10 lg:grid-cols-[7fr_5fr] lg:items-start lg:gap-12">
+		{/* Map: supplementary, hidden below md (§11.5). */}
+		<div class="max-md:hidden" data-observe>
+			<ConstellationMap skills={skills} />
+		</div>
+
+		<SkillList skills={skills} />
+	</div>
 </div>

@@ -1,0 +1,387 @@
+---
+/**
+ * The spectrograph — master plan §11, and the instrument §3.3 implies.
+ *
+ * The palette is built from real emission lines, and the instrument that
+ * produces emission lines is a spectrograph: a continuum with bright lines
+ * standing on it. So the Atlas gets one. Each skill is a line; sweeping
+ * across the strip tunes the readout beneath it and highlights the matching
+ * row in the canonical list.
+ *
+ * ── What the axes actually mean ──────────────────────────────────────────
+ * Position is `sortScore` — depth of experience, the same quantity §11.1
+ * calls magnitude — and the axis is labelled as such rather than dressed up
+ * as a wavelength. Inventing nanometres for React would make the picture
+ * prettier and the site dishonest, which is the trade §3.3 exists to refuse.
+ *
+ * Height is tier, and tier is also written out in the readout, because
+ * §11.4 forbids encoding it by size alone.
+ *
+ * Hue is NOT assigned per skill. It comes from the line's position in the
+ * site's own spectrum, which is how a real spectrograph works — a line's
+ * colour *is* where it falls. That also keeps §3.3 intact: the section owns
+ * one accent, and this strip is the palette itself rather than a second,
+ * competing colour language.
+ *
+ * Accessibility: one tab stop, `role="slider"`, arrow keys across the lines
+ * (see lib/spectrograph.ts for why one and not twenty-four). The SVG is
+ * decorative — every fact it encodes is in the readouts below it, all of
+ * which ship as text.
+ */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	skills: CollectionEntry<'skills'>[];
+}
+
+const { skills }: Props = Astro.props;
+
+/**
+ * The seven distinct band hues, in the order §3.3 declares them. Token
+ * names, not values — the strip re-tints with the palette, never beside it.
+ */
+const CONTINUUM = [
+	'--band-ion',
+	'--band-magenta',
+	'--band-blue',
+	'--band-ember',
+	'--band-violet',
+	'--band-aurora',
+	'--band-gold',
+] as const;
+
+/* viewBox geometry. Wide and short: a spectrograph plate, not a chart. */
+const W = 800;
+const H = 132;
+const BASELINE = 104;
+const PAD = 34;
+
+/** Line height by tier — magnitude, stated in words in the readout too. */
+const TIER_HEIGHT = { CORE: 66, WORKING: 46, FAMILIAR: 28 } as const;
+
+const TIER_LABEL = { CORE: 'Core', WORKING: 'Working', FAMILIAR: 'Familiar' } as const;
+const CONSTELLATION_PLAIN: Record<string, string> = {
+	INTERFACE: 'Frontend',
+	SUBSTRATE: 'Backend',
+	OPERATIONS: 'Tooling',
+};
+
+/*
+ * The score window. Deliberately wider than the data's own 60–95 range so
+ * the strip does not stretch a 35-point spread across the full plate and
+ * imply more separation than exists.
+ */
+const SCORE_MIN = 55;
+const SCORE_MAX = 100;
+
+function xFor(score: number): number {
+	const t = (score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN);
+	return PAD + t * (W - PAD * 2);
+}
+
+const byId = new Map(skills.map((s) => [s.id, s.data.name]));
+
+/*
+ * Several skills share a score, and coincident lines would hide each other.
+ * They are nudged apart by a few viewBox units — about 0.4 score points per
+ * step, which is below the resolution the axis claims — the way a real
+ * instrument renders a blended line as a split one.
+ */
+const NUDGE = 6;
+
+const groups = new Map<number, CollectionEntry<'skills'>[]>();
+for (const skill of skills) {
+	const list = groups.get(skill.data.sortScore) ?? [];
+	list.push(skill);
+	groups.set(skill.data.sortScore, list);
+}
+
+const lines = [...groups.entries()]
+	.flatMap(([score, members]) =>
+		[...members]
+			.sort((a, b) => a.data.name.localeCompare(b.data.name))
+			.map((skill, i) => ({
+				skill,
+				x: xFor(score) + (i - (members.length - 1) / 2) * NUDGE,
+				height: TIER_HEIGHT[skill.data.tier],
+			})),
+	)
+	.sort((a, b) => a.x - b.x);
+
+/** Readouts render in the same order the slider traverses. */
+const readouts = lines.map(({ skill }) => ({
+	id: skill.id,
+	name: skill.data.name,
+	tier: TIER_LABEL[skill.data.tier],
+	constellation: CONSTELLATION_PLAIN[skill.data.constellation],
+	score: skill.data.sortScore,
+	connections: (skill.data.connections ?? [])
+		.map((id) => byId.get(id))
+		.filter((name): name is string => Boolean(name)),
+}));
+
+const axisTicks = [60, 70, 80, 90, 100];
+const gradientId = 'spec-continuum';
+---
+
+<div
+	data-spectrograph
+	class="grid gap-4"
+	style={`--spec-baseline: ${BASELINE}; --spec-x: ${lines[0]?.x ?? PAD};`}
+>
+	<div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+		<h3
+			class="m-0 font-mono text-label tracking-[0.14em] text-accent uppercase"
+		>
+			Spectrograph
+		</h3>
+		<p class="m-0 font-mono text-[0.6875rem] text-ink-low">
+			{lines.length} lines · depth of experience
+		</p>
+		<p
+			class="m-0 ms-auto font-mono text-[0.6875rem] text-ink-low max-sm:ms-0"
+			id="spec-hint"
+		>
+			Sweep across it, or use the arrow keys
+		</p>
+	</div>
+
+	{/*
+	  One tab stop for the whole instrument. The value is a line index; the
+	  text is what a readout would say, which is what a screen reader hears.
+	*/}
+	<div
+		data-spec-slider
+		role="slider"
+		tabindex="0"
+		aria-label="Spectral line selector"
+		aria-orientation="horizontal"
+		aria-valuemin="0"
+		aria-valuemax={lines.length - 1}
+		aria-valuenow="0"
+		aria-valuetext={
+			readouts[0]
+				? `${readouts[0].name} — ${readouts[0].tier}, ${readouts[0].constellation}`
+				: ''
+		}
+		aria-describedby="spec-hint"
+		class="spectrograph-plate glass-card relative block overflow-hidden px-1 py-1"
+	>
+		<svg
+			viewBox={`0 0 ${W} ${H}`}
+			aria-hidden="true"
+			focusable="false"
+			class="block h-auto w-full cursor-crosshair touch-pan-y select-none"
+		>
+			<defs>
+				{/*
+				  `userSpaceOnUse`, and that is not a detail. A gradient in the
+				  default objectBoundingBox units is resolved against each
+				  element's own box — and a vertical line's box is zero units
+				  wide, so a horizontal gradient across it collapses and the
+				  line paints nothing at all. Every emission line was
+				  invisible until this was fixed.
+
+				  In user space the gradient is defined once across the plate,
+				  so each line samples the hue at its own x. That is also the
+				  physical claim this instrument makes: a line's colour IS
+				  where it falls.
+				*/}
+				<linearGradient
+					id={gradientId}
+					gradientUnits="userSpaceOnUse"
+					x1={PAD}
+					y1="0"
+					x2={W - PAD}
+					y2="0"
+				>
+					{
+						CONTINUUM.map((token, i) => (
+							<stop
+								offset={`${(i / (CONTINUUM.length - 1)) * 100}%`}
+								stop-color={`var(${token})`}
+							/>
+						))
+					}
+				</linearGradient>
+			</defs>
+
+			{/* The continuum: the site's own spectrum, dimmed to a ground. */}
+			<rect
+				x={PAD}
+				y={BASELINE - 78}
+				width={W - PAD * 2}
+				height="78"
+				fill={`url(#${gradientId})`}
+				opacity="0.16"
+			/>
+
+			{/* Baseline and its ticks — the axis the lines stand on. */}
+			<line
+				x1={PAD}
+				y1={BASELINE}
+				x2={W - PAD}
+				y2={BASELINE}
+				stroke="var(--color-hairline-hi)"
+				stroke-width="1"
+			/>
+			{
+				axisTicks.map((tick) => (
+					<g>
+						<line
+							x1={xFor(tick)}
+							y1={BASELINE}
+							x2={xFor(tick)}
+							y2={BASELINE + 6}
+							stroke="var(--color-hairline-hi)"
+							stroke-width="1"
+						/>
+						<text
+							x={xFor(tick)}
+							y={BASELINE + 22}
+							text-anchor="middle"
+							fill="var(--color-ink-low)"
+							class="spec-tick font-mono text-[0.5rem]"
+						>
+							{tick}
+						</text>
+					</g>
+				))
+			}
+
+			{/* The caret rides --spec-x, which the module moves. */}
+			<line
+				class="spec-caret"
+				x1="0"
+				x2="0"
+				y1={BASELINE - 84}
+				y2={BASELINE + 8}
+				stroke="var(--color-ink-hi)"
+				stroke-width="1"
+			/>
+
+			{/* The emission lines. */}
+			{
+				lines.map(({ skill, x, height }) => (
+					<line
+						data-spec-line={skill.id}
+						data-spec-x={x.toFixed(2)}
+						data-spec-label={`${skill.data.name} — ${TIER_LABEL[skill.data.tier]}, ${CONSTELLATION_PLAIN[skill.data.constellation]}`}
+						class="spec-line"
+						x1={x}
+						y1={BASELINE}
+						x2={x}
+						y2={BASELINE - height}
+						stroke={`url(#${gradientId})`}
+						stroke-width="3"
+					/>
+				))
+			}
+		</svg>
+	</div>
+
+	{/*
+	  Every line's readout, as text. Only one is shown, but all 24 are in the
+	  HTML: this is the only place `connections` reaches the page as prose
+	  rather than as SVG geometry, so §27.4 needs them here whether or not
+	  the script ever runs.
+	*/}
+	<div class="glass-card min-h-28 px-5 py-4">
+		{
+			readouts.map((readout, i) => (
+				<div data-spec-readout={readout.id} hidden={i !== 0} class="grid gap-2">
+					<div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+						<p class="m-0 text-display-s text-ink-hi">{readout.name}</p>
+						<p class="m-0 font-mono text-[0.6875rem] tracking-[0.08em] text-accent uppercase">
+							{readout.tier}
+						</p>
+						<p class="m-0 font-mono text-[0.6875rem] text-ink-low">
+							{readout.constellation} · magnitude {readout.score}
+						</p>
+					</div>
+					{
+						readout.connections.length > 0 ? (
+							<p class="m-0 text-data text-ink-mid">
+								<span class="text-ink-low">Depends on </span>
+								{readout.connections.join(', ')}
+							</p>
+						) : (
+							<p class="m-0 text-data text-ink-low">
+								No dependency lines recorded.
+							</p>
+						)
+					}
+				</div>
+			))
+		}
+	</div>
+</div>
+
+<style>
+	/*
+	 * Not Tailwind: the caret's position comes from a custom property, and
+	 * no utility can set an SVG geometry attribute.
+	 *
+	 * A transform rather than `x1`/`x2`: the CSS geometry properties are
+	 * `x`, `y`, `width`, `height`, `cx`, `cy`, `r`, `rx`, `ry` — a line's
+	 * endpoints are NOT among them, so styling `x1` does nothing at all.
+	 * Inside a viewBox a translate is in user units, so --spec-x can be the
+	 * same number the SVG uses.
+	 */
+	.spec-caret {
+		transform: translateX(calc(var(--spec-x) * 1px));
+		opacity: 0.55;
+		transition: transform var(--duration-fast) var(--ease-ui);
+	}
+
+	/*
+	 * Text inside a viewBox scales with the plate, and the plate is 800 units
+	 * wide in about 358px on a phone — these labels came out near 4px, which
+	 * is not small type, it is visual noise. Dropped below `md`, the same
+	 * breakpoint §11.5 uses to drop the constellation map, and no information
+	 * goes with them: the readout states the magnitude as a number.
+	 */
+	@media (width < 48rem) {
+		.spec-tick {
+			display: none;
+		}
+	}
+
+	.spec-line {
+		opacity: 0.5;
+		transition:
+			opacity var(--duration-fast) var(--ease-ui),
+			stroke-width var(--duration-fast) var(--ease-ui);
+	}
+
+	.spec-line[data-active] {
+		opacity: 1;
+		stroke-width: 5;
+		filter: var(--glow-emission);
+	}
+
+	/* Hovering the plate lifts every line, so the strip reads as live
+	   before the visitor has picked anything. */
+	.spectrograph-plate:hover .spec-line,
+	.spectrograph-plate:focus-visible .spec-line {
+		opacity: 0.7;
+	}
+
+	@media (forced-colors: active) {
+		/* The continuum and the glow are pure decoration; the caret and the
+		   active line are the state, so they keep a system colour. */
+		.spec-line {
+			opacity: 1;
+			stroke: CanvasText;
+		}
+
+		.spec-line[data-active] {
+			stroke: Highlight;
+			filter: none;
+		}
+
+		.spec-caret {
+			stroke: Highlight;
+		}
+	}
+</style>

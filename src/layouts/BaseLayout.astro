@@ -116,10 +116,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 			import { observeOnce } from '../lib/observeOnce';
 			import { initWorldFocus } from '../lib/worldFocus';
 			import { initAnalytics } from '../lib/analytics';
+			import { initSpectrograph } from '../lib/spectrograph';
 
 			let teardown = init();
 			let teardownFocus = initWorldFocus();
 			let teardownAnalytics = initAnalytics();
+			let teardownSpectrograph = initSpectrograph();
 			observeOnce();
 
 			// Re-arm after a View Transition swaps the document.
@@ -127,9 +129,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 				teardown?.();
 				teardownFocus?.();
 				teardownAnalytics?.();
+				teardownSpectrograph?.();
 				teardown = init();
 				teardownFocus = initWorldFocus();
 				teardownAnalytics = initAnalytics();
+				teardownSpectrograph = initSpectrograph();
 				observeOnce();
 			});
 		</script>

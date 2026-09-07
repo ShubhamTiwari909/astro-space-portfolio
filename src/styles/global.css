@@ -110,6 +110,14 @@
 	/* Cross-fade duration for a band change (§3.3: fade, never cut). */
 	--band-fade: 900ms;
 
+	/* The glow, as a filter rather than a box-shadow. --shadow-glow-* cannot
+	   reach SVG geometry, and an emission line is exactly the thing that
+	   should glow, so the spectrograph needs the value at the token layer
+	   rather than inlined in a component. */
+	--glow-emission: drop-shadow(
+		0 0 6px color-mix(in oklab, var(--band) 70%, transparent)
+	);
+
 	/* ---- syntax highlighting (§14.2) ----
 	   Shiki resolves scopes at build time and emits these inline, so code
 	   colour comes from the same palette as everything else rather than a
@@ -321,6 +329,34 @@
 		background-color: color-mix(in oklab, var(--band) 6%, transparent);
 		border-color: color-mix(in oklab, var(--band) 28%, transparent);
 	}
+}
+
+/* The row the spectrograph is tuned to (§11.4). A cross-component state,
+   so it cannot live in either component's scoped styles.
+
+   Marked with an edge bar and a brighter hairline, NOT by tinting the row's
+   background. The first attempt mixed 10% of the band into the background
+   and axe caught it: that lifted the ground to #172534, which put the
+   constellation chip's --color-ink-low at 4.42:1 and failed §25.2. Tinting
+   would need re-verifying against all eight band hues, every one of which
+   lands on a different ground — an edge bar cannot fail that way, and reads
+   more clearly besides.
+
+   A pseudo-element rather than an inset box-shadow so the bar follows the
+   writing direction, like the ps-/border-s- utilities the rows use. */
+[data-skill-row][data-spec-active] {
+	position: relative;
+	border-color: color-mix(in oklab, var(--band) 34%, transparent);
+}
+
+[data-skill-row][data-spec-active]::before {
+	content: '';
+	position: absolute;
+	inset-block: 0;
+	inset-inline-start: 0;
+	width: 2px;
+	background-color: var(--band);
+	box-shadow: var(--shadow-glow-1);
 }
 
 /* Glow pulse — tiny ambient halo on beacon dots (status indicators) */

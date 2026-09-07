@@ -19,8 +19,18 @@
  * doing real work; it does not earn it for a list of anchors.
  *
  * Reads scroll from the shared singleton rather than adding a listener
- * (§19.2b), and never touches layout: the fill is a `scale`, and attribute
- * writes happen only when the active section actually changes.
+ * (§19.2b), and never touches layout: attribute writes happen only when the
+ * active section actually changes.
+ *
+ * ── The axis is also a control ───────────────────────────────────────────
+ * The hairline carries a playhead you can grab, so the rail is a seek bar
+ * for the whole flight as well as an indicator of it — see
+ * lib/beatScrubber.ts, which moves the SCROLL rather than the camera so
+ * every other consumer follows for free.
+ *
+ * The progress fill and the playhead position are pure CSS, read from the
+ * `--scroll` custom property the scroll loop already publishes to `<body>`.
+ * That used to be a JS write on every frame; it does not need to be one.
  */
 import { BANDS } from '../../lib/bands';
 
@@ -57,7 +67,7 @@ const LABELS: Record<string, string> = {
 							class="block h-px w-2 bg-current transition-[width,box-shadow] duration-(--duration-base) ease-ui group-data-active/tick:w-4 group-data-active/tick:shadow-glow-1"
 						/>
 						<span
-							class="font-mono text-[0.625rem] tracking-[0.14em] uppercase opacity-0 transition-opacity duration-(--duration-fast) ease-ui group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-active/tick:opacity-100 2xl:opacity-100"
+							class="font-mono text-[0.625rem] tracking-[0.14em] uppercase opacity-0 transition-opacity duration-(--duration-fast) ease-ui group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-scrubbing/rail:opacity-100 group-data-active/tick:opacity-100 2xl:opacity-100"
 						>
 							{LABELS[band.section]}
 						</span>
@@ -67,12 +77,40 @@ const LABELS: Record<string, string> = {
 		}
 	</ul>
 
-	{/* Axis: a hairline that fills top-to-bottom with scroll progress. */}
-	<div aria-hidden="true" class="relative order-2 h-44 w-px bg-hairline">
+	{/*
+	  Axis and scrubber. A hairline that fills top-to-bottom with scroll
+	  progress, plus a playhead you can drag to fly.
+
+	  The track is 44px wide and invisible so the grab target meets §25.1
+	  while the drawn line stays a hairline. `touch-none` because a vertical
+	  drag here is the gesture, not a page scroll.
+	*/}
+	<div
+		data-rail-track
+		role="slider"
+		tabindex="0"
+		aria-label="Flight position"
+		aria-orientation="vertical"
+		aria-valuemin="0"
+		aria-valuemax={BANDS.length - 1}
+		aria-valuenow="0"
+		aria-valuetext={`${LABELS[BANDS[0].section]} — beat 1 of ${BANDS.length}`}
+		class="group/track relative order-2 flex h-44 w-11 cursor-grab touch-none items-stretch justify-center data-scrubbing:cursor-grabbing"
+	>
+		<div aria-hidden="true" class="relative w-px bg-hairline">
+			<div
+				data-rail-fill
+				style="scale: 1 var(--scroll, 0)"
+				class="absolute inset-0 origin-top bg-linear-to-b from-transparent to-accent"
+			>
+			</div>
+		</div>
+
+		{/* The playhead. Position is CSS from --scroll: no JS per frame. */}
 		<div
-			data-rail-fill
-			style="scale: 1 0"
-			class="absolute inset-0 origin-top bg-linear-to-b from-transparent to-accent"
+			data-rail-knob
+			aria-hidden="true"
+			class="pointer-events-none absolute start-1/2 top-[calc(var(--scroll,0)*100%)] size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border border-accent bg-void shadow-glow-1 transition-[width,height] duration-(--duration-fast) ease-ui group-hover/track:size-2.5 group-focus-visible/track:size-2.5 group-data-scrubbing/track:size-2.5"
 		>
 		</div>
 	</div>
@@ -80,9 +118,9 @@ const LABELS: Record<string, string> = {
 
 <script>
 	import { scrollState, subscribe } from '../../lib/scrollProgress';
+	import { initBeatScrubber } from '../../lib/beatScrubber';
 
 	const rail = document.querySelector('[data-section-rail]');
-	const fill = rail?.querySelector<HTMLElement>('[data-rail-fill]');
 	const ticks = rail ? [...rail.querySelectorAll<HTMLElement>('[data-rail-tick]')] : [];
 
 	/*
@@ -94,12 +132,11 @@ const LABELS: Record<string, string> = {
 	let unsubscribe: (() => void) | null = null;
 
 	function attach() {
-		if (unsubscribe || !fill || ticks.length === 0) return;
+		if (unsubscribe || ticks.length === 0) return;
 		let lastIndex = -1;
 		unsubscribe = subscribe(() => {
-			// A scale on the compositor: no layout read, no layout write.
-			fill.style.setProperty('scale', `1 ${scrollState.progress}`);
-
+			// The fill and the playhead are CSS, driven by --scroll. All this
+			// has to do is move `aria-current`, and only when it changes.
 			if (scrollState.bandIndex === lastIndex) return;
 			lastIndex = scrollState.bandIndex;
 			ticks.forEach((tick, index) => {
@@ -123,4 +160,12 @@ const LABELS: Record<string, string> = {
 
 	sync();
 	wide.addEventListener('change', sync);
+
+	/*
+	 * The scrubber attaches once, not per breakpoint: the rail is
+	 * `hidden lg:flex`, so below 64rem there is nothing to grab and nothing
+	 * focusable, and re-attaching on every media change would leak
+	 * listeners for no gain.
+	 */
+	initBeatScrubber();
 </script>
