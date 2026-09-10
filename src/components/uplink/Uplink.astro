@@ -15,6 +15,7 @@ import Button from '../ui/Button.astro';
 import Icon, { type IconName } from '../ui/Icon.astro';
 import StatusDot from '../ui/StatusDot.astro';
 import CopyEmail from './CopyEmail';
+import SatelliteBay from './SatelliteBay.astro';
 
 interface Props {
 	profile: CollectionEntry<'profile'>['data'];
@@ -26,6 +27,8 @@ const { profile }: Props = Astro.props;
 const links = profile.socials.filter((s) => s.professional);
 const emailId = 'uplink-email';
 ---
+
+<SatelliteBay />
 
 <Panel variant="strong" class="mx-auto max-w-panel overflow-hidden" data-observe>
 	{/* Terminal header band */}

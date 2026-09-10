@@ -1,0 +1,99 @@
+---
+/**
+ * The satellite bay — the Uplink section's model, and its still.
+ *
+ * Structured the way §17.1 structures the backdrop, and for the same
+ * reason: the still underneath NEVER unmounts, and the canvas cross-fades
+ * over it once it has drawn a frame. So a visitor with no WebGL, or one who
+ * asked for less data, gets a designed object rather than an empty box —
+ * and because the box is reserved by this wrapper rather than by the
+ * island, hydration cannot shift the layout.
+ *
+ * The still is inline SVG rather than a poster image. §26.2 leaves the home
+ * route one spare request out of twenty-eight, and a decorative fallback is
+ * not what to spend it on; drawn as markup it costs about a kilobyte of
+ * HTML and no request at all.
+ *
+ * It has its own ground. The backdrop keeps flying behind this section, and
+ * against the planet system at full brightness the model was just one more
+ * bright object among several — a dimmed bezel gives it somewhere to be.
+ *
+ * Decorative throughout — `aria-hidden` on both layers. Nothing here is
+ * information, which is what lets it be absent (§25.0).
+ */
+import SatelliteViewer from './SatelliteViewer';
+---
+
+<div
+	class="satellite-bay relative mx-auto aspect-[2/1] w-full max-w-panel overflow-hidden rounded-panel border border-hairline bg-void/65 max-sm:aspect-[3/2]"
+	data-observe
+>
+	{/* The still. Present from the first paint, and never removed. */}
+	<svg
+		data-satellite-still
+		viewBox="0 0 420 210"
+		aria-hidden="true"
+		focusable="false"
+		class="absolute inset-0 h-full w-full transition-opacity duration-(--duration-handover) ease-soft"
+	>
+		<g
+			fill="none"
+			stroke="var(--band)"
+			stroke-width="1.5"
+			stroke-linejoin="round"
+			opacity="0.5"
+		>
+			{/* Solar arrays, with their cell divisions. */}
+			{
+				[0, 1].map((side) => {
+					const x = side === 0 ? 34 : 274;
+					return (
+						<g>
+							<rect x={x} y={82} width={112} height={44} rx="1" />
+							{[1, 2, 3, 4, 5, 6, 7].map((i) => (
+								<line x1={x + i * 14} y1={82} x2={x + i * 14} y2={126} opacity="0.5" />
+							))}
+							<line x1={x} y1={104} x2={x + 112} y2={104} opacity="0.5" />
+						</g>
+					);
+				})
+			}
+
+			{/* Booms. */}
+			<rect x="146" y="100" width="32" height="8" rx="1" />
+			<rect x="242" y="100" width="32" height="8" rx="1" />
+
+			{/* Bus. */}
+			<rect x="178" y="80" width="64" height="48" rx="2" />
+
+			{/* High-gain antenna: bowl, mast and feed at the focus. */}
+			<line x1="210" y1="80" x2="210" y2="62" />
+			<ellipse cx="210" cy="44" rx="38" ry="19" />
+			<path d="M172 44 A 38 19 0 0 0 248 44" opacity="0.55" />
+			<line x1="210" y1="44" x2="210" y2="28" opacity="0.7" />
+			<circle cx="210" cy="26" r="3" />
+		</g>
+
+		{/* Transmit beacon. */}
+		<circle cx="210" cy="136" r="3.5" fill="var(--band)" opacity="0.85" />
+	</svg>
+
+	{/*
+	  `client:capable` rather than `client:visible`: the directive checks for
+	  WebGL and for a data-saving preference BEFORE it fetches anything, so
+	  the devices §24.2 protects never download three at all — and on those
+	  devices the still above is simply what the section has.
+	*/}
+	<SatelliteViewer client:capable />
+</div>
+
+<style>
+	/*
+	 * The handover. Once the canvas has drawn a frame the still fades out
+	 * from under it — `:has()` because the island renders after the still
+	 * and a sibling combinator only reaches forwards.
+	 */
+	.satellite-bay:has([data-satellite-ready]) [data-satellite-still] {
+		opacity: 0;
+	}
+</style>

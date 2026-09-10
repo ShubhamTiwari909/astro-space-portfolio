@@ -313,6 +313,7 @@ export default function DeepFieldScene({ planets, burnEvents }: Props) {
 					<Station />
 					{/* Beams are removed on mobile (§24.2). */}
 					{tier.name !== 'low' && <RelayBeams />}
+
 				</Canvas>
 			</SceneBoundary>
 		</div>
